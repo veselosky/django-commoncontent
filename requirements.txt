@@ -1,0 +1,8 @@
+django>=3.2,<5.0
+django-bootstrap-icons>=0.7.8
+pillow>=2.3.0
+
+django-filer
+django-taggit >= 3.0.0
+django-tinymce >= 3.4.0
+pydantic >= 1.9.1

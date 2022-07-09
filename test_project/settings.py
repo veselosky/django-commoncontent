@@ -26,16 +26,27 @@ SECRET_KEY = "django-insecure-ri51as9!afs^d0y_&%cf#jv)uud!dfky0k0ydioc_3u^va&5^+
 DEBUG = True
 
 ALLOWED_HOSTS = []
+SITE_ID = 1
 
 
 # Application definition
 
 INSTALLED_APPS = [
     "genericsite",
+    # 3rd party apps for "full" usage style
+    "django_bootstrap_icons",
+    "easy_thumbnails",  # via filer
+    "filer",
+    "mptt",  # via filer
+    "django_extensions",
+    "taggit",
+    "tinymce",
+    # Standard Django stuff
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
+    "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
@@ -43,6 +54,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # CacheMiddleware comes before LocaleMiddleware
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -85,11 +98,8 @@ DATABASES = {
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
-
-TIME_ZONE = "UTC"
-
+TIME_ZONE = "America/New_York"
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -102,3 +112,12 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+THUMBNAIL_PROCESSORS = (
+    "easy_thumbnails.processors.colorspace",
+    "easy_thumbnails.processors.autocrop",
+    #'easy_thumbnails.processors.scale_and_crop',
+    "filer.thumbnail_processors.scale_and_crop_with_subject_location",
+    "easy_thumbnails.processors.filters",
+)

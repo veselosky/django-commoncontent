@@ -1,3 +1,24 @@
+[project]
+name = "django-genericsite"
+version = "0.0.1"
+authors = [{ name = "Vince Veselosky", email = "vince@veselosky.com" }]
+description = "basic templates for Django's generic views to produce a decent-looking website with minimal effort"
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = ["django>=3.2,<5.0", "django-bootstrap-icons>=0.7.8"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache License",
+    "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+models = ["django-filer>=2.2"]
+
+[project.urls]
+"Homepage" = "https://github.com/veselosky/django-genericsite"
+"Bug Tracker" = "https://github.com/veselosky/django-genericsite/issues"
+
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
