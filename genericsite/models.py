@@ -113,7 +113,7 @@ class AbstractOpenGraph(models.Model):
         related_name="+",
     )
     base_template = models.CharField(
-        _("base template"), max_length=255, default="base.html"
+        _("base template"), max_length=255, default="genericsite/base.html"
     )
     content_template = models.CharField(
         _("content body template"),
@@ -274,7 +274,12 @@ class GenericPageManager(models.Manager):
         return super().get_queryset().select_related("site", "og_image")
 
     def live(self):
-        return self.get_queryset().filter(status=Status.USABLE)
+        return self.get_queryset().filter(
+            models.Q(expiration_time__isnull=True)
+            | models.Q(expiration_time__gt=timezone.now()),
+            status=Status.USABLE,
+            published_time__lte=timezone.now(),
+        )
 
 
 class Section(AbstractOpenGraph):
