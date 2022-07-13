@@ -112,13 +112,11 @@ class AbstractOpenGraph(models.Model):
         help_text=_("Image for social sharing"),
         related_name="+",
     )
-    base_template = models.CharField(
-        _("base template"), max_length=255, default="genericsite/base.html"
-    )
+    base_template = models.CharField(_("base template"), max_length=255, blank=True)
     content_template = models.CharField(
         _("content body template"),
         max_length=255,
-        default="genericsite/article_detail.html",
+        blank=True,
     )
     body = HTMLField(_("body content"), blank=True)
     images = models.ManyToManyField(
@@ -187,14 +185,13 @@ class AbstractOpenGraph(models.Model):
 
     @property
     def copyright_notice(self):
+        var = SiteVar.For(self.site)
         if self.custom_copyright_notice:
-            return self.custom_copyright_notice
-        elif notice := SiteVar.For(self.site).get_value("copyright_notice"):
+            return format_html(self.custom_copyright_notice, self.copyright_year)
+        elif notice := var.get_value("copyright_notice"):
             return format_html(notice, self.copyright_year)
         else:
-            holder = SiteVar.For(self.site).get_value(
-                "copyright_holder", self.site.name
-            )
+            holder = var.get_value("copyright_holder", self.site.name)
             return format_html(
                 "© Copyright {} {}. All rights reserved.", self.copyright_year, holder
             )
@@ -269,17 +266,19 @@ class AbstractArticle(AbstractOpenGraph):
 #######################################################################
 
 
-class GenericPageManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().select_related("site", "og_image")
-
+class OpenGraphQuerySet(models.QuerySet):
     def live(self):
-        return self.get_queryset().filter(
+        return self.filter(
             models.Q(expiration_time__isnull=True)
             | models.Q(expiration_time__gt=timezone.now()),
             status=Status.USABLE,
             published_time__lte=timezone.now(),
         )
+
+
+class GenericPageManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related("site", "og_image")
 
 
 class Section(AbstractOpenGraph):
@@ -290,7 +289,7 @@ class Section(AbstractOpenGraph):
         verbose_name = _("section")
         verbose_name_plural = _("sections")
 
-    objects = GenericPageManager()
+    objects = GenericPageManager.from_queryset(OpenGraphQuerySet)()
 
     def get_absolute_url(self):
         return reverse("section_page", kwargs={"section_slug": self.slug})
@@ -304,7 +303,7 @@ class Page(AbstractOpenGraph):
         verbose_name = _("page")
         verbose_name_plural = _("pages")
 
-    objects = GenericPageManager()
+    objects = GenericPageManager.from_queryset(OpenGraphQuerySet)()
 
     def get_absolute_url(self):
         return reverse("landing_page", kwargs={"page_slug": self.slug})
@@ -320,25 +319,18 @@ class HomePage(AbstractOpenGraph):
     admin_name = models.CharField(
         _("admin name"),
         max_length=255,
+        unique=True,
         help_text=_("Name used in the admin to distinguish from other home pages"),
     )
-    objects = GenericPageManager()
+    objects = GenericPageManager.from_queryset(OpenGraphQuerySet)()
 
     def get_absolute_url(self):
-        return reverse("landing_page", kwargs={"page_slug": self.slug})
+        return reverse("home_page")
 
 
 class ArticleManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().select_related("site", "section", "og_image")
-
-    def live(self):
-        return self.get_queryset().filter(
-            models.Q(expiration_time__isnull=True)
-            | models.Q(expiration_time__gt=timezone.now()),
-            status=Status.USABLE,
-            published_time__lte=timezone.now(),
-        )
 
 
 class Article(AbstractArticle):
@@ -348,7 +340,7 @@ class Article(AbstractArticle):
         Section, verbose_name=_("section"), on_delete=models.PROTECT
     )
 
-    objects = ArticleManager()
+    objects = ArticleManager.from_queryset(OpenGraphQuerySet)()
 
     def get_absolute_url(self):
         return reverse(

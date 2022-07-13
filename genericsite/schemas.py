@@ -4,10 +4,11 @@ https://ogp.me/
 """
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+import typing as T
 
-from django.utils.html import format_html, format_html_join
-from pydantic import BaseModel, HttpUrl, validator
+from django.db import models
+from django.utils.html import format_html
+from pydantic import BaseModel, AnyHttpUrl, validator
 
 metatag = '<meta property="{}:{}" content="{}" />\n'
 
@@ -20,10 +21,10 @@ class OGGender(Enum):
 
 class StructuredProperty(BaseModel):
     "Represents a generic structured property"
-    _prefix: Optional[str] = None
-    url: HttpUrl
-    secure_url: Optional[HttpUrl]
-    type: Optional[str]
+    _prefix: T.Optional[str] = None
+    url: AnyHttpUrl
+    secure_url: T.Optional[AnyHttpUrl]
+    type: T.Optional[str]
 
     @validator("secure_url")
     def secure_url_requires_https(cls, v):
@@ -50,29 +51,29 @@ class AudioProp(StructuredProperty):
 class VideoProp(StructuredProperty):
     "Represents the 'video' structured property"
     _prefix = "video"
-    width: Optional[int]
-    height: Optional[int]
+    width: T.Optional[int]
+    height: T.Optional[int]
 
 
 class ImageProp(VideoProp):
     "Represents the 'image' structured property"
     _prefix = "image"
-    alt: Optional[str]
+    alt: T.Optional[str]
 
 
 class OpenGraph(BaseModel, orm_mode=True):
     "A generic open graph object (page)"
-    audio: List[AudioProp] = []
-    description: Optional[str]
-    determiner: Optional[str]
-    image: List[ImageProp] = []
-    locale: Optional[str]
-    locale_alternate: List[str] = []
-    site_name: Optional[str]
+    audio: T.List[AudioProp] = []
+    description: T.Optional[str]
+    determiner: T.Optional[str]
+    image: T.List[ImageProp] = []
+    locale: T.Optional[str]
+    locale_alternate: T.List[str] = []
+    site_name: T.Optional[str]
     title: str
     type: str = "website"
-    url: HttpUrl
-    video: List[VideoProp] = []
+    url: AnyHttpUrl
+    video: T.List[VideoProp] = []
 
     def __str__(self):
         # Subclasses with attrs will use a separate namespace for them, so here we ONLY
@@ -94,15 +95,22 @@ class OpenGraph(BaseModel, orm_mode=True):
         return val
 
 
-class OGArticle(OpenGraph):
+# Must allow arbitrary types to allow section to be a django model instance
+class OGArticle(OpenGraph, arbitrary_types_allowed=True):
     "OG Article object"
-    published_time: Optional[datetime]
-    modified_time: Optional[datetime]
-    expiration_time: Optional[datetime]
-    author: List[HttpUrl] = []
-    section: Optional[str]
-    tag: List[str] = []
+    published_time: T.Optional[datetime]
+    modified_time: T.Optional[datetime]
+    expiration_time: T.Optional[datetime]
+    author: T.List[AnyHttpUrl] = []
+    section: T.Union[None, str, models.Model]
+    tag: T.List[str] = []
     type: str = "article"
+
+    @validator("section")
+    def section_model_to_str(cls, v):
+        if isinstance(v, models.Model):
+            return str(v)
+        return v
 
     def __str__(self):
         val = super().__str__()
@@ -119,10 +127,10 @@ class OGArticle(OpenGraph):
 
 class OGBook(OpenGraph):
     "OG book object"
-    author: List[HttpUrl] = []
-    isbn: Optional[str]
-    release_date: Optional[datetime]
-    tag: List[str] = []
+    author: T.List[AnyHttpUrl] = []
+    isbn: T.Optional[str]
+    release_date: T.Optional[datetime]
+    tag: T.List[str] = []
     type: str = "book"
 
     def __str__(self):
@@ -140,12 +148,12 @@ class OGBook(OpenGraph):
 
 class OGVideo(OpenGraph):
     "OG video/movie object (type video.other)"
-    actor: List[HttpUrl] = []  # FIXME ignoring roles for now
-    director: List[HttpUrl] = []
-    writer: List[HttpUrl] = []
-    duration: Optional[int]  # length in seconds
-    release_date: Optional[datetime]
-    tag: List[str] = []
+    actor: T.List[AnyHttpUrl] = []  # FIXME ignoring roles for now
+    director: T.List[AnyHttpUrl] = []
+    writer: T.List[AnyHttpUrl] = []
+    duration: T.Optional[int]  # length in seconds
+    release_date: T.Optional[datetime]
+    tag: T.List[str] = []
     type: str = "video.other"
 
     def __str__(self):
@@ -173,7 +181,7 @@ class OGTVShow(OGVideo):
 
 class OGEpisode(OGVideo):
     "OG TV episode (video.episode)"
-    series: Optional[OGTVShow]
+    series: T.Optional[OGTVShow]
     type: str = "video.episode"
 
     def __str__(self):
@@ -185,10 +193,10 @@ class OGEpisode(OGVideo):
 
 class OGProfile(OpenGraph):
     "OG's 'person' object"
-    first_name: Optional[str]
-    last_name: Optional[str]
-    username: Optional[str]
-    gender: Optional[OGGender]
+    first_name: T.Optional[str]
+    last_name: T.Optional[str]
+    username: T.Optional[str]
+    gender: T.Optional[OGGender]
     type: str = "profile"
 
     def __str__(self):
