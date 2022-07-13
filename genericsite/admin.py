@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from genericsite.models import Article, HomePage, Page, Section
+from genericsite.models import Article, HomePage, Page, Section, SiteVar
+
+
+@admin.register(SiteVar)
+class SiteVarAdmin(admin.ModelAdmin):
+    list_display = ("name", "value", "site")
+    list_filter = ("site",)
 
 
 class OpenGraphAdmin(admin.ModelAdmin):
@@ -107,14 +113,16 @@ class PageAdmin(OpenGraphAdmin):
 
 @admin.register(HomePage)
 class HomePageAdmin(OpenGraphAdmin):
+    prepopulated_fields = {"slug": ("admin_name",)}
+    list_display = ("admin_name", "published_time", "site", "status")
     fieldsets = (
         (
             None,
             {
                 "fields": (
                     "admin_name",
-                    "title",
                     "slug",
+                    "title",
                     "description",
                     "og_image",
                     "body",
@@ -145,6 +153,3 @@ class HomePageAdmin(OpenGraphAdmin):
             },
         ),
     )
-
-
-list_display = ("admin_name", "published_time", "site", "status")
