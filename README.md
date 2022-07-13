@@ -30,6 +30,28 @@ or no front-end to deal with.
 
 ## How to use it
 
+For the full "just do it for me" usage style, add the following to your
+INSTALLED_APPS:
+
+```python
+    "genericsite",
+    # 3rd party apps for "full" usage style
+    "django_bootstrap_icons",
+    "easy_thumbnails",
+    "filer",
+    "mptt",  # for filer
+    "taggit",
+    "tinymce",
+    # Standard Django stuff
+    "django.contrib.contenttypes",
+    "django.contrib.sites",
+```
+
+Also ensure that your MIDDLWARE list includes
+`django.contrib.sites.middleware.CurrentSiteMiddleware` near the top.
+
+TODO When closer to "1.0" create a project template for use with startproject.
+
 ### The base template
 
 The GenericSite base template is divided into major blocks that can be replaced
@@ -62,57 +84,35 @@ in your child templates. The blocks, in order of appearance, are:
   deferred JavaScript or other elements you want loaded after the main page
   content.
 
-### Basic
+### Block Templates
 
-For each of your models, create a "opengraph" method that returns an object or
-dictionary mapping the models attributes to the extended open graph attributes
-supported by GenericSite.
+Genericsite ships with several partial templates that can be included as the
+content of the base blocks to construct a page quickly from reusable modules.
 
-### Advanced
+TODO Document available block templates.
 
-Install the optional dependencies to support GenericSite abstract models. Then
-create your models to extend the included abstract models.
+### Site Vars
 
-## What's included
+The app comes with a SiteVar model for storing site-specific variables or chunks
+of content. You can store any variable for use with your own templates.
+Variables used by the default templates/models include:
 
-- [ ] `opengraph` templatetag to include opengraph meta tags given a dict (used
-      by default in base template)
-- [ ] base template: Generic base template with page divided into logical blocks
-- [ ] detail_txt: Generic detail page template for text-based content, with
-      opengraph metadata
-- [ ] detail_img: Generic detail page template featuring a single large image
-- [ ] detail_video: Generic detail page template featuring a single large video
-- [ ] detail_audio: Generic detail page template featuring an audio player
-- [ ] list_blog_txt: Generic list page featuring text-based entries as for a
-      blog (bottom 1/3 of the blog example)
-- [ ] list_card_imgtop: Generic list page featuring large landscape image cards
-      with text beneath (bottom of album example)
-- [ ] list_card_imgright: Generic list page featuring cards with text on the
-      left and a portrait image to the right (middle 1/3 of blog example)
-- [ ] list_big_img: Generic list page featuring a large image beside text
-      (bottom 1/3 of carousel example, "featurette")
-
-## How it works
-
-The included generic templates expect to be called from Django's generic views.
-Detail templates expect to have a variable called "object" in the context. List
-views expect a variable called "object_list".
-
-Each object is expected to have a property or method "opengraph" which will
-return an object or dictionary containing opengraph-compatible metadata
-(enhanced with some schema.org data in some cases). For each model you wish to
-use with generic templates, you just need to create a mapping between the
-model's attributes and standard opengraph attributes. This can be done in the
-model itself, or it can be done in the view and attached to the model instance
-before the template is called.
-
-## Headers and footers
-
-The generic layout includes many header and footer layouts derived from examples
-on the Bootstrap website. These are implemented as template includes. Set the
-context variables "header_template" and "footer_template" to use them. If those
-variables are not found int the context, no header is included, and a generic
-copyright notice is included in the footer.
+- `copyright_holder` - Custom name for the copyright holder if using the default
+  copyright notice. Falls back to `site.name` if not provided.
+- `copyright_notice` - HTML to include in the copyright notice section of the
+  footer (replaces the default copyright notice).
+- `default_detail_content_template` - Default template to use for the `content`
+  block for detail pages.
+- `default_list_content_template` - Default template to use for the `content`
+  block for list pages.
+- `default_footer_template` - Default template to use for the `footer` block.
+- `default_header_template` - Default template to use for the `header` block.
+- `default_icon` - Name of a Bootstrap icon to use by default if the object
+  provides none.
+- `default_postcontent_template` - Default template to use for the `postcontent`
+  block.
+- `default_precontent_template` - Default template to use for the `precontent`
+  block.
 
 ## Open Graph attributes used by the templates
 
