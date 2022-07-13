@@ -1,0 +1,31 @@
+<!DOCTYPE html>{% load i18n static %}
+<html prefix="og: https://ogp.me/ns#
+article: https://ogp.me/ns/article#
+book: https://ogp.me/ns/book#
+profile: https://ogp.me/ns/profile#
+video: https://ogp.me/ns/video#
+">
+<head>
+  <meta charset="utf-8" />
+  <title>{% block title %}{% firstof object.seo_title opengraph.title request.site.name %}{% endblock %}</title>
+  <meta name="description" content="{% firstof object.seo_description opengraph.description %}" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+  integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
+  crossorigin="anonymous">
+  {% block opengraph %}{{ opengraph }}{% endblock %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock body_class %}">
+  {% block header %}{% include header_template|default:"genericsite/blocks/header_simple.html" %}{% endblock header %}
+  {% block precontent %}{% include precontent_template|default:"genericsite/blocks/empty.html" %}{% endblock precontent %}
+  {% block content %}{% include content_template|default:"genericsite/blocks/article_text.html" %}{% endblock content %}
+  {% block postcontent %}{% include postcontent_template|default:"genericsite/blocks/empty.html" %}{% endblock postcontent %}
+  {% block footer %}{% include footer_template|default:"genericsite/blocks/footer_simple.html" %}{% endblock footer %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
+integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
+crossorigin="anonymous"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

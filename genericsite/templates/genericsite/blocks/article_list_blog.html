@@ -1,0 +1,19 @@
+{% load i18n %}
+<div class="article-list container-lg">{% for article in object_list %}
+<article class="article-preview">
+  <h2 class="article-title"><a href="{{ article.get_absolute_url}}"
+    >{% firstof article.headline article.title article.opengraph.title %}</a></h2>
+  {% if article.author_display_name and article.author_profile_url %}
+  <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}
+    <a href="{{ article.author_profile_url }}">{{ article.author_display_name }}</a></p>
+  {% elif article.author_display_name %}
+  <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}} {{ article.author_display_name }}</p>
+  {% else %}
+  <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}</p>
+  {% endif %}<div class="article-excerpt">
+  {% firstof article.excerpt article.description article.opengraph.description %}
+  </div>
+  <p><a href="{{ article.get_absolute_url }}#continue-reading">{% trans "Continue reading" %}</a></p>
+</article><!-- /.article-preview -->
+{% endfor %}
+</div>

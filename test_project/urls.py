@@ -16,8 +16,22 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from genericsite import views as generic
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("filer/", include("filer.urls")),
     path("tinymce/", include("tinymce.urls")),
+    path(
+        "<slug:section_slug>/<slug:article_slug>.html",
+        generic.ArticleDetailView.as_view(),
+        name="article_page",
+    ),
+    path(
+        "<slug:page_slug>.html", generic.PageDetailView.as_view(), name="landing_page"
+    ),
+    path("<slug:section_slug>/", generic.SectionView.as_view(), name="section_page"),
+    path("", generic.HomePageView.as_view(), name="home_page"),
+    # TODO Pagination URLs for sections and home page
 ]
