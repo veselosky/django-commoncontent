@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from genericsite.models import Article, HomePage, Page, Section, SiteVar
+from genericsite.models import Article, HomePage, Page, Section, SiteVar, Link, Menu
 
 
 @admin.register(SiteVar)
@@ -153,3 +153,15 @@ class HomePageAdmin(OpenGraphAdmin):
             },
         ),
     )
+
+
+class LinkInline(admin.StackedInline):
+    extra: int = 1
+    model = Link
+
+
+@admin.register(Menu)
+class MenuAdmin(admin.ModelAdmin):
+    exclude = ["links"]
+    inlines = [LinkInline]
+    prepopulated_fields = {"slug": ("admin_name",)}

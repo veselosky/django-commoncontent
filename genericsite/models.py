@@ -1,5 +1,6 @@
 import typing as T
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db import models
@@ -197,6 +198,16 @@ class AbstractOpenGraph(models.Model):
             )
 
     @property
+    def excerpt(self):
+        """Rich text excerpt for use in teases and feed content. If no excerpt has
+        been specified, returns the full body text."""
+        config = apps.get_app_config("genericsite")
+        if not self.body:
+            return ""
+        excerpt = self.body.split(config.pagebreak_separator, maxsplit=1)[0]
+        return excerpt
+
+    @property
     def icon_name(self):
         "name of an icon to represent this object"
         if self.custom_icon:
@@ -347,3 +358,93 @@ class Article(AbstractArticle):
             "article_page",
             kwargs={"article_slug": self.slug, "section_slug": self.section.slug},
         )
+
+
+class Menu(models.Model):
+    class Meta:
+        unique_together = ("site", "slug")
+
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, verbose_name=_("site"))
+    admin_name = models.CharField(_("admin name"), max_length=255)
+    slug = models.SlugField(_("slug"))
+    title = models.CharField(_("title"), max_length=255, blank=True)
+
+    def __str__(self):
+        return self.admin_name
+
+    @property
+    def links(self):
+        return self.link_set.all()
+
+
+class Link(models.Model):
+    """
+    A model to store links that can be used in menus. Note, Links are not complete
+    open graph objects and intentionally lack many open graph properties. The subset
+    of properties required by GenericSite is: url, title and the GenericSite extension
+    "icon_name". For completeness, the model also supports storing a description and
+    image, though at this writing GenericSite templates do not use these properties.
+    """
+
+    class Meta:
+        unique_together = (("menu", "url"), ("menu", "title"))
+
+    menu = models.ForeignKey(Menu, on_delete=models.CASCADE, verbose_name=_("menu"))
+    url = models.CharField(
+        _("URL"),
+        max_length=255,
+        help_text=_(
+            "This can be either an absolute path or a full URL "
+            "starting with a scheme such as “https://”."
+        ),
+    )
+    title = models.CharField(_("title"), blank=True, max_length=255)
+    custom_icon = models.CharField(
+        _("custom icon"),
+        max_length=50,
+        blank=True,
+        help_text="<a href=https://icons.getbootstrap.com/#icons target=iconlist>icon list</a>",
+    )
+    description = models.TextField(_("description"), blank=True)
+    og_image = FilerImageField(
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        help_text=_("Image for social sharing"),
+        related_name="+",
+    )
+
+    @property
+    def icon_name(self):
+        "name of an icon to represent this object"
+        if self.custom_icon:
+            return self.custom_icon
+        elif icon := SiteVar.For(self.site).get_value("default_icon"):
+            return icon
+        else:
+            return "link-45deg"
+
+    @property
+    def image(self):
+        if self.og_image:
+            return [self.og_image]
+        return []
+
+
+class SectionMenu:
+    def __init__(self, site: Site, title: str = "", sections=None, pages=None) -> None:
+        self.site = site
+        self.title = title
+        self.sections = sections or Section.objects.live().filter(site=site).order_by(
+            "title"
+        )
+        self.pages = pages
+
+    @property
+    def links(self):
+        home = HomePage.objects.live().filter(site=self.site).latest()
+        menu = [home]
+        menu.extend(self.sections)
+        if self.pages:
+            menu.extend(self.pages)
+        return menu

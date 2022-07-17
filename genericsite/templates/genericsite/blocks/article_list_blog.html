@@ -11,7 +11,7 @@
   {% else %}
   <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}</p>
   {% endif %}<div class="article-excerpt">
-  {% firstof article.excerpt article.description article.opengraph.description %}
+  {% firstof article.excerpt|safe article.description article.opengraph.description %}
   </div>
   <p><a href="{{ article.get_absolute_url }}#continue-reading">{% trans "Continue reading" %}</a></p>
 </article><!-- /.article-preview -->
