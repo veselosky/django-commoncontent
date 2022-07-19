@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+VAR = BASE_DIR / "var"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -24,6 +24,7 @@ SECRET_KEY = "django-insecure-ri51as9!afs^d0y_&%cf#jv)uud!dfky0k0ydioc_3u^va&5^+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+FILER_DEBUG = FILER_ENABLE_LOGGING = DEBUG
 
 ALLOWED_HOSTS = []
 SITE_ID = 1
@@ -91,7 +92,7 @@ WSGI_APPLICATION = "test_project.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": VAR / "db.sqlite3",
     }
 }
 
@@ -106,8 +107,14 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
-
 STATIC_URL = "static/"
+STATIC_ROOT = VAR / "static"
+MEDIA_ROOT = VAR / "media"
+MEDIA_URL = "media/"
+if not STATIC_ROOT.exists():
+    STATIC_ROOT.mkdir(parents=True, exist_ok=True)
+if not MEDIA_ROOT.exists():
+    MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
