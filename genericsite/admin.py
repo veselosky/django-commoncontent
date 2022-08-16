@@ -1,6 +1,45 @@
 from django.contrib import admin
 
-from genericsite.models import Article, HomePage, Page, Section, SiteVar, Link, Menu
+from filer.admin.fileadmin import FileAdmin
+from genericsite.models import (
+    Article,
+    ArticleAudio,
+    ArticleImage,
+    ArticleVideo,
+    HomePage,
+    Page,
+    Section,
+    SiteVar,
+    Link,
+    Menu,
+    AudioFile,
+    VideoFile,
+)
+
+
+class ArticleAudioInline(admin.StackedInline):
+    extra: int = 1
+    model = ArticleAudio
+
+
+class ArticleImageInline(admin.StackedInline):
+    extra: int = 1
+    model = ArticleImage
+
+
+class ArticleVideoInline(admin.StackedInline):
+    extra: int = 1
+    model = ArticleVideo
+
+
+@admin.register(AudioFile)
+class AudioFileAdmin(FileAdmin):
+    pass
+
+
+@admin.register(VideoFile)
+class VideoFileAdmin(FileAdmin):
+    pass
 
 
 @admin.register(SiteVar)
@@ -12,6 +51,8 @@ class SiteVarAdmin(admin.ModelAdmin):
 class OpenGraphAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     date_heirarchy = "published_time"
+    list_display = ("title", "published_time", "site", "status")
+    list_filter = ("site", "status")
     search_fields = ("title", "description")
     fieldsets = (
         (
@@ -51,13 +92,11 @@ class OpenGraphAdmin(admin.ModelAdmin):
         ),
     )
 
-    list_display = ("title", "published_time", "site", "status")
-    list_filter = ("site", "status")
-
 
 @admin.register(Article)
 class ArticleAdmin(OpenGraphAdmin):
     list_display = ("title", "section", "published_time", "site", "status")
+    inlines = [ArticleImageInline]
     fieldsets = (
         (
             None,

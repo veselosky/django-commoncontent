@@ -42,6 +42,9 @@ class StructuredProperty(BaseModel):
                 val += format_html(metatag, f"og:{self._prefix}", attr, content)
         return val
 
+    def get_absolute_url(self):
+        return self.url.path
+
 
 class AudioProp(StructuredProperty):
     "Represents the 'audio' structured property"

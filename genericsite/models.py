@@ -1,3 +1,4 @@
+from datetime import datetime
 import typing as T
 
 from django.apps import apps
@@ -5,20 +6,26 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db import models
 from django.utils.html import format_html
+from django.utils.timezone import get_current_timezone, make_aware, now
 from django.utils.translation import gettext_lazy as _, to_locale
 from django.utils import timezone
 from django.urls import reverse
+from filer.fields.file import FilerFileField
 from filer.fields.image import FilerImageField
-from filer.models import Image
+from filer.models.abstract import BaseImage
+from filer.models.filemodels import File
 from taggit.managers import TaggableManager
 from tinymce.models import HTMLField
 
-from genericsite.schemas import OpenGraph, OGArticle
+from genericsite.schemas import OpenGraph, OGArticle, ImageProp
 
 # Transform "en-us" to "en_US"
 DEFAULT_LOCALE = to_locale(settings.LANGUAGE_CODE)
 
 
+######################################################################################
+# Site Vars
+######################################################################################
 class SiteVarQueryset(models.QuerySet):
     def get_value(self, name: str, default: str = "", asa: T.Callable = str):
         """
@@ -77,6 +84,12 @@ class SiteVar(models.Model):
         return cls.objects.filter(site_id=site_id)
 
 
+######################################################################################
+# Content Models
+######################################################################################
+
+# This vocabulary taken from IPTC standards, upon which https://schema.org/creativeWork
+# is based.
 class Status(models.TextChoices):
     WITHHELD = "withheld", _("Draft (withheld)")
     USABLE = "usable", _("Publish (usable)")
@@ -91,6 +104,7 @@ class AbstractOpenGraph(models.Model):
 
     title = models.CharField(_("title"), max_length=255)
     slug = models.SlugField(_("slug"))
+    # From https://schema.org/creativeWorkStatus
     status = models.CharField(
         _("status"),
         max_length=50,
@@ -106,6 +120,11 @@ class AbstractOpenGraph(models.Model):
         related_name="+",
     )
     description = models.TextField(_("description"), blank=True)
+    # In a list context, OG objects are frequently represented using their image, or
+    # rather the first image in their image set. To prevent having to perform complex
+    # queries to get images for all listed objects, we "cache" the first image in the
+    # og_image field. This allows a simple `select_related` to retrieve the objects and
+    # their images in one query.
     og_image = FilerImageField(
         on_delete=models.SET_NULL,
         blank=True,
@@ -119,13 +138,13 @@ class AbstractOpenGraph(models.Model):
         max_length=255,
         blank=True,
     )
+    # From https://schema.org/articleBody or https://schema.org/text
     body = HTMLField(_("body content"), blank=True)
-    images = models.ManyToManyField(
-        Image, verbose_name=_("images"), related_name="+", blank=True
-    )
 
-    # The time fields properly belong to the Article subclass in Open Graph, but
-    # they are useful on any model.
+    # The time, author, and tag fields properly belong to the Article subclass in Open
+    # Graph, but they are useful on any model.
+
+    # Equivalent to https://schema.org/datePublished
     published_time = models.DateTimeField(
         _("published time"),
         blank=True,
@@ -133,6 +152,7 @@ class AbstractOpenGraph(models.Model):
         db_index=True,
         help_text=_("Must be non-blank and in the past for page to be 'live'"),
     )
+    # Equivalent to https://schema.org/dateModified
     modified_time = models.DateTimeField(
         _("modified time"),
         blank=True,
@@ -140,6 +160,7 @@ class AbstractOpenGraph(models.Model):
         db_index=True,
         help_text=_("Time of last significant editorial update"),
     )
+    # Equivalent to https://schema.org/expires
     expiration_time = models.DateTimeField(
         _("expiration time"),
         blank=True,
@@ -147,6 +168,14 @@ class AbstractOpenGraph(models.Model):
         db_index=True,
         help_text=_("Must be blank or in the future for page to be 'live'"),
     )
+    author_display_name = models.CharField(
+        _("author name, as displayed"),
+        max_length=255,
+        blank=True,
+        help_text=_("e.g. 'Dr. Samuel Clemens, Phd.'"),
+    )
+    author_profile_url = models.URLField(_("author URL"), max_length=255, blank=True)
+    tags = TaggableManager(blank=True)
 
     # These metadata fields are seldom used and have sensible defaults where needed.
     type = models.CharField(
@@ -223,52 +252,17 @@ class AbstractOpenGraph(models.Model):
 
     @property
     def opengraph(self):
+        "Serialize data to Open Graph metatags"
+        # Note: although many additional properties are declared on the base class for
+        # use by GenericSite, the ones serialized here are only the ones declared in
+        # the base of the Open Graph protocol. The author and tags fields properly
+        # belong only to subclasses and are explicitly excluded here to ensure tags are
+        # serialized correctly. We declare this in the superclass so that plain pages,
+        # section pages, etc. do not need to redeclare it. Subclasses that are proper
+        # Open Graph subtypes (Article, Video) will need to redeclare this property to
+        # add their unique OG metadata (by instantiating the correct schema).
         og = OpenGraph.from_orm(self)
         og.site_name = self.site.name
-        if self.og_image:
-            og.image = [self.og_image]
-        return og
-
-
-class AbstractArticle(AbstractOpenGraph):
-    class Meta:
-        abstract = True
-        get_latest_by = "published_time"
-        ordering = ["-published_time"]
-        unique_together = ("site", "section", "slug")
-        verbose_name = _("article page")
-        verbose_name_plural = _("article pages")
-
-    type = models.CharField(
-        _("type"),
-        max_length=50,
-        default="article",
-        help_text=_("Open Graph type, see https://ogp.me"),
-    )
-    # Exists here to be inherited in custom models for users who do not want to
-    # use the stock models below. The section field will be overridden in the
-    # stock models, as Section will be an AbstractOpenGraph model.
-    section = models.CharField(_("section"), max_length=50, blank=True)
-    author_display_name = models.CharField(
-        _("author name, as displayed"),
-        max_length=255,
-        blank=True,
-        help_text=_("e.g. 'Dr. Samuel Clemens, Phd.'"),
-    )
-    author_profile_url = models.URLField(_("author URL"), max_length=255, blank=True)
-    tags = TaggableManager(blank=True)
-
-    def opengraph(self):
-        og = OGArticle.from_orm(self)
-        og.site_name = self.site.name
-        if self.og_image:
-            og.image = [self.og_image]
-        if self.author_profile_url:
-            og.author = [self.author_profile_url]
-        tags = list(self.tags.names())
-        if tags:
-            og.tag = tags
-
         return og
 
 
@@ -344,9 +338,22 @@ class ArticleManager(models.Manager):
         return super().get_queryset().select_related("site", "section", "og_image")
 
 
-class Article(AbstractArticle):
+class Article(AbstractOpenGraph):
     "Articles are the bread and butter of a site. They will appear in feeds."
-    # We override the section from AbstractArticle to use our model instead.
+
+    class Meta:
+        get_latest_by = "published_time"
+        ordering = ["-published_time"]
+        unique_together = ("site", "section", "slug")
+        verbose_name = _("article")
+        verbose_name_plural = _("articles")
+
+    type = models.CharField(
+        _("type"),
+        max_length=50,
+        default="article",
+        help_text=_("Open Graph type, see https://ogp.me"),
+    )
     section = models.ForeignKey(
         Section, verbose_name=_("section"), on_delete=models.PROTECT
     )
@@ -358,6 +365,23 @@ class Article(AbstractArticle):
             "article_page",
             kwargs={"article_slug": self.slug, "section_slug": self.section.slug},
         )
+
+    def sync_og_image(self):
+        img_rel = self.image_set.first()
+        if img_rel and img_rel.image_file != self.og_image:
+            self.og_image = img_rel.image_file
+            self.save(update_fields=["og_image"])
+
+    @property
+    def opengraph(self):
+        "Serialize data to Open Graph metatags"
+        og = OGArticle.from_orm(self)
+        og.site_name = self.site.name
+        if self.author_profile_url:
+            og.author = [self.author_profile_url]
+        tags = list(self.tags.names())
+        if tags:
+            og.tag = tags
 
 
 class Menu(models.Model):
@@ -448,3 +472,411 @@ class SectionMenu:
         if self.pages:
             menu.extend(self.pages)
         return menu
+
+
+######################################################################################
+# Media Objects (for use with django-filer)
+######################################################################################
+# Filer media objects descend from the concrete File class, which lends them a "name"
+# and "description". In order to support simple upload, media objects must not have
+# any required fields. Media objects are not pages so they don't need full OG metadata
+# but we do need copyright info and the standard title, description.
+
+
+class ImageFile(BaseImage):
+    class Meta(BaseImage.Meta):
+        # You must define a meta with an explicit app_label
+        app_label = "genericsite"
+        default_manager_name = "objects"
+
+    # From filer.Image
+    date_taken = models.DateTimeField(
+        _("date taken"),
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    custom_copyright_notice = HTMLField(
+        _("custom copyright notice"),
+        blank=True,
+        help_text=_(
+            r"include a pair of curly braces {} where you want the year inserted"
+        ),
+    )
+    # BaseImage defines fields/properties:
+    # default_alt_text
+    # default_caption
+    # subject_location
+    # width (in field _width)
+    # height (in field _height)
+
+    # Allows ImageProp.from_orm to grab alt text
+    @property
+    def alt(self):
+        return self.default_alt_text
+
+    # Proxy "title" to the name field for consistency
+    @property
+    def title(self):
+        return self.name
+
+    @title.setter
+    def title(self, value):
+        self.name = value
+
+    @property
+    def copyright_year(self):
+        if self.date_taken:
+            return self.date_taken.year
+        elif self.uploaded_at:
+            return self.uploaded_at.year
+        else:
+            return timezone.now().year
+
+    @property
+    def copyright_notice(self):
+        if self.custom_copyright_notice:
+            return format_html(self.custom_copyright_notice, self.copyright_year)
+        else:
+            return ""
+
+    # From filer.Image
+    def save(self, *args, **kwargs):
+        if self.date_taken is None:
+            try:
+                exif_date = self.exif.get("DateTimeOriginal", None)
+                if exif_date is not None:
+                    d, t = exif_date.split(" ")
+                    year, month, day = d.split(":")
+                    hour, minute, second = t.split(":")
+                    if getattr(settings, "USE_TZ", False):
+                        tz = get_current_timezone()
+                        self.date_taken = make_aware(
+                            datetime(
+                                int(year),
+                                int(month),
+                                int(day),
+                                int(hour),
+                                int(minute),
+                                int(second),
+                            ),
+                            tz,
+                        )
+                    else:
+                        self.date_taken = datetime(
+                            int(year),
+                            int(month),
+                            int(day),
+                            int(hour),
+                            int(minute),
+                            int(second),
+                        )
+            except Exception:
+                pass
+        if self.date_taken is None:
+            self.date_taken = now()
+        super().save(*args, **kwargs)
+
+
+class VideoFile(File):
+    VIDEO_TYPES = [
+        "application/vnd.dvb.ait",
+        "video/mp2t",
+        "video/mp4",
+        "video/mpeg",
+        "video/ogg",
+        "video/quicktime",
+        "video/webm",
+        "video/x-msvideo",
+        "video/x-ms-wmv",
+        "video/x-sgi-movie",
+    ]
+    _icon = "video"
+
+    published_time = models.DateTimeField(
+        _("published time"),
+        blank=True,
+        null=True,
+        db_index=True,
+        help_text=_("Must be non-blank and in the past for page to be 'live'"),
+    )
+
+    custom_copyright_notice = HTMLField(
+        _("custom copyright notice"),
+        blank=True,
+        help_text=_(
+            r"include a pair of curly braces {} where you want the year inserted"
+        ),
+    )
+
+    duration = models.FloatField(
+        _("duration"), blank=True, null=True, help_text=_("length in seconds")
+    )
+
+    # TODO Override file_data_changed to populate duration field
+
+    # Proxy "title" to the name field for consistency
+    @property
+    def title(self):
+        return self.name
+
+    @title.setter
+    def title(self, value):
+        self.name = value
+
+    @property
+    def copyright_year(self):
+        if self.published_time:
+            return self.published_time.year
+        elif self.uploaded_at:
+            return self.uploaded_at.year
+        else:
+            return timezone.now().year
+
+    @property
+    def copyright_notice(self):
+        if self.custom_copyright_notice:
+            return format_html(self.custom_copyright_notice, self.copyright_year)
+        else:
+            return ""
+
+    @classmethod
+    def matches_file_type(cls, iname, ifile, mime_type):
+        return mime_type in cls.VIDEO_TYPES
+
+
+class FilerVideoField(FilerFileField):
+    default_model_class = VideoFile
+
+
+class AudioFile(File):
+    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+    AUDIO_TYPES = [
+        "audio/aac",
+        "audio/midi",
+        "audio/mp4",
+        "audio/mpeg",
+        "audio/ogg",
+        "audio/opus",
+        "audio/wav",
+        "audio/webm",
+        "audio/x-flac",
+        "audio/x-midi",
+        "audio/x-wav",
+    ]
+    _icon = "audio"
+
+    published_time = models.DateTimeField(
+        _("published time"),
+        blank=True,
+        null=True,
+        db_index=True,
+    )
+
+    custom_copyright_notice = HTMLField(
+        _("custom copyright notice"),
+        blank=True,
+        help_text=_(
+            r"include a pair of curly braces {} where you want the year inserted"
+        ),
+    )
+
+    duration = models.FloatField(
+        _("duration"), blank=True, null=True, help_text=_("length in seconds")
+    )
+
+    # TODO Override file_data_changed to populate duration field
+
+    # Proxy "title" to the name field for consistency
+    @property
+    def title(self):
+        return self.name
+
+    @title.setter
+    def title(self, value):
+        self.name = value
+
+    @property
+    def copyright_year(self):
+        if self.published_time:
+            return self.published_time.year
+        elif self.uploaded_at:
+            return self.uploaded_at.year
+        else:
+            return timezone.now().year
+
+    @property
+    def copyright_notice(self):
+        if self.custom_copyright_notice:
+            return format_html(self.custom_copyright_notice, self.copyright_year)
+        else:
+            return ""
+
+    @classmethod
+    def matches_file_type(cls, iname, ifile, mime_type):
+        return mime_type in cls.AUDIO_TYPES
+
+
+class FilerAudioField(FilerFileField):
+    default_model_class = AudioFile
+
+
+######################################################################################
+# Media Collection Models
+######################################################################################
+# Each OG content object may have 4 collections attached: audio, video, image,
+# attachement. These are attached to the content via custom through models so each
+# media object can have custom metadata within the context of the collection. This
+# allows you to treat an Article as an image gallery or playlist using the right
+# template.
+
+
+class ImageItem(models.Model):
+    class Meta:
+        abstract = True
+
+    image_file = FilerImageField(
+        on_delete=models.CASCADE,
+        verbose_name=_("image file"),
+        help_text=_("Image for social sharing"),
+        related_name="+",
+    )
+
+    contextual_title = models.CharField(_("title"), blank=True, max_length=255)
+    contextual_alt_text = models.CharField(_("alt text"), blank=True, max_length=255)
+    contextual_description = models.TextField(_("description"), blank=True)
+
+    @property
+    def alt_text(self):
+        return self.contextual_alt_text or self.image_file.default_alt_text
+
+    @property
+    def description(self):
+        return self.contextual_description or self.image_file.description
+
+    @property
+    def height(self):
+        return self.image_file.height
+
+    @property
+    def title(self):
+        return self.contextual_title or self.image_file.name
+
+    @property
+    def url(self):
+        return self.image_file.url
+
+    @property
+    def width(self):
+        return self.image_file.width
+
+    def __str__(self):
+        return self.title
+
+
+class VideoItem(models.Model):
+    class Meta:
+        abstract = True
+
+    video_file = FilerVideoField(
+        on_delete=models.CASCADE,
+        verbose_name=_("video file"),
+        related_name="+",
+    )
+
+    contextual_title = models.CharField(_("title"), blank=True, max_length=255)
+    contextual_description = models.TextField(_("description"), blank=True)
+
+    @property
+    def description(self):
+        return self.contextual_description or self.video_file.description
+
+    @property
+    def height(self):
+        return self.video_file.height
+
+    @property
+    def title(self):
+        return self.contextual_title or self.video_file.name
+
+    @property
+    def url(self):
+        return self.video_file.url
+
+    @property
+    def width(self):
+        return self.video_file.width
+
+    def __str__(self):
+        return self.title
+
+
+class AudioItem(models.Model):
+    class Meta:
+        abstract = True
+
+    audio_file = FilerAudioField(
+        on_delete=models.CASCADE,
+        verbose_name=_("audio file"),
+        related_name="+",
+    )
+
+    contextual_title = models.CharField(_("title"), blank=True, max_length=255)
+    contextual_description = models.TextField(_("description"), blank=True)
+
+    @property
+    def description(self):
+        return self.contextual_description or self.audio_file.description
+
+    @property
+    def title(self):
+        return self.contextual_title or self.audio_file.name
+
+    @property
+    def url(self):
+        return self.audio_file.url
+
+    def __str__(self):
+        return self.title
+
+
+class ArticleImage(ImageItem):
+    class Meta:
+        order_with_respect_to = "article"
+
+    article = models.ForeignKey(
+        Article,
+        verbose_name=_("article"),
+        on_delete=models.CASCADE,
+        related_name="image_set",
+    )
+
+    def save(self, *args, **kwargs) -> None:
+        super().save(*args, **kwargs)
+        # FIXME This could be a performance problem if a lot of images are
+        # related to the same article. Find a smarter way (later). -VV 2022-08-15
+        self.article.sync_og_image()
+
+
+class ArticleAudio(AudioItem):
+    class Meta:
+        order_with_respect_to = "article"
+
+    article = models.ForeignKey(
+        Article,
+        verbose_name=_("article"),
+        on_delete=models.CASCADE,
+        related_name="audio_set",
+    )
+
+
+class ArticleVideo(VideoItem):
+    class Meta:
+        order_with_respect_to = "article"
+
+    article = models.ForeignKey(
+        Article,
+        verbose_name=_("article"),
+        on_delete=models.CASCADE,
+        related_name="video_set",
+    )

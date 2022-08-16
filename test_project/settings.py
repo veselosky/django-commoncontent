@@ -24,7 +24,6 @@ SECRET_KEY = "django-insecure-ri51as9!afs^d0y_&%cf#jv)uud!dfky0k0ydioc_3u^va&5^+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-FILER_DEBUG = FILER_ENABLE_LOGGING = DEBUG
 
 ALLOWED_HOSTS = []
 SITE_ID = 1
@@ -105,7 +104,7 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+# Static files (CSS, JavaScript, Images) and Media
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 STATIC_URL = "static/"
 STATIC_ROOT = VAR / "static"
@@ -115,6 +114,15 @@ if not STATIC_ROOT.exists():
     STATIC_ROOT.mkdir(parents=True, exist_ok=True)
 if not MEDIA_ROOT.exists():
     MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+
+FILER_DEBUG = FILER_ENABLE_LOGGING = DEBUG
+FILER_IMAGE_MODEL = "genericsite.ImageFile"
+FILER_FILE_MODELS = (
+    FILER_IMAGE_MODEL,
+    "genericsite.VideoFile",
+    "genericsite.AudioFile",
+    "filer.File",
+)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
