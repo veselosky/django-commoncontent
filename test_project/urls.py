@@ -45,3 +45,11 @@ if settings.DEBUG:
     # Serve static and media files from development server
     # urlpatterns += staticfiles_urlpatterns()  # automatic when DEBUG on
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    try:
+        import debug_toolbar
+
+        # Wildcard patterns might match and block these if appended, hence insert
+        urlpatterns.insert(0, path("__debug__/", include(debug_toolbar.urls)))
+    except ImportError:
+        pass

@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     "easy_thumbnails",  # via filer
     "filer",
     "mptt",  # via filer
-    "django_extensions",
     "taggit",
     "tinymce",
     # Standard Django stuff
@@ -139,3 +138,32 @@ THUMBNAIL_PROCESSORS = (
     "filer.thumbnail_processors.scale_and_crop_with_subject_location",
     "easy_thumbnails.processors.filters",
 )
+
+#######################################################################
+# DEVELOPMENT: If running in a dev environment, loosen restrictions
+# and add debugging tools.
+#######################################################################
+if DEBUG:
+    ALLOWED_HOSTS = ["*"]
+    # Use the basic storage with no manifest
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    try:
+        import debug_toolbar
+
+        INSTALLED_APPS.append("debug_toolbar")
+        MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
+        INTERNAL_IPS = [
+            "127.0.0.1",
+        ]
+        # See also urls.py for debug_toolbar urls
+    except ImportError:
+        # Dev tools are optional
+        pass
+
+    try:
+        import django_extensions
+
+        INSTALLED_APPS.append("django_extensions")
+    except ImportError:
+        # Dev tools are optional
+        pass
