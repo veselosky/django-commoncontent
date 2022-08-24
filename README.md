@@ -114,6 +114,14 @@ Variables used by the default templates/models include:
 - `default_precontent_template` - Default template to use for the `precontent`
   block.
 
+## Images
+
+GenericSite takes advantage of Django-filer and easy_thumbnails to manage
+images.
+
+GenericSite uses presets to produce images in specific sizes as recommended by
+[Buffer's Social Media Image Guidelines](https://buffer.com/library/ideal-image-sizes-social-media-posts/).
+
 ## Open Graph attributes used by the templates
 
 - title
@@ -137,3 +145,15 @@ Variables used by the default templates/models include:
 - video.type
 - video.width
 - video.height
+
+## Development
+
+After checking out the code, you can bootstrap a development environment by
+running:
+
+```sh
+python manage.py devsetup
+```
+
+Note that the Python used to run this script will be the one used in your
+virtualenv.
