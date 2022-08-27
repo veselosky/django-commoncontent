@@ -1,6 +1,8 @@
 import typing as T
 
+from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
+from django.utils import timezone
 from django.views.generic import DetailView, ListView
 from genericsite.models import Article, HomePage, Page, Section, SiteVar
 
@@ -122,17 +124,31 @@ class HomePageView(ArticleList):
     allow_empty: bool = True
 
     def get_object(self):
-        return (
-            HomePage.objects.live().filter(site=get_current_site(self.request)).latest()
-        )
+        try:
+            hp = (
+                HomePage.objects.live()
+                .filter(site=get_current_site(self.request))
+                .latest()
+            )
+        except HomePage.DoesNotExist as e:
+            if settings.DEBUG:
+                # Create a phony debug home page for bootstrapping.
+                hp = HomePage(
+                    site=get_current_site(self.request),
+                    admin_name="__DEBUG__",
+                    title="Generic Site",
+                    published_time=timezone.now(),
+                )
+            else:
+                raise e
+        return hp
 
     def get_context_data(self, **kwargs):
         site = get_current_site(self.request)
         context = super().get_context_data(**kwargs)
-        context["object"] = (
-            HomePage.objects.filter(site=site)
-            .live()
-            .order_by("-published_time")
-            .first()
-        )
+        context = supply_context_defaults(self.object.site, context, viewtype="list")
+        hp = self.get_object()
+        context["object"] = hp
+        if hp.admin_name == "__DEBUG__":
+            context["precontent_template"] = "genericsite/blocks/debug_newsite.html"
         return context
