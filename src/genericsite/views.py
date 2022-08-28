@@ -1,9 +1,10 @@
 import typing as T
 
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, TemplateView
 from genericsite.models import Article, HomePage, Page, Section, SiteVar
 
 
@@ -151,4 +152,17 @@ class HomePageView(ArticleList):
         context["object"] = hp
         if hp.admin_name == "__DEBUG__":
             context["precontent_template"] = "genericsite/blocks/debug_newsite.html"
+        return context
+
+
+class ProfileView(LoginRequiredMixin ,TemplateView):
+    template_name = "registration/profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if "allauth" in settings.INSTALLED_APPS:  # use allauth views
+            context["change_password_view"] = "account_change_password"
+        else:  # use django.contrib.auth views
+            context["change_password_view"] = "password_change"
+
         return context
