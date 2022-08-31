@@ -36,6 +36,8 @@ def supply_context_defaults(
 
 
 class OpenGraphDetailView(DetailView):
+    template_name_field = "base_template"
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context = supply_context_defaults(self.object.site, context)
@@ -48,10 +50,20 @@ class OpenGraphDetailView(DetailView):
         return ""
 
     def get_template_names(self):
-        var = SiteVar.For(self.object.site)
-        return getattr(self.object, "base_template", "") or var.get_value(
-            "default_base_template", "genericsite/base.html"
-        )
+        # Allow using the Django convention <app>/<model>_detail.html
+        # This also takes care of prioritizing an object-specific template
+        # thanks to template_name_field.
+        names = super().get_template_names()
+
+        # Fall back to site default if set
+        var = self.object.site.vars
+        if site_default := var.get_value("default_base_template", ""):
+            names.append(site_default)
+
+        # Fall back to Genericsite default
+        names.append("genericsite/base.html")
+
+        return names
 
 
 class ArticleDetailView(OpenGraphDetailView):
@@ -104,14 +116,22 @@ class ArticleList(ListView):
         return qs
 
     def get_template_names(self):
-        var = SiteVar.For(self.object.site)
-        return getattr(self.object, "base_template", "") or var.get_value(
-            "default_base_template", "genericsite/base.html"
-        )
+        # Allow using the Django convention <app>/<model>_detail.html
+        names = super().get_template_names()
+
+        # Fall back to site default if set
+        var = self.object.site.vars
+        if site_default := var.get_value("default_base_template", ""):
+            names.append(site_default)
+
+        # Fall back to Genericsite default
+        names.append("genericsite/base.html")
+
+        return names
 
 
 class SectionView(ArticleList):
-    allow_empty: bool = False
+    allow_empty: bool = True
     object = None
 
     def get_object(self):
@@ -155,7 +175,7 @@ class HomePageView(ArticleList):
         return context
 
 
-class ProfileView(LoginRequiredMixin ,TemplateView):
+class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = "registration/profile.html"
 
     def get_context_data(self, **kwargs):
