@@ -38,9 +38,9 @@ cssselect2==0.6.0 \
     --hash=sha256:3a83b2a68370c69c9cd3fcb88bbfaebe9d22edeef2c22d1ff3e1ed9c7fa45ed8 \
     --hash=sha256:5b5d6dea81a5eb0c9ca39f116c8578dd413778060c94c1f51196371618909325
     # via svglib
-django==4.1 \
-    --hash=sha256:031ccb717782f6af83a0063a1957686e87cb4581ea61b47b3e9addf60687989a \
-    --hash=sha256:032f8a6fc7cf05ccd1214e4a2e21dfcd6a23b9d575c6573cacc8c67828dbe642
+django==4.1.2 \
+    --hash=sha256:26dc24f99c8956374a054bcbf58aab8dc0cad2e6ac82b0fe036b752c00eee793 \
+    --hash=sha256:b8d843714810ab88d59344507d4447be8b2cf12a49031363b6eed9f1b9b2280f
     # via
     #   django-bootstrap-icons
     #   django-filer
