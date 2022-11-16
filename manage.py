@@ -26,7 +26,7 @@ def devsetup(rebuild=False):
     # Upgrade pip in virtualenv. Need pip >= 22.1 for -e with pyproject.toml
     # 3.8's pip won't cut it.
     print("Upgrading virtualenv to latest pip")
-    subprocess.run(shlex.split(f"{python} -m pip install -q -U pip"))
+    subprocess.run(shlex.split(f"{python} -m pip install -q -U pip wheel"))
 
     # Run pip install -e .[dev]
     #   - Installs requirements from pyproject.toml, not requirements.txt
