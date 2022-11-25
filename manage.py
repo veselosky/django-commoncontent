@@ -31,7 +31,7 @@ def devsetup(rebuild=False):
     # Run pip install -e .[dev]
     #   - Installs requirements from pyproject.toml, not requirements.txt
     print("Installing requirements. May take a bit. Grab a coffee.")
-    subprocess.run([python, "-m", "pip", "install", ".[dev]"])
+    subprocess.run([python, "-m", "pip", "install", "-e", ".[dev]"])
 
     # If no .env, copy example.env to .env
     # dotenv = this.parent / ".env"
@@ -41,6 +41,8 @@ def devsetup(rebuild=False):
     # Create the dev database
     print("Applying database migrations")
     subprocess.run([python, "manage.py", "migrate"])
+
+    print("Now activate your virtualenv using: source venv/bin/activate")
 
 
 def django_command(args=None):
