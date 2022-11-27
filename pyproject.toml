@@ -23,6 +23,7 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
     "black",
+    "django-allauth >= 0.51.0",
     "django-debug-toolbar",
     "django_extensions",
     "pip-tools",

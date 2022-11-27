@@ -36,6 +36,9 @@ LOGIN_REDIRECT_URL = "/"
 INSTALLED_APPS = [
     "genericsite",
     # 3rd party apps for "full" usage style
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
     "django_bootstrap_icons",
     "easy_thumbnails",  # via filer
     "filer",
@@ -46,9 +49,9 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.messages",
     "django.contrib.sessions",
     "django.contrib.sites",
-    "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
 
