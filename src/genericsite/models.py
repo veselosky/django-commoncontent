@@ -252,15 +252,18 @@ class AbstractOpenGraph(models.Model):
 
     @property
     def opengraph(self):
-        "Serialize data to Open Graph metatags"
-        # Note: although many additional properties are declared on the base class for
-        # use by GenericSite, the ones serialized here are only the ones declared in
-        # the base of the Open Graph protocol. The author and tags fields properly
-        # belong only to subclasses and are explicitly excluded here to ensure tags are
-        # serialized correctly. We declare this in the superclass so that plain pages,
-        # section pages, etc. do not need to redeclare it. Subclasses that are proper
-        # Open Graph subtypes (Article, Video) will need to redeclare this property to
-        # add their unique OG metadata (by instantiating the correct schema).
+        """Serialize data to Open Graph metatags.
+
+        Note: although many additional properties are declared on the base class for
+        use by GenericSite, the ones serialized here are only the ones declared in
+        the base of the Open Graph protocol. The author and tags fields properly
+        belong only to subclasses and are explicitly excluded here to ensure tags are
+        serialized correctly. We declare this in the superclass so that plain pages,
+        section pages, etc. do not need to redeclare it. Subclasses that are proper
+        Open Graph subtypes (Article, Video) will need to redeclare this property to
+        add their unique OG metadata (by instantiating the correct schema).
+
+        """
         og = OpenGraph.from_orm(self)
         og.site_name = self.site.name
         return og
