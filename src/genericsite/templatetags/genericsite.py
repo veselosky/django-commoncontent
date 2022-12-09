@@ -1,5 +1,7 @@
 from django import template
 from django.contrib.sites.shortcuts import get_current_site
+from django.utils.html import format_html
+from django.utils import timezone
 
 from genericsite.models import Menu, SectionMenu, SiteVar
 
@@ -32,9 +34,31 @@ def add_classes(value, arg):
 
 
 @register.simple_tag(takes_context=True)
-def sitevar(context, name, default=""):
-    site = get_current_site(context["request"])
-    return SiteVar.For(site).get_value(name, default)
+def copyright_notice(context):
+    """Return a copyright notice for the current page."""
+    obj = context.get("object")
+    request = context.get("request")
+    site = get_current_site(request)
+    notice = ""
+    # First we check if the "object" (for detail views) knows its own copyright.
+    if obj and hasattr(obj, "copyright_year"):
+        copyright_year = obj.copyright_year
+    else:
+        copyright_year = timezone.now().year
+
+    if obj and hasattr(obj, "copyright_notice"):
+        notice = obj.copyright_notice
+    if notice:
+        return format_html(notice, copyright_year)
+
+    # Otherwise, we fall back to the site's copyright. Is one explicitly set?
+    if notice := site.vars.get_value("copyright_notice"):
+        return format_html(notice, copyright_year)
+    else:
+        holder = site.vars.get_value("copyright_holder", site.name)
+        return format_html(
+            "© Copyright {} {}. All rights reserved.", copyright_year, holder
+        )
 
 
 @register.simple_tag(takes_context=True)
@@ -73,3 +97,9 @@ def menu_aria_current(context, menuitem: str):
     elif path.startswith(menuitem):
         return 'aria-current="section" '
     return ""
+
+
+@register.simple_tag(takes_context=True)
+def sitevar(context, name, default=""):
+    site = get_current_site(context["request"])
+    return SiteVar.For(site).get_value(name, default)
