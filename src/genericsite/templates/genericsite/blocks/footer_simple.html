@@ -1,6 +1,6 @@
-{% load i18n %}
+{% load genericsite i18n %}
 <footer class="container-lg border-top mt-5">
-  {{ object.copyright_notice }}
+  {% copyright_notice %}
   <p>
     <a href="#">{% trans "Back to top" %}</a>
   </p>
