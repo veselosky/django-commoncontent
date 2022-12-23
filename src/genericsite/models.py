@@ -10,10 +10,6 @@ from django.utils.timezone import get_current_timezone, make_aware, now
 from django.utils.translation import gettext_lazy as _, to_locale
 from django.utils import timezone
 from django.urls import reverse
-from filer.fields.file import FilerFileField
-from filer.fields.image import FilerImageField
-from filer.models.abstract import BaseImage
-from filer.models.filemodels import File
 from taggit.managers import TaggableManager
 from tinymce.models import HTMLField
 
@@ -125,7 +121,8 @@ class AbstractOpenGraph(models.Model):
     # queries to get images for all listed objects, we "cache" the first image in the
     # og_image field. This allows a simple `select_related` to retrieve the objects and
     # their images in one query.
-    og_image = FilerImageField(
+    og_image = models.ForeignKey(
+        "Image",
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
@@ -433,7 +430,8 @@ class Link(models.Model):
         help_text="<a href=https://icons.getbootstrap.com/#icons target=iconlist>icon list</a>",
     )
     description = models.TextField(_("description"), blank=True)
-    og_image = FilerImageField(
+    og_image = models.ForeignKey(
+        "Image",
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
@@ -478,250 +476,18 @@ class SectionMenu:
 
 
 ######################################################################################
-# Media Objects (for use with django-filer)
+# Media Objects
 ######################################################################################
-# Filer media objects descend from the concrete File class, which lends them a "name"
-# and "description". In order to support simple upload, media objects must not have
-# any required fields. Media objects are not pages so they don't need full OG metadata
-# but we do need copyright info and the standard title, description.
-
-
-class ImageFile(BaseImage):
-    class Meta(BaseImage.Meta):
-        # You must define a meta with an explicit app_label
-        app_label = "genericsite"
-        default_manager_name = "objects"
-
-    # From filer.Image
-    date_taken = models.DateTimeField(
-        _("date taken"),
-        null=True,
-        blank=True,
-        editable=False,
+class Image(models.Model):
+    img_file = models.ImageField()
+    width = models.IntegerField(_("width"), blank=True)
+    height = models.IntegerField(_("height"), blank=True)
+    description = models.CharField(
+        verbose_name=_("description"), max_length=255, blank=True
     )
-    custom_copyright_notice = HTMLField(
-        _("custom copyright notice"),
-        blank=True,
-        help_text=_(
-            r"include a pair of curly braces {} where you want the year inserted"
-        ),
+    default_alt_text = models.CharField(
+        verbose_name=_("default alt text"), max_length=255, blank=True
     )
-    # BaseImage defines fields/properties:
-    # default_alt_text
-    # default_caption
-    # subject_location
-    # width (in field _width)
-    # height (in field _height)
-
-    # Allows ImageProp.from_orm to grab alt text
-    @property
-    def alt(self):
-        return self.default_alt_text
-
-    # Proxy "title" to the name field for consistency
-    @property
-    def title(self):
-        return self.name
-
-    @title.setter
-    def title(self, value):
-        self.name = value
-
-    @property
-    def copyright_year(self):
-        if self.date_taken:
-            return self.date_taken.year
-        elif self.uploaded_at:
-            return self.uploaded_at.year
-        else:
-            return timezone.now().year
-
-    @property
-    def copyright_notice(self):
-        if self.custom_copyright_notice:
-            return format_html(self.custom_copyright_notice, self.copyright_year)
-        else:
-            return ""
-
-    # From filer.Image
-    def save(self, *args, **kwargs):
-        if self.date_taken is None:
-            try:
-                exif_date = self.exif.get("DateTimeOriginal", None)
-                if exif_date is not None:
-                    d, t = exif_date.split(" ")
-                    year, month, day = d.split(":")
-                    hour, minute, second = t.split(":")
-                    if getattr(settings, "USE_TZ", False):
-                        tz = get_current_timezone()
-                        self.date_taken = make_aware(
-                            datetime(
-                                int(year),
-                                int(month),
-                                int(day),
-                                int(hour),
-                                int(minute),
-                                int(second),
-                            ),
-                            tz,
-                        )
-                    else:
-                        self.date_taken = datetime(
-                            int(year),
-                            int(month),
-                            int(day),
-                            int(hour),
-                            int(minute),
-                            int(second),
-                        )
-            except Exception:
-                pass
-        if self.date_taken is None:
-            self.date_taken = now()
-        super().save(*args, **kwargs)
-
-
-class VideoFile(File):
-    VIDEO_TYPES = [
-        "application/vnd.dvb.ait",
-        "video/mp2t",
-        "video/mp4",
-        "video/mpeg",
-        "video/ogg",
-        "video/quicktime",
-        "video/webm",
-        "video/x-msvideo",
-        "video/x-ms-wmv",
-        "video/x-sgi-movie",
-    ]
-    _icon = "video"
-
-    published_time = models.DateTimeField(
-        _("published time"),
-        blank=True,
-        null=True,
-        db_index=True,
-        help_text=_("Must be non-blank and in the past for page to be 'live'"),
-    )
-
-    custom_copyright_notice = HTMLField(
-        _("custom copyright notice"),
-        blank=True,
-        help_text=_(
-            r"include a pair of curly braces {} where you want the year inserted"
-        ),
-    )
-
-    duration = models.FloatField(
-        _("duration"), blank=True, null=True, help_text=_("length in seconds")
-    )
-
-    # TODO Override file_data_changed to populate duration field
-
-    # Proxy "title" to the name field for consistency
-    @property
-    def title(self):
-        return self.name
-
-    @title.setter
-    def title(self, value):
-        self.name = value
-
-    @property
-    def copyright_year(self):
-        if self.published_time:
-            return self.published_time.year
-        elif self.uploaded_at:
-            return self.uploaded_at.year
-        else:
-            return timezone.now().year
-
-    @property
-    def copyright_notice(self):
-        if self.custom_copyright_notice:
-            return format_html(self.custom_copyright_notice, self.copyright_year)
-        else:
-            return ""
-
-    @classmethod
-    def matches_file_type(cls, iname, ifile, mime_type):
-        return mime_type in cls.VIDEO_TYPES
-
-
-class FilerVideoField(FilerFileField):
-    default_model_class = VideoFile
-
-
-class AudioFile(File):
-    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
-    AUDIO_TYPES = [
-        "audio/aac",
-        "audio/midi",
-        "audio/mp4",
-        "audio/mpeg",
-        "audio/ogg",
-        "audio/opus",
-        "audio/wav",
-        "audio/webm",
-        "audio/x-flac",
-        "audio/x-midi",
-        "audio/x-wav",
-    ]
-    _icon = "audio"
-
-    published_time = models.DateTimeField(
-        _("published time"),
-        blank=True,
-        null=True,
-        db_index=True,
-    )
-
-    custom_copyright_notice = HTMLField(
-        _("custom copyright notice"),
-        blank=True,
-        help_text=_(
-            r"include a pair of curly braces {} where you want the year inserted"
-        ),
-    )
-
-    duration = models.FloatField(
-        _("duration"), blank=True, null=True, help_text=_("length in seconds")
-    )
-
-    # TODO Override file_data_changed to populate duration field
-
-    # Proxy "title" to the name field for consistency
-    @property
-    def title(self):
-        return self.name
-
-    @title.setter
-    def title(self, value):
-        self.name = value
-
-    @property
-    def copyright_year(self):
-        if self.published_time:
-            return self.published_time.year
-        elif self.uploaded_at:
-            return self.uploaded_at.year
-        else:
-            return timezone.now().year
-
-    @property
-    def copyright_notice(self):
-        if self.custom_copyright_notice:
-            return format_html(self.custom_copyright_notice, self.copyright_year)
-        else:
-            return ""
-
-    @classmethod
-    def matches_file_type(cls, iname, ifile, mime_type):
-        return mime_type in cls.AUDIO_TYPES
-
-
-class FilerAudioField(FilerFileField):
-    default_model_class = AudioFile
 
 
 ######################################################################################
@@ -738,7 +504,8 @@ class ImageItem(models.Model):
     class Meta:
         abstract = True
 
-    image_file = FilerImageField(
+    image_file = models.ForeignKey(
+        Image,
         on_delete=models.CASCADE,
         verbose_name=_("image file"),
         help_text=_("Image for social sharing"),
@@ -777,72 +544,6 @@ class ImageItem(models.Model):
         return self.title
 
 
-class VideoItem(models.Model):
-    class Meta:
-        abstract = True
-
-    video_file = FilerVideoField(
-        on_delete=models.CASCADE,
-        verbose_name=_("video file"),
-        related_name="+",
-    )
-
-    contextual_title = models.CharField(_("title"), blank=True, max_length=255)
-    contextual_description = models.TextField(_("description"), blank=True)
-
-    @property
-    def description(self):
-        return self.contextual_description or self.video_file.description
-
-    @property
-    def height(self):
-        return self.video_file.height
-
-    @property
-    def title(self):
-        return self.contextual_title or self.video_file.name
-
-    @property
-    def url(self):
-        return self.video_file.url
-
-    @property
-    def width(self):
-        return self.video_file.width
-
-    def __str__(self):
-        return self.title
-
-
-class AudioItem(models.Model):
-    class Meta:
-        abstract = True
-
-    audio_file = FilerAudioField(
-        on_delete=models.CASCADE,
-        verbose_name=_("audio file"),
-        related_name="+",
-    )
-
-    contextual_title = models.CharField(_("title"), blank=True, max_length=255)
-    contextual_description = models.TextField(_("description"), blank=True)
-
-    @property
-    def description(self):
-        return self.contextual_description or self.audio_file.description
-
-    @property
-    def title(self):
-        return self.contextual_title or self.audio_file.name
-
-    @property
-    def url(self):
-        return self.audio_file.url
-
-    def __str__(self):
-        return self.title
-
-
 class ArticleImage(ImageItem):
     class Meta:
         order_with_respect_to = "article"
@@ -859,27 +560,3 @@ class ArticleImage(ImageItem):
         # FIXME This could be a performance problem if a lot of images are
         # related to the same article. Find a smarter way (later). -VV 2022-08-15
         self.article.sync_og_image()
-
-
-class ArticleAudio(AudioItem):
-    class Meta:
-        order_with_respect_to = "article"
-
-    article = models.ForeignKey(
-        Article,
-        verbose_name=_("article"),
-        on_delete=models.CASCADE,
-        related_name="audio_set",
-    )
-
-
-class ArticleVideo(VideoItem):
-    class Meta:
-        order_with_respect_to = "article"
-
-    article = models.ForeignKey(
-        Article,
-        verbose_name=_("article"),
-        on_delete=models.CASCADE,
-        related_name="video_set",
-    )

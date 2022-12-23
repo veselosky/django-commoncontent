@@ -1,45 +1,20 @@
 from django.contrib import admin
 
-from filer.admin.fileadmin import FileAdmin
 from genericsite.models import (
     Article,
-    ArticleAudio,
     ArticleImage,
-    ArticleVideo,
     HomePage,
     Page,
     Section,
     SiteVar,
     Link,
     Menu,
-    AudioFile,
-    VideoFile,
 )
-
-
-class ArticleAudioInline(admin.StackedInline):
-    extra: int = 1
-    model = ArticleAudio
 
 
 class ArticleImageInline(admin.StackedInline):
     extra: int = 1
     model = ArticleImage
-
-
-class ArticleVideoInline(admin.StackedInline):
-    extra: int = 1
-    model = ArticleVideo
-
-
-@admin.register(AudioFile)
-class AudioFileAdmin(FileAdmin):
-    pass
-
-
-@admin.register(VideoFile)
-class VideoFileAdmin(FileAdmin):
-    pass
 
 
 @admin.register(SiteVar)

@@ -40,9 +40,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "django_bootstrap_icons",
-    "easy_thumbnails",  # via filer
-    "filer",
-    "mptt",  # via filer
+    "easy_thumbnails",
     "taggit",
     "tinymce",
     # Standard Django stuff
@@ -119,15 +117,6 @@ if not STATIC_ROOT.exists():
 if not MEDIA_ROOT.exists():
     MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
-FILER_DEBUG = FILER_ENABLE_LOGGING = DEBUG
-FILER_IMAGE_MODEL = "genericsite.ImageFile"
-FILER_FILE_MODELS = (
-    FILER_IMAGE_MODEL,
-    "genericsite.VideoFile",
-    "genericsite.AudioFile",
-    "filer.File",
-)
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
@@ -137,8 +126,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 THUMBNAIL_PROCESSORS = (
     "easy_thumbnails.processors.colorspace",
     "easy_thumbnails.processors.autocrop",
-    #'easy_thumbnails.processors.scale_and_crop',
-    "filer.thumbnail_processors.scale_and_crop_with_subject_location",
+    "easy_thumbnails.processors.scale_and_crop",
     "easy_thumbnails.processors.filters",
 )
 
