@@ -9,7 +9,7 @@ dependencies = [
     "django >= 3.2, < 5.0",
     "django-bootstrap-icons >= 0.7.8",
     "pillow >= 2.3.0",
-    "django-filer >= 2.2.1, < 3.0",
+    "easy-thumbnails >= 2.8.4",
     "django-taggit >= 3.0.0, < 4.0",
     "django-tinymce >= 3.4.0, < 3.5",
     "pydantic >= 1.9.1, < 2.0",
@@ -29,6 +29,7 @@ dev = [
     "pip-tools",
     "pycodestyle",
     "pytest",
+    "pytest-cov",
     "pytest-django",
 ]
 
