@@ -29,6 +29,7 @@ dev = [
     "pip-tools",
     "pycodestyle",
     "pytest",
+    "pytest-cov",
     "pytest-django",
 ]
 
