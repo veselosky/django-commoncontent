@@ -1,9 +1,6 @@
 from datetime import datetime
-from unittest import TestCase
-from unittest.mock import Mock
 
-from django.template import Context, Template
-from django.test import RequestFactory, TestCase as DjangoTestCase
+from django.test import TestCase as DjangoTestCase
 
 from genericsite.models import Page, Site, SiteVar, Status
 
