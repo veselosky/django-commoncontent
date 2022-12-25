@@ -382,6 +382,7 @@ class Article(AbstractOpenGraph):
         tags = list(self.tags.names())
         if tags:
             og.tag = tags
+        return og
 
 
 class Menu(models.Model):

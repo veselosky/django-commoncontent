@@ -152,16 +152,13 @@ class HomePageView(ArticleList):
                 .latest()
             )
         except HomePage.DoesNotExist as e:
-            if settings.DEBUG:
-                # Create a phony debug home page for bootstrapping.
-                hp = HomePage(
-                    site=get_current_site(self.request),
-                    admin_name="__DEBUG__",
-                    title="Generic Site",
-                    published_time=timezone.now(),
-                )
-            else:
-                raise e
+            # Create a phony debug home page for bootstrapping.
+            hp = HomePage(
+                site=get_current_site(self.request),
+                admin_name="__DEBUG__",
+                title="Generic Site",
+                published_time=timezone.now(),
+            )
         return hp
 
     def get_context_data(self, **kwargs):
