@@ -7,4 +7,10 @@ class GenericsiteConfig(AppConfig):
 
     @property
     def pagebreak_separator(self):
-        return "<!-- MORE -->"
+        from django.conf import settings
+
+        try:
+            return settings.TINYMCE_DEFAULT_CONFIG["pagebreak_separator"]
+        except Exception:
+            # May not be configured
+            return "<!-- MORE -->"
