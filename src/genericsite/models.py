@@ -236,12 +236,7 @@ class AbstractOpenGraph(models.Model):
     @property
     def icon_name(self):
         "name of an icon to represent this object"
-        if self.custom_icon:
-            return self.custom_icon
-        elif icon := SiteVar.For(self.site).get_value("default_icon"):
-            return icon
-        else:
-            return "file-text"
+        return self.custom_icon or self.site.vars.get_value("default_icon", "file-text")
 
     @property
     def url(self):
@@ -443,12 +438,9 @@ class Link(models.Model):
     @property
     def icon_name(self):
         "name of an icon to represent this object"
-        if self.custom_icon:
-            return self.custom_icon
-        elif icon := SiteVar.For(self.site).get_value("default_icon"):
-            return icon
-        else:
-            return "link-45deg"
+        return self.custom_icon or self.site.vars.get_value(
+            "default_icon", "link-45deg"
+        )
 
     @property
     def image(self):

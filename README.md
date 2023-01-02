@@ -39,14 +39,14 @@ Add the following to your INSTALLED_APPS:
     # 3rd party apps used by GenericSite
     "django_bootstrap_icons",
     "easy_thumbnails",
-    "filer",
-    "mptt",  # for filer
     "taggit",
     "tinymce",
     # Standard Django stuff used by GenericSite
     "django.contrib.contenttypes",
     "django.contrib.sites",
 ```
+
+Add `genericsite.apps.context_defaults` to your context processors.
 
 Also ensure that your MIDDLWARE list includes
 `django.contrib.sites.middleware.CurrentSiteMiddleware` near the top.
@@ -122,7 +122,7 @@ the default templates/models include:
 
 ## Images
 
-GenericSite takes advantage of Django-filer and easy_thumbnails to manage images.
+GenericSite takes advantage of easy_thumbnails to manage images.
 
 GenericSite uses presets to produce images in specific sizes as recommended by
 [Buffer's Social Media Image Guidelines](https://buffer.com/library/ideal-image-sizes-social-media-posts/).

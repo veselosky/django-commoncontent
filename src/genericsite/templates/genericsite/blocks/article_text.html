@@ -1,16 +1,14 @@
 {% with object as article %}
-<main role="main" class="container-lg">
-  <article class="article-full">
-    <h1 class="article-title">{% firstof article.headline article.title article.opengraph.title %}</h1>
-    {% if article.author_display_name and article.author_profile_url %}
-    <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}
-      <a href="{{ article.author_profile_url }}">{{ article.author_display_name }}</a></p>
-    {% elif article.author_display_name %}
-    <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}} {{ article.author_display_name }}</p>
-    {% else %}
-    <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}</p>
-    {% endif %}
-    {{ article.body|safe }}
-  </article>
-</main>
+<article class="article-full">
+  <h1 class="article-title">{% firstof article.headline article.title article.opengraph.title %}</h1>
+  {% if article.author_display_name and article.author_profile_url %}
+  <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}
+    <a href="{{ article.author_profile_url }}">{{ article.author_display_name }}</a></p>
+  {% elif article.author_display_name %}
+  <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}} {{ article.author_display_name }}</p>
+  {% else %}
+  <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}</p>
+  {% endif %}
+  {{ article.body|safe }}
+</article>
 {% endwith %}
