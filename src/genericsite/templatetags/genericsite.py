@@ -100,6 +100,20 @@ def menu_aria_current(context, menuitem: str):
 
 
 @register.simple_tag(takes_context=True)
+def opengraph_image(context, og):
+    "For an Open Graph compatible item, return an open graph image."
+    if img := getattr(og, "og_image"):
+        return img
+    if hasattr(og, "image_set"):
+        if img := og.image_set.first():
+            return img
+    if hasattr(og, "section"):
+        if img := og.section.og_image:
+            return img
+    return None
+
+
+@register.simple_tag(takes_context=True)
 def sitevar(context, name, default=""):
     site = get_current_site(context["request"])
     return SiteVar.For(site).get_value(name, default)

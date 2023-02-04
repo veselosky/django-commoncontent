@@ -1,4 +1,4 @@
-{% with object as article %}
+{% load thumbnail genericsite %}{% with object as article %}
 <article class="article-full">
   <h1 class="article-title">{% firstof article.headline article.title article.opengraph.title %}</h1>
   {% if article.author_display_name and article.author_profile_url %}
@@ -8,6 +8,14 @@
   <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}} {{ article.author_display_name }}</p>
   {% else %}
   <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}</p>
+  {% endif %}
+  {% opengraph_image article as img %} {% if img %}
+  <p>
+    <img
+    class="img-fluid"
+    src="{{img.image_file|thumbnail_url:"large"}}"
+    alt="{{img.alt_text}}"/>
+  </p>
   {% endif %}
   {{ article.body|safe }}
 </article>

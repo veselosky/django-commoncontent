@@ -1,5 +1,5 @@
 {% load i18n %}
-<div class="article-list container-lg">{% for article in object_list %}
+<div class="article-list">{% for article in object_list %}
 <article class="article-preview">
   <h2 class="article-title"><a href="{{ article.get_absolute_url}}"
     >{% firstof article.headline article.title article.opengraph.title %}</a></h2>

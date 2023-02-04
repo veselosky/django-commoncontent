@@ -71,3 +71,38 @@ class TestModels(DjangoTestCase):
             published_time=datetime.fromisoformat("2021-11-22T19:00"),
         )
         assert f"2021 example.com. All rights" in page.copyright_notice
+
+    def test_explicit_excerpt(self):
+        """Page has a pagebreak marker for excerpt. Should return only content before
+        the marker.
+        """
+        site = Site.objects.get(id=1)
+        page = Page(
+            title="Test Page",
+            slug="test-page",
+            status=Status.USABLE,
+            site=site,
+            published_time=datetime.fromisoformat("2021-11-22T19:00"),
+            body="""First paragraph.
+            <!-- pagebreak --><span id=continue-reading></span>
+            Second paragraph.
+            """,
+        )
+        assert f"First paragraph." in page.excerpt
+        assert f"Second paragraph." not in page.excerpt
+
+    def test_no_explicit_excerpt(self):
+        """Page has no pagebreak marker for excerpt. Should return all content."""
+        site = Site.objects.get(id=1)
+        page = Page(
+            title="Test Page",
+            slug="test-page",
+            status=Status.USABLE,
+            site=site,
+            published_time=datetime.fromisoformat("2021-11-22T19:00"),
+            body="""First paragraph.
+            Second paragraph.
+            """,
+        )
+        assert f"First paragraph." in page.excerpt
+        assert f"Second paragraph." in page.excerpt

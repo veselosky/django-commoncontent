@@ -19,18 +19,20 @@ class AdminSmokeTest(TestCase):
         self.client.force_login(self.user)
 
         views = [
-            "admin:genericsite_sitevar_changelist",
-            "admin:genericsite_sitevar_add",
-            "admin:genericsite_article_changelist",
             "admin:genericsite_article_add",
-            "admin:genericsite_section_changelist",
-            "admin:genericsite_section_add",
-            "admin:genericsite_page_changelist",
-            "admin:genericsite_page_add",
-            "admin:genericsite_homepage_changelist",
+            "admin:genericsite_article_changelist",
             "admin:genericsite_homepage_add",
-            "admin:genericsite_menu_changelist",
+            "admin:genericsite_homepage_changelist",
+            "admin:genericsite_image_add",
+            "admin:genericsite_image_changelist",
             "admin:genericsite_menu_add",
+            "admin:genericsite_menu_changelist",
+            "admin:genericsite_page_add",
+            "admin:genericsite_page_changelist",
+            "admin:genericsite_section_add",
+            "admin:genericsite_section_changelist",
+            "admin:genericsite_sitevar_add",
+            "admin:genericsite_sitevar_changelist",
         ]
 
         for view in views:

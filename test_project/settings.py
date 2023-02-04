@@ -79,6 +79,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "genericsite.apps.context_defaults",
             ],
         },
     },
@@ -121,6 +122,9 @@ if not MEDIA_ROOT.exists():
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# For Django >= 4.1
+# FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
+CONN_HEALTH_CHECKS = True
 
 
 THUMBNAIL_PROCESSORS = (
@@ -129,6 +133,28 @@ THUMBNAIL_PROCESSORS = (
     "easy_thumbnails.processors.scale_and_crop",
     "easy_thumbnails.processors.filters",
 )
+THUMBNAIL_WIDGET_OPTIONS = {"size": (160, 90)}
+THUMBNAIL_DEBUG = DEBUG
+
+TINYMCE_DEFAULT_CONFIG = {
+    "height": "320px",
+    "width": "960px",
+    "menubar": "edit view insert format tools table help",
+    "pagebreak_separator": "<!-- pagebreak --><span id=continue-reading></span>",
+    "plugins": "advlist autoresize charmap code codesample help hr image imagetools "
+    "link lists media pagebreak paste searchreplace table toc visualblocks "
+    "visualchars wordcount",
+    "toolbar": "undo redo | bold italic strikethrough | styleselect | removeformat | "
+    "numlist bullist indent outdent | image pagebreak | code",
+    "image_advtab": True,
+    "image_caption": True,
+    "image_class_list": [
+        {"title": "Responsive", "value": "img-fluid"},
+        {"title": "Left", "value": "float-left"},
+        {"title": "Right", "value": "float-right"},
+    ],
+    "image_list": "/mce/recent_images.json",
+}
 
 #######################################################################
 # DEVELOPMENT: If running in a dev environment, loosen restrictions

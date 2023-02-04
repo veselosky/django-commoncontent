@@ -1,38 +1,12 @@
 import typing as T
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
 from django.views.generic import DetailView, ListView, TemplateView
-from genericsite.models import Article, HomePage, Page, Section, SiteVar
-
-
-def supply_context_defaults(
-    site, context, viewtype: T.Literal["detail", "list"] = "detail"
-):
-    "Mutate and return the context, adding common defaults to the context."
-    var = SiteVar.For(site)
-    context["header_template"] = var.get_value(
-        "default_header_template", "genericsite/blocks/header_simple.html"
-    )
-    context["footer_template"] = var.get_value(
-        "default_footer_template", "genericsite/blocks/footer_simple.html"
-    )
-    context["precontent_template"] = var.get_value(
-        "default_precontent_template", "genericsite/blocks/empty.html"
-    )
-    context["postcontent_template"] = var.get_value(
-        "default_postcontent_template", "genericsite/blocks/empty.html"
-    )
-    # The content block is a little more complicated
-    tpl_var = f"default_{viewtype}_content_template"
-    default = "genericsite/blocks/article_text.html"
-    if viewtype == "list":
-        default = "genericsite/blocks/article_list_blog.html"
-    context["content_template"] = var.get_value(tpl_var, default)
-
-    return context
+from genericsite.models import Article, HomePage, Page, Section
 
 
 class OpenGraphDetailView(DetailView):
@@ -40,14 +14,13 @@ class OpenGraphDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context = supply_context_defaults(self.object.site, context)
         context["opengraph"] = self.object.opengraph
         if custom_template := getattr(self.object, "content_template", ""):
             context["content_template"] = custom_template
         return context
 
     def get_context_object_name(self, object):
-        return ""
+        return None
 
     def get_template_names(self):
         # Allow using the Django convention <app>/<model>_detail.html
@@ -57,7 +30,7 @@ class OpenGraphDetailView(DetailView):
 
         # Fall back to site default if set
         var = self.object.site.vars
-        if site_default := var.get_value("default_base_template", ""):
+        if site_default := var.get_value("default_base_template"):
             names.append(site_default)
 
         # Fall back to Genericsite default
@@ -84,26 +57,39 @@ class PageDetailView(OpenGraphDetailView):
 
 
 class ArticleList(ListView):
+    """View for pages that present a list of articles (e.g. SectionPage, HomePage).
+
+    The `get_object` method is left unimplemented here, as it will be different for
+    each subclass. This is an extension of Django's views. In Django's GenericViews,
+    List pages don't have an `object`, but in GenericSite, all pages have an `object`.
+    """
+
     model = Article
-    paginate_by: int = 10
+    paginate_by: int = 15
     paginate_orphans: int = 2
     object = None
+    # template_name_suffix = "_list" is supplied by ListView
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        conf = apps.get_app_config("genericsite")
+        site = get_current_site(self.request)
         context = super().get_context_data(**kwargs)
-        context = supply_context_defaults(self.object.site, context, viewtype="list")
         context["object"] = self.object
         context["opengraph"] = self.object.opengraph
-        if custom_template := getattr(self.object, "content_template", ""):
-            context["content_template"] = custom_template
+        context[
+            "content_template"
+        ] = self.object.content_template or site.vars.get_value(
+            "default_list_content_template", conf.default_list_content_template
+        )
+
         return context
 
     def get_context_object_name(self, object_list):
-        return ""
+        return None
 
     def get_object(self):
         raise NotImplementedError
@@ -116,12 +102,27 @@ class ArticleList(ListView):
         return qs
 
     def get_template_names(self):
-        # Allow using the Django convention <app>/<model>_detail.html
-        names = super().get_template_names()
+        names = []
+        # Per Django convention, `template_name` on the View takes precedence
+        if tname := getattr(self, "template_name"):
+            names.append(tname)
+
+        # Django's ListView doesn't account for an object overriding the template,
+        # so we need to do that ourselves.
+        if self.object.base_template:
+            names.append(self.object.base_template)
+
+        # Allow using the Django convention <app>/<model>_list.html
+        if hasattr(self.object_list, "model"):
+            opts = self.object_list.model._meta
+            names.append(
+                "%s/%s%s.html"
+                % (opts.app_label, opts.model_name, self.template_name_suffix)
+            )
 
         # Fall back to site default if set
         var = self.object.site.vars
-        if site_default := var.get_value("default_base_template", ""):
+        if site_default := var.get_value("default_base_template"):
             names.append(site_default)
 
         # Fall back to Genericsite default
@@ -162,11 +163,8 @@ class HomePageView(ArticleList):
         return hp
 
     def get_context_data(self, **kwargs):
-        site = get_current_site(self.request)
         context = super().get_context_data(**kwargs)
-        context = supply_context_defaults(self.object.site, context, viewtype="list")
-        hp = self.get_object()
-        context["object"] = hp
+        hp = self.object
         if hp.admin_name == "__DEBUG__":
             context["precontent_template"] = "genericsite/blocks/debug_newsite.html"
         return context

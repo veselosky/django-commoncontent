@@ -17,14 +17,41 @@ video: https://ogp.me/ns/video#
   crossorigin="anonymous">
   {% endblock bootstrap_styles %}
   {% block opengraph %}{{ opengraph }}{% endblock %}
-  {% block extra_head %}{% endblock %}
+  {% block extra_head %}
+  <link rel="stylesheet" href="{% static 'generic.css' %}">
+  {% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock body_class %}">
-  {% block header %}{% include header_template|default:"genericsite/blocks/header_simple.html" %}{% endblock header %}
-  {% block precontent %}{% include precontent_template|default:"genericsite/blocks/empty.html" %}{% endblock precontent %}
-  {% block content %}{% include content_template|default:"genericsite/blocks/article_text.html" %}{% endblock content %}
-  {% block postcontent %}{% include postcontent_template|default:"genericsite/blocks/empty.html" %}{% endblock postcontent %}
-  {% block footer %}{% include footer_template|default:"genericsite/blocks/footer_simple.html" %}{% endblock footer %}
+  {% block header %}
+  <header class="{{ bootstrap_container_class }}">
+    {% include header_template|default:"genericsite/blocks/header_simple.html" %}
+  </header>
+  {% endblock header %}
+
+  {% block precontent %}
+  <div class="precontent {{ bootstrap_container_class }}">
+    {% include precontent_template|default:"genericsite/blocks/empty.html" %}
+  </div>
+  {% endblock precontent %}
+
+  {% block content %}
+  <main role="main" class="{{ bootstrap_container_class }}">
+    {% include content_template|default:"genericsite/blocks/article_text.html" %}
+  </main>
+  {% endblock content %}
+
+  {% block postcontent %}
+  <div class="postcontent {{ bootstrap_container_class }}">
+    {% include postcontent_template|default:"genericsite/blocks/empty.html" %}
+  </div>
+  {% endblock postcontent %}
+
+  {% block footer %}
+  <footer class="{{ bootstrap_container_class }}">
+    {% include footer_template|default:"genericsite/blocks/footer_simple.html" %}
+  </footer>
+  {% endblock footer %}
+
   {% block bootstrap_js %}
   <script
   src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"
@@ -32,6 +59,7 @@ video: https://ogp.me/ns/video#
   crossorigin="anonymous">
   </script>
   {% endblock bootstrap_js %}
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>
