@@ -30,6 +30,16 @@ The templates are built using Bootstrap 5, and they load the core CSS and JavaSc
 from a CDN by default, so there's nothing else to install and little or no front-end to
 deal with.
 
+## Development
+
+After checking out the code, you can bootstrap a development environment by running:
+
+```sh
+python manage.py devsetup
+```
+
+Note that the Python used to run this script will be the one used in your virtualenv.
+
 ## How to use it
 
 Add the following to your INSTALLED_APPS:
@@ -120,12 +130,28 @@ the default templates/models include:
 - `default_postcontent_template` - Default template to use for the `postcontent` block.
 - `default_precontent_template` - Default template to use for the `precontent` block.
 
-## Images
+## Images and Media
 
-GenericSite takes advantage of easy_thumbnails to manage images.
+GenericSite takes advantage of easy_thumbnails to manage images. Models are provided for
+storing file metadata including copyright information.
 
 GenericSite uses presets to produce images in specific sizes as recommended by
 [Buffer's Social Media Image Guidelines](https://buffer.com/library/ideal-image-sizes-social-media-posts/).
+
+These named thumbnail settings are available:
+
+- small: 160x90
+- medium: 400x225
+- large: 960x540
+- opengraph: 1200x630
+- hd720p: 1280x720
+- hd1080p: 1920x1080
+- portrait_small: 90x160
+- portrait_medium: 225x400
+- portrait_large: 540x960
+- portrait_cover: 1000x1500
+- portrait_social: 1080x1350
+- portrait_hd: 1080x1920
 
 ## Open Graph attributes used by the templates
 
@@ -150,13 +176,3 @@ GenericSite uses presets to produce images in specific sizes as recommended by
 - video.type
 - video.width
 - video.height
-
-## Development
-
-After checking out the code, you can bootstrap a development environment by running:
-
-```sh
-python manage.py devsetup
-```
-
-Note that the Python used to run this script will be the one used in your virtualenv.

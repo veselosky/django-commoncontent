@@ -133,6 +133,8 @@ THUMBNAIL_PROCESSORS = (
     "easy_thumbnails.processors.scale_and_crop",
     "easy_thumbnails.processors.filters",
 )
+THUMBNAIL_WIDGET_OPTIONS = {"size": (160, 90)}
+THUMBNAIL_DEBUG = DEBUG
 
 TINYMCE_DEFAULT_CONFIG = {
     "height": "320px",

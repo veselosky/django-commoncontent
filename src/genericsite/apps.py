@@ -1,4 +1,5 @@
 from django.apps import apps, AppConfig
+from django.utils.translation import gettext_lazy as _
 
 
 class GenericsiteConfig(AppConfig):
@@ -31,6 +32,7 @@ class GenericsiteConfig(AppConfig):
     bootstrap_container_class = "container"
 
     default_icon = "file-text"
+    fallback_copyright = _("© Copyright {} {}. All rights reserved.")
 
     @property
     def pagebreak_separator(self):
@@ -42,7 +44,45 @@ class GenericsiteConfig(AppConfig):
             # May not be configured
             return "<!-- MORE -->"
 
+    def ready(self):
+        # Add genericsite thumbnail aliases to the easy_thumbnails aliases.
+        # This makes them accessible on thumbnail image fields.
+        from easy_thumbnails.alias import aliases
 
+        # Landscape aliases, most common in genericsite and many designs
+        if not aliases.get("hd1080p"):
+            aliases.set("hd1080p", {"size": (1920, 1080), "crop": True})
+        if not aliases.get("hd720p"):
+            aliases.set("hd720p", {"size": (1280, 720), "crop": True})
+        # Ref https://buffer.com/library/ideal-image-sizes-social-media-posts/
+        # Recommended size for sharing social images on FB, and close enough for others
+        if not aliases.get("opengraph"):
+            aliases.set("opengraph", {"size": (1200, 630), "crop": True})
+        if not aliases.get("large"):
+            aliases.set("large", {"size": (960, 540), "crop": True})
+        if not aliases.get("medium"):
+            aliases.set("medium", {"size": (400, 225), "crop": True})
+        if not aliases.get("small"):
+            aliases.set("small", {"size": (160, 90), "crop": True})
+
+        # Portrait orientation aliases
+        if not aliases.get("portrait_small"):
+            aliases.set("portrait_small", {"size": (90, 160), "crop": True})
+        if not aliases.get("portrait_medium"):
+            aliases.set("portrait_medium", {"size": (225, 400), "crop": True})
+        if not aliases.get("portrait_large"):
+            aliases.set("portrait_large", {"size": (540, 960), "crop": True})
+        # Buffer post recommends this size for Pinterest
+        if not aliases.get("portrait_cover"):
+            aliases.set("portrait_cover", {"size": (1000, 1500), "crop": True})
+        # Buffer post recommends this size for Insta/FB
+        if not aliases.get("portrait_social"):
+            aliases.set("portrait_social", {"size": (1080, 1350), "crop": True})
+        if not aliases.get("portrait_hd"):
+            aliases.set("portrait_hd", {"size": (1080, 1920), "crop": True})
+
+
+# A context processor to add our vars to template contexts:
 def context_defaults(request):
     """Supply default context variables for GenericSite templates"""
     # We don't access the class above directly, because the end user can make thier own

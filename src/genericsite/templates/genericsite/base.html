@@ -17,7 +17,9 @@ video: https://ogp.me/ns/video#
   crossorigin="anonymous">
   {% endblock bootstrap_styles %}
   {% block opengraph %}{{ opengraph }}{% endblock %}
-  {% block extra_head %}{% endblock %}
+  {% block extra_head %}
+  <link rel="stylesheet" href="{% static 'generic.css' %}">
+  {% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock body_class %}">
   {% block header %}

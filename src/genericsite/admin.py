@@ -1,9 +1,12 @@
 from django.contrib import admin
 
+from easy_thumbnails.fields import ThumbnailerImageField
+from easy_thumbnails.widgets import ImageClearableFileInput
+
 from genericsite.models import (
     Article,
-    ArticleImage,
     HomePage,
+    Image,
     Page,
     Section,
     SiteVar,
@@ -12,9 +15,26 @@ from genericsite.models import (
 )
 
 
-class ArticleImageInline(admin.StackedInline):
-    extra: int = 1
-    model = ArticleImage
+@admin.register(Image)
+class ImageAdmin(admin.ModelAdmin):
+    formfield_overrides = {
+        ThumbnailerImageField: {"widget": ImageClearableFileInput},
+    }
+    readonly_fields = ("image_width", "image_height", "mime_type")
+    fields = (
+        "title",
+        "image_file",
+        "site",
+        "alt_text",
+        "tags",
+        "description",
+        "copyright_holder",
+        "custom_copyright_notice",
+        "created_dt",
+        "image_width",
+        "image_height",
+        "mime_type",
+    )
 
 
 @admin.register(SiteVar)
@@ -25,7 +45,7 @@ class SiteVarAdmin(admin.ModelAdmin):
 
 class OpenGraphAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
-    date_heirarchy = "published_time"
+    date_hierarchy = "published_time"
     list_display = ("title", "published_time", "site", "status")
     list_filter = ("site", "status")
     search_fields = ("title", "description")
@@ -71,7 +91,7 @@ class OpenGraphAdmin(admin.ModelAdmin):
 @admin.register(Article)
 class ArticleAdmin(OpenGraphAdmin):
     list_display = ("title", "section", "published_time", "site", "status")
-    inlines = [ArticleImageInline]
+    raw_id_fields = ["image_set"]
     fieldsets = (
         (
             None,

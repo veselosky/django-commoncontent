@@ -65,7 +65,7 @@ class ArticleList(ListView):
     """
 
     model = Article
-    paginate_by: int = 10
+    paginate_by: int = 15
     paginate_orphans: int = 2
     object = None
     # template_name_suffix = "_list" is supplied by ListView

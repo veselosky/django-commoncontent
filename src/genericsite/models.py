@@ -1,4 +1,4 @@
-from datetime import datetime
+import mimetypes
 import typing as T
 
 from django.apps import apps
@@ -10,6 +10,8 @@ from django.utils.timezone import get_current_timezone, make_aware, now
 from django.utils.translation import gettext_lazy as _, to_locale
 from django.utils import timezone
 from django.urls import reverse
+from easy_thumbnails.fields import ThumbnailerImageField
+from easy_thumbnails.files import get_thumbnailer
 from taggit.managers import TaggableManager
 from tinymce.models import HTMLField
 
@@ -81,6 +83,136 @@ class SiteVar(models.Model):
 
 
 ######################################################################################
+# Media Objects
+######################################################################################
+class MediaObject(models.Model):
+    """Abstract base class for stored media files (image, audio, video, attachment).
+
+    Every media object has an `image_file` attribute so it can have a thumbnail of some
+    kind to display in visual contexts. Thumbnails of standard sizes can be accessed
+    via this field. We assume images will use this field as the main `content_field`.
+    Other subclasses should use this to store a thumbnail or cover art, and add a new
+    field to store their content file, and set the `content_field` attribute to the
+    name of the new field where their audio/video/attachment is stored.
+
+    If `mime_type` is not populated, it will be guessed when the instance is saved,
+    based on the file name stored in the `content_field` (using `mimetypes.guess_type`).
+    """
+
+    class Meta:
+        abstract = True
+
+    content_field = "image_file"
+
+    title = models.CharField(_("title"), max_length=255, unique=True)
+    description = models.CharField(
+        verbose_name=_("description"), max_length=255, blank=True
+    )
+    image_file = ThumbnailerImageField(
+        _("image file"),
+        width_field="image_width",
+        height_field="image_height",
+        max_length=255,
+    )
+    image_width = models.IntegerField(_("image_width"), blank=True)
+    image_height = models.IntegerField(_("image_height"), blank=True)
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, default=1)
+
+    tags = TaggableManager(blank=True)
+
+    # Open Graph has `type`, Schema.org calls it `encodingFormat`, both recommend MIME
+    # type as the value
+    mime_type = models.CharField(
+        _("MIME type"), max_length=255, db_index=True, blank=True
+    )
+    copyright_holder = models.CharField(
+        _("copyright holder"), max_length=255, blank=True
+    )
+    custom_copyright_notice = HTMLField(
+        _("custom copyright notice"),
+        blank=True,
+        help_text=_(
+            r"include a pair of curly braces {} where you want the year inserted"
+        ),
+    )
+    uploaded_dt = models.DateTimeField(_("when uploaded"), auto_now_add=True)
+    created_dt = models.DateTimeField(_("when taken"), blank=True, null=True)
+
+    @property
+    def copyright_year(self):
+        if self.created_dt:
+            return self.created_dt.year
+        else:
+            return self.uploaded_dt.year
+
+    @property
+    def copyright_notice(self):
+        conf = apps.get_app_config("genericsite")
+        var = self.site.vars
+        if self.custom_copyright_notice:
+            return format_html(self.custom_copyright_notice, self.copyright_year)
+        elif notice := var.get_value("copyright_notice"):
+            return format_html(notice, self.copyright_year)
+        else:
+            holder = var.get_value("copyright_holder", self.site.name)
+            return format_html(conf.fallback_copyright, self.copyright_year, holder)
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def _base_url(self):
+        protocol = "http" if settings.DEBUG else "https"
+        return f"{protocol}://{self.site.domain}"
+
+    @property
+    def url(self):
+        path = getattr(self, self.content_field).url
+        protocol = "http" if settings.DEBUG else "https"
+        return f"{self._base_url}{path}"
+
+    def save(self, *args, **kwargs):
+        if not self.mime_type:
+            self.mime_type, _ = mimetypes.guess_type(
+                getattr(self, self.content_field).name, strict=False
+            )
+        return super().save(*args, **kwargs)
+
+
+class Image(MediaObject):
+    class Meta:
+        verbose_name = _("image")
+        verbose_name_plural = _("images")
+
+    alt_text = models.CharField(verbose_name=_("alt text"), max_length=255, blank=True)
+
+    @property
+    def opengraph(self):
+        thumb = get_thumbnailer(self.image_file)["opengraph"]
+        return ImageProp(
+            url=f"{self._base_url}{thumb.url}",
+            type=self.mime_type,
+            width=thumb.width,
+            height=thumb.height,
+            alt=self.alt_text,
+        )
+
+    @property
+    def icon_name(self):
+        return "image"
+
+
+class Attachment(MediaObject):
+    class Meta:
+        verbose_name = _("attachment")
+        verbose_name_plural = _("attachments")
+
+    content_field = "file"
+
+    file = models.FileField(_("file"), max_length=255)
+
+
+######################################################################################
 # Content Models
 ######################################################################################
 
@@ -93,6 +225,8 @@ class Status(models.TextChoices):
 
 
 class AbstractOpenGraph(models.Model):
+    """Abstract base model for all models that will represent content pages"""
+
     class Meta:
         abstract = True
         get_latest_by = "published_time"
@@ -212,16 +346,15 @@ class AbstractOpenGraph(models.Model):
 
     @property
     def copyright_notice(self):
-        var = SiteVar.For(self.site)
+        conf = apps.get_app_config("genericsite")
+        var = self.site.vars
         if self.custom_copyright_notice:
             return format_html(self.custom_copyright_notice, self.copyright_year)
         elif notice := var.get_value("copyright_notice"):
             return format_html(notice, self.copyright_year)
         else:
             holder = var.get_value("copyright_holder", self.site.name)
-            return format_html(
-                "© Copyright {} {}. All rights reserved.", self.copyright_year, holder
-            )
+            return format_html(conf.fallback_copyright, self.copyright_year, holder)
 
     @property
     def excerpt(self):
@@ -258,6 +391,8 @@ class AbstractOpenGraph(models.Model):
         """
         og = OpenGraph.from_orm(self)
         og.site_name = self.site.name
+        if self.og_image:
+            og.image = [self.og_image.opengraph]
         return og
 
 
@@ -281,6 +416,7 @@ class GenericPageManager(models.Manager):
         return super().get_queryset().select_related("site", "og_image")
 
 
+#######################################################################
 class Section(AbstractOpenGraph):
     "A model to represent major site categories."
 
@@ -295,6 +431,7 @@ class Section(AbstractOpenGraph):
         return reverse("section_page", kwargs={"section_slug": self.slug})
 
 
+#######################################################################
 class Page(AbstractOpenGraph):
     "A model to represent a generic evergreen page or 'landing page'."
 
@@ -309,6 +446,7 @@ class Page(AbstractOpenGraph):
         return reverse("landing_page", kwargs={"page_slug": self.slug})
 
 
+#######################################################################
 class HomePage(AbstractOpenGraph):
     "A model to represent the site home page."
 
@@ -328,6 +466,7 @@ class HomePage(AbstractOpenGraph):
         return reverse("home_page")
 
 
+#######################################################################
 class ArticleManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().select_related("site", "section", "og_image")
@@ -352,6 +491,8 @@ class Article(AbstractOpenGraph):
     section = models.ForeignKey(
         Section, verbose_name=_("section"), on_delete=models.PROTECT
     )
+    image_set = models.ManyToManyField(Image, verbose_name=_("related images"))
+    attachment_set = models.ManyToManyField(Attachment, verbose_name=_("attachments"))
 
     objects = ArticleManager.from_queryset(OpenGraphQuerySet)()
 
@@ -361,17 +502,13 @@ class Article(AbstractOpenGraph):
             kwargs={"article_slug": self.slug, "section_slug": self.section.slug},
         )
 
-    def sync_og_image(self):
-        img_rel = self.image_set.first()
-        if img_rel and img_rel.image_file != self.og_image:
-            self.og_image = img_rel.image_file
-            self.save(update_fields=["og_image"])
-
     @property
     def opengraph(self):
         "Serialize data to Open Graph metatags"
         og = OGArticle.from_orm(self)
         og.site_name = self.site.name
+        if self.og_image:
+            og.image = [self.og_image.opengraph]
         if self.author_profile_url:
             og.author = [self.author_profile_url]
         tags = list(self.tags.names())
@@ -380,6 +517,9 @@ class Article(AbstractOpenGraph):
         return og
 
 
+#######################################################################
+# Site Menus
+#######################################################################
 class Menu(models.Model):
     class Meta:
         unique_together = ("site", "slug")
@@ -466,90 +606,3 @@ class SectionMenu:
         if self.pages:
             menu.extend(self.pages)
         return menu
-
-
-######################################################################################
-# Media Objects
-######################################################################################
-class Image(models.Model):
-    img_file = models.ImageField()
-    width = models.IntegerField(_("width"), blank=True)
-    height = models.IntegerField(_("height"), blank=True)
-    description = models.CharField(
-        verbose_name=_("description"), max_length=255, blank=True
-    )
-    default_alt_text = models.CharField(
-        verbose_name=_("default alt text"), max_length=255, blank=True
-    )
-
-
-######################################################################################
-# Media Collection Models
-######################################################################################
-# Each OG content object may have 4 collections attached: audio, video, image,
-# attachement. These are attached to the content via custom through models so each
-# media object can have custom metadata within the context of the collection. This
-# allows you to treat an Article as an image gallery or playlist using the right
-# template.
-
-
-class ImageItem(models.Model):
-    class Meta:
-        abstract = True
-
-    image_file = models.ForeignKey(
-        Image,
-        on_delete=models.CASCADE,
-        verbose_name=_("image file"),
-        help_text=_("Image for social sharing"),
-        related_name="+",
-    )
-
-    contextual_title = models.CharField(_("title"), blank=True, max_length=255)
-    contextual_alt_text = models.CharField(_("alt text"), blank=True, max_length=255)
-    contextual_description = models.TextField(_("description"), blank=True)
-
-    @property
-    def alt_text(self):
-        return self.contextual_alt_text or self.image_file.default_alt_text
-
-    @property
-    def description(self):
-        return self.contextual_description or self.image_file.description
-
-    @property
-    def height(self):
-        return self.image_file.height
-
-    @property
-    def title(self):
-        return self.contextual_title or self.image_file.name
-
-    @property
-    def url(self):
-        return self.image_file.url
-
-    @property
-    def width(self):
-        return self.image_file.width
-
-    def __str__(self):
-        return self.title
-
-
-class ArticleImage(ImageItem):
-    class Meta:
-        order_with_respect_to = "article"
-
-    article = models.ForeignKey(
-        Article,
-        verbose_name=_("article"),
-        on_delete=models.CASCADE,
-        related_name="image_set",
-    )
-
-    def save(self, *args, **kwargs) -> None:
-        super().save(*args, **kwargs)
-        # FIXME This could be a performance problem if a lot of images are
-        # related to the same article. Find a smarter way (later). -VV 2022-08-15
-        self.article.sync_og_image()
