@@ -101,10 +101,11 @@ class MediaObject(models.Model):
 
     class Meta:
         abstract = True
+        unique_together = ("site", "title")
 
     content_field = "image_file"
 
-    title = models.CharField(_("title"), max_length=255, unique=True)
+    title = models.CharField(_("title"), max_length=255)
     description = models.CharField(
         verbose_name=_("description"), max_length=255, blank=True
     )
@@ -116,6 +117,8 @@ class MediaObject(models.Model):
     )
     image_width = models.IntegerField(_("image_width"), blank=True)
     image_height = models.IntegerField(_("image_height"), blank=True)
+    alt_text = models.CharField(verbose_name=_("alt text"), max_length=255, blank=True)
+
     site = models.ForeignKey(Site, on_delete=models.CASCADE, default=1)
 
     tags = TaggableManager(blank=True)
@@ -180,11 +183,9 @@ class MediaObject(models.Model):
 
 
 class Image(MediaObject):
-    class Meta:
+    class Meta(MediaObject.Meta):
         verbose_name = _("image")
         verbose_name_plural = _("images")
-
-    alt_text = models.CharField(verbose_name=_("alt text"), max_length=255, blank=True)
 
     @property
     def opengraph(self):
@@ -203,7 +204,7 @@ class Image(MediaObject):
 
 
 class Attachment(MediaObject):
-    class Meta:
+    class Meta(MediaObject.Meta):
         verbose_name = _("attachment")
         verbose_name_plural = _("attachments")
 
