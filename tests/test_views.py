@@ -50,11 +50,17 @@ class TestSectionView(TestCase):
         self.assertContains(resp, section.title)
 
 
-class TestArticleView(TestCase):
-    def test_article(self):
-        """Article page should contain metadata"""
+class TestArticlesAndFeeds(TestCase):
+    @classmethod
+    def setUpTestData(cls):
         site, _ = Site.objects.get_or_create(
             id=1, defaults={"domain": "example.com", "name": "example.com"}
+        )
+        homepage = HomePage.objects.create(
+            site=site,
+            title="Test Home Page",
+            slug="test-home-page",
+            published_time=timezone.now(),
         )
         section = Section.objects.create(
             site=site,
@@ -69,6 +75,13 @@ class TestArticleView(TestCase):
             title="Test Article 1",
             published_time=timezone.now(),
         )
+        cls.site = site
+        cls.homepage = homepage
+        cls.section = section
+        cls.article = article
+
+    def test_article(self):
+        """Article page should contain metadata"""
         resp = self.client.get(
             reverse(
                 "article_page",
@@ -76,8 +89,18 @@ class TestArticleView(TestCase):
             )
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, article.title)
+        self.assertContains(resp, self.article.title)
         self.assertContains(resp, '''property="og:type" content="article"''')
+
+    def test_site_rss(self):
+        resp = self.client.get(reverse("site_feed"))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_section_rss(self):
+        resp = self.client.get(
+            reverse("section_feed", kwargs={"section_slug": self.section.slug})
+        )
+        self.assertEqual(resp.status_code, 200)
 
 
 class TestProfileView(TestCase):
