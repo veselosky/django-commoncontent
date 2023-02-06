@@ -26,6 +26,7 @@ urlpatterns = [
     path("django_accounts/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),
     path("tinymce/", include("tinymce.urls")),
+    path("feed/", generic.SiteFeed(), name="site_feed"),
     path(
         "<slug:section_slug>/<slug:article_slug>.html",
         generic.ArticleDetailView.as_view(),
@@ -35,6 +36,7 @@ urlpatterns = [
         "<slug:page_slug>.html", generic.PageDetailView.as_view(), name="landing_page"
     ),
     path("<slug:section_slug>/", generic.SectionView.as_view(), name="section_page"),
+    path("<slug:section_slug>/feed/", generic.SectionFeed(), name="section_feed"),
     path("", generic.HomePageView.as_view(), name="home_page"),
 ]
 if settings.DEBUG:

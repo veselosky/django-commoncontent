@@ -10,6 +10,9 @@ video: https://ogp.me/ns/video#
   <title>{% block title %}{% firstof object.seo_title opengraph.title request.site.name %}{% endblock %}</title>
   <meta name="description" content="{% firstof object.seo_description opengraph.description %}" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="alternate" type="application/rss+xml"
+    title="{{request.site.name}} RSS (All articles)"
+    href="{% url "site_feed" %}" />
   {% block bootstrap_styles %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
   rel="stylesheet"

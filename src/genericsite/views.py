@@ -4,7 +4,10 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
+from django.contrib.syndication.views import Feed
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.feedgenerator import Rss201rev2Feed
 from django.views.generic import DetailView, ListView, TemplateView
 from genericsite.models import Article, HomePage, Page, Section
 
@@ -196,3 +199,113 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             context["change_password_view"] = "password_change"
 
         return context
+
+
+# Custom feeds are not very well documented. This snippet shows how to
+# do this: https://djangosnippets.org/snippets/2202/
+class ContentFeed(Rss201rev2Feed):
+    "Feed generator supporting content:encoded element"
+
+    def root_attributes(self):
+        attrs = super().root_attributes()
+        attrs["xmlns:content"] = "http://purl.org/rss/1.0/modules/content/"
+        return attrs
+
+    def add_item_elements(self, handler, item):
+        super().add_item_elements(handler, item)
+        handler.addQuickElement("content:encoded", item["content_encoded"])
+
+
+class SiteFeed(Feed):
+    "RSS feed of site Article Pages"
+    feed_type = ContentFeed
+
+    def get_object(self, request, *args, **kwargs):
+        "For site feed, get_object will return the site"
+        return request.site
+
+    def title(self, obj):
+        tagline = obj.vars.get_value("tagline")
+        if tagline:
+            return f"{obj.name} -- {obj.tagline}"
+        return obj.name
+
+    def link(self, obj):
+        return reverse("home_page")
+
+    def description(self, obj):
+        page = HomePage.objects.live().filter(site=obj).latest()
+        return page.description
+
+    def feed_url(self, obj):
+        return reverse("site_feed")
+
+    def author_name(self, obj):
+        return obj.vars.get_value("author_display_name")
+
+    def feed_copyright(self, obj):
+        page = HomePage.objects.live().filter(site=obj).latest()
+        return page.copyright_notice
+
+    def items(self, obj):
+        paginate_by = obj.vars.get_value("paginate_by", 15, asa=int)
+        return Article.objects.live().filter(site=obj)[:paginate_by]
+
+    def item_title(self, item):
+        return item.opengraph.title
+
+    def item_description(self, item):
+        return item.opengraph.description
+
+    def item_link(self, item):
+        return item.get_absolute_url()
+
+    def item_author_name(self, item):
+        return item.author_display_name
+
+    def item_pubdate(self, item):
+        return item.published_time
+
+    def item_updateddate(self, item):
+        return item.modified_time
+
+    def item_copyright(self, item):
+        return item.copyright_notice
+
+    def item_extra_kwargs(self, item):
+        return {"content_encoded": self.item_content_encoded(item)}
+
+    def item_content_encoded(self, item):
+        return item.excerpt
+
+
+class SectionFeed(SiteFeed):
+    "Feed of Articles in a specified section"
+
+    def get_object(self, request, *args, **kwargs):
+        "Return the CategoryPage for this feed"
+        return Section.objects.live().get(
+            site=request.site, slug=kwargs["section_slug"]
+        )
+
+    def title(self, obj):
+        return obj.opengraph.title
+
+    def link(self, obj):
+        return obj.get_absolute_url()
+
+    def description(self, obj):
+        return obj.opengraph.description
+
+    def feed_url(self, obj):
+        return reverse("section_feed", kwargs={"section_slug": obj.slug})
+
+    def author_name(self, obj):
+        return obj.author_display_name or obj.site.vars.get_value("author_display_name")
+
+    def feed_copyright(self, obj):
+        return obj.copyright_notice
+
+    def items(self, obj):
+        paginate_by = obj.site.vars.get_value("paginate_by", 15, asa=int)
+        return Article.objects.live().filter(section=obj)[:paginate_by]
