@@ -30,7 +30,7 @@ class OpenGraphDetailView(DetailView):
 
         # Fall back to site default if set
         var = self.object.site.vars
-        if site_default := var.get_value("default_base_template"):
+        if site_default := var.get_value("base_template"):
             names.append(site_default)
 
         # Fall back to Genericsite default
@@ -72,17 +72,17 @@ class OpenGraphListView(ListView):
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        conf = apps.get_app_config("genericsite")
         site = get_current_site(self.request)
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
         context["opengraph"] = self.object.opengraph
+        context["precontent_template"] = site.vars.get_value("list_precontent_template")
         context[
             "content_template"
-        ] = self.object.content_template or site.vars.get_value(
-            "default_list_content_template", conf.default_list_content_template
+        ] = self.object.content_template or site.vars.get_value("list_content_template")
+        context["postcontent_template"] = site.vars.get_value(
+            "list_postcontent_template"
         )
-
         return context
 
     def get_context_object_name(self, object_list):
@@ -96,14 +96,14 @@ class OpenGraphListView(ListView):
         if paginate_by := super().get_paginate_by(queryset):
             return paginate_by
         # Fall back to per-site setting or None
-        return self.request.site.vars.get_value("paginate_by")
+        return self.request.site.vars.get_value("paginate_by", None, asa=int)
 
     def get_paginate_orphans(self) -> int:
         # If set explicitly on class, return it
         if orphans := super().get_paginate_orphans():
             return orphans
         # Fall back to per-site setting or 0 (Django's default)
-        return self.request.site.vars.get_value("paginate_orphans", 0)
+        return self.request.site.vars.get_value("paginate_orphans", 0, asa=int)
 
     def get_queryset(self):
         site = get_current_site(self.request)
@@ -133,7 +133,7 @@ class OpenGraphListView(ListView):
 
         # Fall back to site default if set
         var = self.object.site.vars
-        if site_default := var.get_value("default_base_template"):
+        if site_default := var.get_value("base_template"):
             names.append(site_default)
 
         # Fall back to Genericsite default
