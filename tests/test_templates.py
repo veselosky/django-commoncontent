@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from django.core.paginator import Paginator
-from django.template import Context, loader
+from django.template import loader
 
 
 class TestTemplateSyntax(TestCase):
