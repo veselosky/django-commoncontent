@@ -36,7 +36,6 @@ urlpatterns = [
     ),
     path("<slug:section_slug>/", generic.SectionView.as_view(), name="section_page"),
     path("", generic.HomePageView.as_view(), name="home_page"),
-    # TODO Pagination URLs for sections and home page
 ]
 if settings.DEBUG:
     # NOTE: When DEBUG and staticfiles is installed, Django automatically adds static
