@@ -48,6 +48,10 @@ class SiteVarQueryset(models.QuerySet):
         try:
             return asa(self.get(name=name).value)
         except self.model.DoesNotExist:
+            # Anything that can be a site var can also be configured app-wide.
+            conf = apps.get_app_config("genericsite")
+            if hasattr(conf, name):
+                return asa(getattr(conf, name))
             return asa(default)
         # Note explicitly NOT catching MultipleObjectsReturned, that's still an error
 

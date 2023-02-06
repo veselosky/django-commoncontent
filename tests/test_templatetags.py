@@ -2,13 +2,14 @@ from datetime import datetime
 from unittest import TestCase
 from unittest.mock import Mock
 
+from django.core.paginator import Paginator
 from django.template import Context, Template
-from django.test import RequestFactory, TestCase as DjangoTestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase as DjangoTestCase
 
 from genericsite.models import Page, Site, SiteVar, Status
 
 
-class TestTemplateFilters(TestCase):
+class TestAddClassesFilter(SimpleTestCase):
     def test_add_classes_classless(self):
         mock = Mock()
         mock.field.widget.attrs = {}
@@ -22,13 +23,38 @@ class TestTemplateFilters(TestCase):
         mock = Mock()
         mock.field.widget.attrs = {"class": "class1 classB"}
         output = Template(
-            '{% load genericsite %}{{ fakefield|add_classes:"newclass" }} '
+            '{% load genericsite %}{{ fakefield|add_classes:"newclass secondclass" }} '
         ).render(Context({"fakefield": mock}))
         print(output)
-        assert mock.as_widget.called_with({"class": "class1 classB newclass"})
+        assert mock.as_widget.called_with(
+            {"class": "class1 classB newclass secondclass"}
+        )
 
 
-class TestTemplateTags(DjangoTestCase):
+class TestElidedRangeFilter(SimpleTestCase):
+    def test_elided_range_large(self):
+        pn = Paginator(object_list="abcdefghijklmnopqrstuvwxyz", per_page=1)
+        output = Template(
+            "{% load genericsite %}{% for num in page_obj|elided_range %}{{num}} {% endfor %}"
+        ).render(Context({"page_obj": pn.get_page(10)}))
+        self.assertEqual(output, "1 2 … 7 8 9 10 11 12 13 … 25 26 ")
+
+    def test_elided_range_medium(self):
+        pn = Paginator(object_list="abcdefghijklmnopqrstuvwxyz", per_page=2)
+        output = Template(
+            "{% load genericsite %}{% for num in page_obj|elided_range %}{{num}} {% endfor %}"
+        ).render(Context({"page_obj": pn.get_page(10)}))
+        self.assertEqual(output, "1 2 … 7 8 9 10 11 12 13 ")
+
+    def test_elided_range_small(self):
+        pn = Paginator(object_list="abcdefghijklmnopqrstuvwxyz", per_page=3)
+        output = Template(
+            "{% load genericsite %}{% for num in page_obj|elided_range %}{{num}} {% endfor %}"
+        ).render(Context({"page_obj": pn.get_page(1)}))
+        self.assertEqual(output, "1 2 3 4 5 6 7 8 9 ")
+
+
+class TestCopyrightNoticeTag(DjangoTestCase):
     def test_copyright_notice_obj_has_custom(self):
         """Context contains an 'object' that has a copyright_notice method.
         Should return the value of object.copyright_notice.

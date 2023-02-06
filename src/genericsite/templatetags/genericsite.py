@@ -8,12 +8,17 @@ from genericsite.models import Menu, SectionMenu, SiteVar
 register = template.Library()
 
 
+#######################################################################################
+# Filters
+#######################################################################################
+
+
 @register.filter(name="add_classes")
 def add_classes(value, arg):
     """
     Add provided classes to form field
     :param value: form field
-    :param arg: string of classes seperated by ' '
+    :param arg: string of classes separated by ' '
     :return: edited field
     https://stackoverflow.com/a/60267589/15428550
     because good programmers steal.
@@ -31,6 +36,25 @@ def add_classes(value, arg):
             css_classes.append(a)
     # join back to single string
     return value.as_widget(attrs={"class": " ".join(css_classes)})
+
+
+@register.filter
+def elided_range(value):
+    """
+    Filter applied only to Page objects (from Paginator). Calls `get_elided_page_range`
+    on the paginator, passing the current page number as the first argument, and
+    returns the result.
+
+    `{% for num in page_obj|elided_range %}{{num}} {% endfor %}`
+    1 2 … 7 8 9 10 11 12 13 … 19 20
+    """
+    page_obj = value
+    return page_obj.paginator.get_elided_page_range(page_obj.number)
+
+
+#######################################################################################
+# Tags
+#######################################################################################
 
 
 @register.simple_tag(takes_context=True)

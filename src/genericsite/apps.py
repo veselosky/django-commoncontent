@@ -17,6 +17,8 @@ class GenericsiteConfig(AppConfig):
     # ========================================================================
     # Our configs
     # ========================================================================
+    paginate_by = 15
+    paginate_orphans = 2
 
     # Default block templates are injected to the template context by our context
     # processor, so they're accessible even to 3rd party views.

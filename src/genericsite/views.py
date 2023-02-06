@@ -56,7 +56,7 @@ class PageDetailView(OpenGraphDetailView):
         )
 
 
-class ArticleList(ListView):
+class OpenGraphListView(ListView):
     """View for pages that present a list of articles (e.g. SectionPage, HomePage).
 
     The `get_object` method is left unimplemented here, as it will be different for
@@ -64,9 +64,6 @@ class ArticleList(ListView):
     List pages don't have an `object`, but in GenericSite, all pages have an `object`.
     """
 
-    model = Article
-    paginate_by: int = 15
-    paginate_orphans: int = 2
     object = None
     # template_name_suffix = "_list" is supplied by ListView
 
@@ -93,6 +90,20 @@ class ArticleList(ListView):
 
     def get_object(self):
         raise NotImplementedError
+
+    def get_paginate_by(self, queryset):
+        # If set explicitly on class, return it
+        if paginate_by := super().get_paginate_by(queryset):
+            return paginate_by
+        # Fall back to per-site setting or None
+        return self.request.site.vars.get_value("paginate_by")
+
+    def get_paginate_orphans(self) -> int:
+        # If set explicitly on class, return it
+        if orphans := super().get_paginate_orphans():
+            return orphans
+        # Fall back to per-site setting or 0 (Django's default)
+        return self.request.site.vars.get_value("paginate_orphans", 0)
 
     def get_queryset(self):
         site = get_current_site(self.request)
@@ -131,7 +142,11 @@ class ArticleList(ListView):
         return names
 
 
-class SectionView(ArticleList):
+class ArticleListView(OpenGraphListView):
+    model = Article
+
+
+class SectionView(ArticleListView):
     allow_empty: bool = True
     object = None
 
@@ -142,7 +157,7 @@ class SectionView(ArticleList):
         )
 
 
-class HomePageView(ArticleList):
+class HomePageView(ArticleListView):
     allow_empty: bool = True
 
     def get_object(self):
