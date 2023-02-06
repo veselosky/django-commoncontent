@@ -24,6 +24,7 @@ urlpatterns = [
     path("accounts/profile/", generic.ProfileView.as_view(), name="account_profile"),
     path("accounts/", include("allauth.urls")),
     path("django_accounts/", include("django.contrib.auth.urls")),
+    path("admin/doc/", include("django.contrib.admindocs.urls")),
     path("admin/", admin.site.urls),
     path("tinymce/", include("tinymce.urls")),
     path(
