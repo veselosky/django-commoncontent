@@ -169,3 +169,16 @@ def sitevar(context, name, default=""):
     """
     site = get_current_site(context["request"])
     return SiteVar.For(site).get_value(name, default)
+
+
+@register.simple_tag(takes_context=True)
+def sitevars(context):
+    """Retrieves a dict of all site vars for the current site, storing it in a variable.
+
+    ::
+
+        {% sitevars as sv %}
+        This site is called {{sv.brand}}. It has a custom var: {{sv.custom}}
+    """
+    site = get_current_site(context["request"])
+    return SiteVar.For(site).get_value(name, default)
