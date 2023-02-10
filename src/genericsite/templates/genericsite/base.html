@@ -23,7 +23,7 @@ video: https://ogp.me/ns/video#
 </head>
 <body class="{% block body_class %}{% endblock body_class %}">
   {% block header %}
-  <header class="{{ bootstrap_container_class }}">
+  <header class="page_header {{ bootstrap_container_class }}">
     {% include header_template|default:"genericsite/blocks/header_simple.html" %}
   </header>
   {% endblock header %}
@@ -47,7 +47,7 @@ video: https://ogp.me/ns/video#
   {% endblock postcontent %}
 
   {% block footer %}
-  <footer class="{{ bootstrap_container_class }}">
+  <footer class="page_footer {{ bootstrap_container_class }}">
     {% include footer_template|default:"genericsite/blocks/footer_simple.html" %}
   </footer>
   {% endblock footer %}
