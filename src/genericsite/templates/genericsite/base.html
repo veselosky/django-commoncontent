@@ -1,4 +1,4 @@
-<!DOCTYPE html>{% load i18n static %}
+<!DOCTYPE html>{% load i18n static genericsite %}
 <html prefix="og: https://ogp.me/ns#
 article: https://ogp.me/ns/article#
 book: https://ogp.me/ns/book#
@@ -20,6 +20,7 @@ video: https://ogp.me/ns/video#
   {% block extra_head %}
   <link rel="stylesheet" href="{% static 'generic.css' %}">
   {% endblock %}
+  {% sitevar "bootstrap_container_class" as bootstrap_container_class %}
 </head>
 <body class="{% block body_class %}{% endblock body_class %}">
   {% block header %}
