@@ -14,8 +14,16 @@ class OpenGraphDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        conf = apps.get_app_config("genericsite")
+
         context["opengraph"] = self.object.opengraph
-        if custom_template := getattr(self.object, "content_template", ""):
+
+        # Allow passing kwargs in the urlconf to override the default block templates
+        for block in conf.base_blocks:
+            if tpl := self.kwargs.get(block):
+                context[block] = tpl
+
+        if custom_template := getattr(self.object, "content_template"):
             context["content_template"] = custom_template
         return context
 
@@ -73,6 +81,7 @@ class OpenGraphListView(ListView):
 
     def get_context_data(self, **kwargs):
         site = get_current_site(self.request)
+        conf = apps.get_app_config("genericsite")
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
         context["opengraph"] = self.object.opengraph
@@ -83,6 +92,12 @@ class OpenGraphListView(ListView):
         context["postcontent_template"] = site.vars.get_value(
             "list_postcontent_template"
         )
+
+        # Allow passing kwargs in the urlconf to override the default block templates
+        for block in conf.base_blocks:
+            if tpl := self.kwargs.get(block):
+                context[block] = tpl
+
         return context
 
     def get_context_object_name(self, object_list):

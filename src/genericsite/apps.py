@@ -18,6 +18,15 @@ class GenericsiteConfig(AppConfig):
     # Our configs
     # ========================================================================
     base_template = "genericsite/base.html"
+    # List of blocks in the base template that include other templates, and can
+    # be overridden on a per-view basis or with SiteVars.
+    base_blocks = (
+        "header_template",
+        "precontent_template",
+        "content_template",
+        "postcontent_template",
+        "footer_template",
+    )
     bootstrap_container_class = "container"
     paginate_by = 15
     paginate_orphans = 2
