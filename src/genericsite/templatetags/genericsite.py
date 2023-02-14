@@ -181,4 +181,4 @@ def sitevars(context):
         This site is called {{sv.brand}}. It has a custom var: {{sv.custom}}
     """
     site = get_current_site(context["request"])
-    return SiteVar.For(site).get_value(name, default)
+    return dict(site.vars.all().values_list("name", "value"))
