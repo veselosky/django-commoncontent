@@ -17,11 +17,10 @@ register = template.Library()
 def add_classes(value, arg):
     """
     Add provided classes to form field
-    :param value: form field
-    :param arg: string of classes separated by ' '
-    :return: edited field
     https://stackoverflow.com/a/60267589/15428550
     because good programmers steal.
+
+    ``{{ form.username|add_classes:"form-control" }}``
     """
     css_classes = value.field.widget.attrs.get("class", "")
     # check if class is set or empty and split its content to list (or init list)
@@ -41,11 +40,12 @@ def add_classes(value, arg):
 @register.filter
 def elided_range(value):
     """
-    Filter applied only to Page objects (from Paginator). Calls `get_elided_page_range`
+    Filter applied only to Page objects (from Paginator). Calls ``get_elided_page_range``
     on the paginator, passing the current page number as the first argument, and
     returns the result.
 
-    `{% for num in page_obj|elided_range %}{{num}} {% endfor %}`
+    ``{% for num in page_obj|elided_range %}{{num}} {% endfor %}``
+
     1 2 … 7 8 9 10 11 12 13 … 19 20
     """
     page_obj = value
@@ -87,6 +87,10 @@ def copyright_notice(context):
 
 @register.simple_tag(takes_context=True)
 def menu(context, menu_slug):
+    """Looks up a Menu object from the database by slug and stores it in the variable named after 'as'.
+
+    ``{% menu "main-nav" as menu %}``
+    """
     request = context.get("request")
     site = get_current_site(request)
     menu = None
@@ -101,6 +105,12 @@ def menu(context, menu_slug):
 
 @register.simple_tag(takes_context=True)
 def menu_active(context, menuitem: str):
+    """Returns 'active' if the current URL is "under" the given URL.
+
+    Used to style menu links to mark the current section.
+
+    ``<a href="{{ url }}" class="nav-link {% menu_active url %}" {% menu_aria_current url %}>``
+    """
     path = str(context["request"].path)
     # Special case because every url starts with /
     if menuitem == "/":
@@ -115,6 +125,12 @@ def menu_active(context, menuitem: str):
 
 @register.simple_tag(takes_context=True)
 def menu_aria_current(context, menuitem: str):
+    """Adds ``aria-current="page"`` if the current URL is "under" the given URL.
+
+    Used to style menu links to mark the current section.
+
+    ``<a href="{{ url }}" class="nav-link {% menu_active url %}" {% menu_aria_current url %}>``
+    """
     path = str(context["request"].path)
     if path == menuitem:
         return 'aria-current="page" '
@@ -125,7 +141,11 @@ def menu_aria_current(context, menuitem: str):
 
 @register.simple_tag(takes_context=True)
 def opengraph_image(context, og):
-    "For an Open Graph compatible item, return an open graph image."
+    """For an Open Graph compatible item, return an Image instance suitable to
+    represent the item in a visual context.
+
+    ``{% opengraph_image article as img %}``
+    """
     if img := getattr(og, "og_image"):
         return img
     if hasattr(og, "image_set"):
@@ -139,5 +159,26 @@ def opengraph_image(context, og):
 
 @register.simple_tag(takes_context=True)
 def sitevar(context, name, default=""):
+    """Retrieves the value of a SiteVar from the database, either printing it
+    or storing it in a variable.
+
+    ::
+
+        {% sitevar "custom" as custom %}
+        This site is called {% sitevar "brand" %}. It has a custom var: {{custom}}
+    """
     site = get_current_site(context["request"])
     return SiteVar.For(site).get_value(name, default)
+
+
+@register.simple_tag(takes_context=True)
+def sitevars(context):
+    """Retrieves a dict of all site vars for the current site, storing it in a variable.
+
+    ::
+
+        {% sitevars as sv %}
+        This site is called {{sv.brand}}. It has a custom var: {{sv.custom}}
+    """
+    site = get_current_site(context["request"])
+    return dict(site.vars.all().values_list("name", "value"))

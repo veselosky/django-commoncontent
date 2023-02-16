@@ -115,20 +115,32 @@ The app comes with a SiteVar model for storing site-specific variables or chunks
 content. You can store any variable for use with your own templates. Variables used by
 the default templates/models include:
 
+- `base_template` - The base template to use for generic pages. Defaults to
+  `genericsite/base.html`.
 - `copyright_holder` - Custom name for the copyright holder if using the default
   copyright notice. Falls back to `site.name` if not provided.
 - `copyright_notice` - HTML to include in the copyright notice section of the footer
   (replaces the default copyright notice).
-- `default_detail_content_template` - Default template to use for the `content` block
+- `detail_precontent_template` - Default template to use for the `precontent` block for
+  detail pages.
+- `detail_content_template` - Default template to use for the `content` block for detail
+  pages.
+- `detail_postcontent_template` - Default template to use for the `postcontent` block
   for detail pages.
-- `default_list_content_template` - Default template to use for the `content` block for
+- `list_postcontent_template` - Default template to use for the `postcontent` block for
   list pages.
-- `default_footer_template` - Default template to use for the `footer` block.
-- `default_header_template` - Default template to use for the `header` block.
+- `list_precontent_template` - Default template to use for the `precontent` block for
+  list pages.
+- `list_content_template` - Default template to use for the `content` block for list
+  pages.
+- `footer_template` - Default template to use for the `footer` block.
+- `header_template` - Default template to use for the `header` block.
 - `default_icon` - Name of a Bootstrap icon to use by default if the object provides
   none.
-- `default_postcontent_template` - Default template to use for the `postcontent` block.
-- `default_precontent_template` - Default template to use for the `precontent` block.
+- `paginate_by` - Items per page on list pages, same as Django's ListView, see
+  [pagination](https://docs.djangoproject.com/en/dev/ref/paginator/) in the Django docs.
+- `paginate_orphans` - Same as Django's ListView, see
+  [pagination](https://docs.djangoproject.com/en/dev/ref/paginator/) in the Django docs.
 
 ## Images and Media
 

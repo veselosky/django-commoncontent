@@ -41,7 +41,7 @@ class SiteVarQueryset(models.QuerySet):
         # Returns the string if set, or "Ignore" if not set
         x = site.vars.get_value("abort_retry_ignore", "Ignore")
         # Returns the number of pages as an integer. Note the default should be a str.
-        num_items = site.vars.get_value("items_per_page", default="10", asa=int)
+        num_items = site.vars.get_value("paginate_by", default="10", asa=int)
         # Parses the value as JSON and returns the result
         data = site.vars.get_value("json_data", "{}", json.loads)
         """
@@ -52,7 +52,8 @@ class SiteVarQueryset(models.QuerySet):
             conf = apps.get_app_config("genericsite")
             if hasattr(conf, name):
                 return asa(getattr(conf, name))
-            return asa(default)
+            # This allows None as a default, without crashing on e.g. `int(None)`
+            return asa(default) if default is not None else default
         # Note explicitly NOT catching MultipleObjectsReturned, that's still an error
 
 
