@@ -5,6 +5,7 @@
 {% block content %}{% sitevar "bootstrap_container_class" as bootstrap_container_class %}
   <main class="{{bootstrap_container_class}}">
     <div class="col-md-6">
+      {% include "genericsite/includes/messages.html" %}
       <h1>{% trans "Verify Your E-mail Address" %}</h1>
       {% url 'account_email' as email_url %}
       <p>{% blocktrans trimmed %}
@@ -20,5 +21,4 @@
         {% endblocktrans %}</p>
     </div>
   </main>
-
 {% endblock %}
