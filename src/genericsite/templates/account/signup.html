@@ -1,20 +1,30 @@
 {% extends "account/base.html" %}
-{% load i18n %}
+{% load i18n genericsite %}
 {% block title %}{% trans "Signup" %}
 {% endblock %}
-{% block content %}
-  <main class="container-lg">
-    <h1>{% trans "Sign Up" %}</h1>
-    <p>{% blocktrans %}Already have an account? Then please
-      <a href="{{ login_url }}">sign in</a>.{% endblocktrans %}</p>
-    <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
-      {% csrf_token %}
-      {{ form.as_p }}
-      {% if redirect_field_value %}
-        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
-      {% endif %}
-      <button type="submit">{% trans "Sign Up" %}
-        &raquo;</button>
-    </form>
+{% block content %}{% sitevar "bootstrap_container_class" as bootstrap_container_class %}
+  <main class="{{bootstrap_container_class}}">
+    <div class="col-md-6">
+      {% include "genericsite/includes/messages.html" %}
+      <h1>{% trans "Sign Up" %}</h1>
+      <p>{% blocktrans trimmed %}Already have an account? Then please
+        <a href="{{ login_url }}">sign in</a>.{% endblocktrans %}</p>
+      <form class="signup{% if form.is_bound %} was-validated{% endif %}" id="signup_form" method="post" action="{% url 'account_signup' %}">
+        {% csrf_token %}
+        {% if redirect_field_value %}
+          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+        {% endif %}
+        {% for field in form %}
+          <div class="form-floating mb-3">
+            {{field|add_classes:"form-control"}}
+            <label for="{{field.id_for_label}}" class="form-label">{{field.label}}</label>
+            {% for err in field.errors %} <div class="invalid-feedback">{{err}}</div> {% endfor %}
+          </div>
+        {% endfor %}
+        <p>
+          <button class="btn btn-primary" type="submit"> {% trans "Sign Up" %} </button>
+        </p>
+      </form>
+    </div>
   </main>
 {% endblock %}
