@@ -1,6 +1,6 @@
 [project]
 name = "django-genericsite"
-version = "0.0.1"
+dynamic = ["version"]
 authors = [{ name = "Vince Veselosky", email = "vince@veselosky.com" }]
 description = "basic templates for Django's generic views to produce a decent-looking website with minimal effort"
 readme = "README.md"
@@ -43,3 +43,6 @@ dev = [
 # specify a file pattern in MANIFEST.in to collect them.
 requires = ["setuptools>=65.0", "setuptools-scm>=7.0.5", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = { attr = "genericsite.__version__" }
