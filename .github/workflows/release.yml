@@ -12,6 +12,8 @@ jobs:
   create_release:
     runs-on: ubuntu-22.04
     needs: run_tests
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out the code
         uses: actions/checkout@v3
