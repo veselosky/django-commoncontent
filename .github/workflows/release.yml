@@ -6,14 +6,15 @@ on:
   workflow_dispatch:
 
 jobs:
+  run_tests:
+    uses: ./.github/workflows/test.yml
+
   create_release:
     runs-on: ubuntu-22.04
+    needs: run_tests
     steps:
       - name: Check out the code
         uses: actions/checkout@v3
-
-      - name: Run tests
-        uses: ./.github/workflows/test.yml
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
