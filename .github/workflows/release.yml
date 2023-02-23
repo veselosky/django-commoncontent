@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Run tests
-        uses: .github/workflows/test.yml
+        uses: ./.github/workflows/test.yml
 
       - name: Check out the code
         uses: actions/checkout@v3
