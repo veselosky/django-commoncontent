@@ -11,8 +11,13 @@ from pathlib import Path
 
 def devsetup(rebuild=False):
     """Set up an environment for local development."""
-    this = Path(sys.argv[0]).resolve(strict=True)
-    venvdir = this.parent / "venv"
+    this = Path(__file__).resolve(strict=True)
+    venvdir = this.parent / ".venv"
+    project_dir = this.parent
+
+    def _run(*args):
+        subprocess.check_call(args, cwd=str(project_dir))
+
     if rebuild:
         # Nuke the venv and recreate
         print("Rebuilding virtualenv")
@@ -22,27 +27,31 @@ def devsetup(rebuild=False):
         venv.create(str(venvdir), with_pip=True, prompt="genericsite")
 
     python = venvdir / "bin" / "python"
+    activate = f"source {venvdir}/bin/activate"
+    if sys.platform == "win32":
+        python = venvdir / "Scripts" / "python.exe"
+        activate = f"{venvdir}\Scripts\Activate.ps1 or {venvdir}\Scripts\activate.bat"
 
     # Upgrade pip in virtualenv. Need pip >= 22.1 for -e with pyproject.toml
     # 3.8's pip won't cut it.
     print("Upgrading virtualenv to latest pip")
-    subprocess.run(shlex.split(f"{python} -m pip install -q -U pip wheel"))
+    _run(python, "-m", "pip", "install", "-q", "--upgrade", "pip", "wheel")
 
     # Run pip install -e .[dev]
     #   - Installs requirements from pyproject.toml, not requirements.txt
     print("Installing requirements. May take a bit. Grab a coffee.")
-    subprocess.run([python, "-m", "pip", "install", "-e", ".[dev]"])
+    _run(python, "-m", "pip", "install", "-e", ".[dev]")
 
     # If no .env, copy example.env to .env
-    # dotenv = this.parent / ".env"
+    # dotenv = project_dir / ".env"
     # if not dotenv.exists():
-    #     shutil.copy(this.parent.joinpath("example.env"), dotenv)
+    #     shutil.copy(project_dir.joinpath("example.env"), dotenv)
 
     # Create the dev database
     print("Applying database migrations")
-    subprocess.run([python, "manage.py", "migrate"])
+    _run(python, "manage.py", "migrate")
 
-    print("Now activate your virtualenv using: source venv/bin/activate")
+    print(f"Now activate your virtualenv using: {activate}")
 
 
 def django_command(args=None):
