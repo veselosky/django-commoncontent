@@ -35,6 +35,7 @@ LOGIN_REDIRECT_URL = "/"
 
 INSTALLED_APPS = [
     "genericsite",
+    "django_extensions",
     # 3rd party apps for "full" usage style
     "allauth",
     "allauth.account",
@@ -174,14 +175,6 @@ if DEBUG:
             "127.0.0.1",
         ]
         # See also urls.py for debug_toolbar urls
-    except ImportError:
-        # Dev tools are optional
-        pass
-
-    try:
-        import django_extensions
-
-        INSTALLED_APPS.append("django_extensions")
     except ImportError:
         # Dev tools are optional
         pass
