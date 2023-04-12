@@ -9,15 +9,6 @@
       "command": "${command:python.interpreterPath} manage.py shell_plus",
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": []
-    },
-    {
-      "label": "Upgrade Requirements",
-      "type": "shell",
-      "command": "${command:python.interpreterPath} manage.py pipsync --upgrade",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
     }
   ]
 }
