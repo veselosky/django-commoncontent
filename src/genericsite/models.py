@@ -5,17 +5,18 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db import models
+from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.timezone import get_current_timezone, make_aware, now
-from django.utils.translation import gettext_lazy as _, to_locale
-from django.utils import timezone
-from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import to_locale
 from easy_thumbnails.fields import ThumbnailerImageField
 from easy_thumbnails.files import get_thumbnailer
 from taggit.managers import TaggableManager
 from tinymce.models import HTMLField
 
-from genericsite.schemas import OpenGraph, OGArticle, ImageProp
+from genericsite.schemas import ImageProp, OGArticle, OpenGraph
 
 # Transform "en-us" to "en_US"
 DEFAULT_LOCALE = to_locale(settings.LANGUAGE_CODE)
@@ -58,6 +59,48 @@ class SiteVarQueryset(models.QuerySet):
 
 
 class SiteVar(models.Model):
+    """
+    Site-specific variables are stored here. All site variable are injected into
+    template contexts using the generic site context processor in
+    ``genericsite.apps.context_defaults``. You can store any variables for your own
+    site. The variables below are used by the included generic templates.
+
+    - ``base_template`` - The base template to use for generic pages. Defaults to
+      ``genericsite/base.html``.
+    - ``copyright_holder`` - Custom name for the copyright holder if using the default
+      copyright notice. Falls back to ``site.name`` if not provided.
+    - ``copyright_notice`` - HTML to include in the copyright notice section of the
+      footer (replaces the default copyright notice).
+    - ``custom_stylesheet`` - A site-specific CSS file. This is pulled into the
+      ``extra_head`` block after bootstrap and genericsite's CSS, so you can use it to
+      override default styles and customize the look and feel of each site. It is
+      included using ``{% static custom_stylesheet %}`` so the value should be relative
+      to the STATIC_ROOT.
+    - ``default_icon`` - Name of a Bootstrap icon to use by default if the object
+      provides none.
+    - ``detail_precontent_template`` - Default template to use for the ``precontent``
+      block for detail pages.
+    - ``detail_content_template`` - Default template to use for the ``content`` block
+      for detail pages.
+    - ``detail_postcontent_template`` - Default template to use for the ``postcontent``
+      block for detail pages.
+    - ``footer_template`` - Default template to use for the ``footer`` block.
+    - ``header_template`` - Default template to use for the ``header`` block.
+    - ``list_postcontent_template`` - Default template to use for the ``postcontent``
+      block for list pages.
+    - ``list_precontent_template`` - Default template to use for the ``precontent``
+      block for list pages.
+    - ``list_content_template`` - Default template to use for the ``content`` block for
+      list pages.
+    - ``paginate_by`` - Items per page on list pages, same as Django's ListView, see
+      `pagination <https://docs.djangoproject.com/en/dev/ref/paginator/>`_ in the
+      Django docs.
+    - ``paginate_orphans`` - Same as Django's ListView, see
+      `pagination <https://docs.djangoproject.com/en/dev/ref/paginator/>`_ in the
+      Django docs.
+
+    """
+
     class Meta:
         base_manager_name = "objects"
         unique_together = ("site", "name")
@@ -76,7 +119,7 @@ class SiteVar(models.Model):
     objects = SiteVarQueryset.as_manager()
 
     def __str__(self):
-        return self.value
+        return f"{self.name}={self.value} ({self.site.domain})"
 
     @classmethod
     def For(cls, site: T.Union[Site, int]) -> models.Manager:
@@ -222,6 +265,7 @@ class Attachment(MediaObject):
 # Content Models
 ######################################################################################
 
+
 # This vocabulary taken from IPTC standards, upon which https://schema.org/creativeWork
 # is based.
 class Status(models.TextChoices):
@@ -247,6 +291,11 @@ class AbstractOpenGraph(models.Model):
         choices=Status.choices,
         default=Status.USABLE,
         db_index=True,
+        help_text=_(
+            'Must be "usable" to appear on the site. '
+            'See <a href="https://schema.org/creativeWorkStatus">Schema.org</a> '
+            "for details."
+        ),
     )
     site = models.ForeignKey(
         Site,
@@ -269,11 +318,24 @@ class AbstractOpenGraph(models.Model):
         help_text=_("Image for social sharing"),
         related_name="+",
     )
-    base_template = models.CharField(_("base template"), max_length=255, blank=True)
+    base_template = models.CharField(
+        _("base template"),
+        max_length=255,
+        blank=True,
+        help_text=_(
+            "Replaces the standard base.html root layout. This allows you to have a "
+            "totally custom layout for a page."
+        ),
+    )
     content_template = models.CharField(
         _("content body template"),
         max_length=255,
         blank=True,
+        help_text=_(
+            "The template that renders the content body within the page layout "
+            "provided by the base.html. This only affects the 'main' section of "
+            "the page, the rest of the layout is inherited from base.html."
+        ),
     )
     # From https://schema.org/articleBody or https://schema.org/text
     body = HTMLField(_("body content"), blank=True)
@@ -319,7 +381,7 @@ class AbstractOpenGraph(models.Model):
         _("opengraph type"),
         max_length=50,
         default="website",
-        help_text=_("Open Graph type, see https://ogp.me"),
+        help_text=_("Open Graph type, see <a href='https://ogp.me'>https://ogp.me</a>"),
     )
     seo_title = models.CharField(_("SEO title override"), max_length=255, blank=True)
     seo_description = models.CharField(
