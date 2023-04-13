@@ -22,8 +22,8 @@ video: https://ogp.me/ns/video#
   {% block opengraph %}{{ opengraph }}{% endblock %}
   {% block extra_head %}
   <link rel="stylesheet" href="{% static 'generic.css' %}">
+  {% if custom_stylesheet %}<link rel="stylesheet" href="{% static custom_stylesheet %}">{% endif %}
   {% endblock %}
-  {% sitevar "bootstrap_container_class" as bootstrap_container_class %}
 </head>
 <body class="{% block body_class %}{% endblock body_class %}">
   {% block header %}

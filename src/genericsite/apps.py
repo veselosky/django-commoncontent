@@ -1,4 +1,4 @@
-from django.apps import apps, AppConfig
+from django.apps import AppConfig, apps
 from django.utils.translation import gettext_lazy as _
 
 
@@ -58,6 +58,23 @@ class GenericsiteConfig(AppConfig):
             # May not be configured
             return "<!-- MORE -->"
 
+    def as_dict(self) -> dict:
+        return {
+            "base_template": self.base_template,
+            "bootstrap_container_class": self.bootstrap_container_class,
+            "default_icon": self.default_icon,
+            "detail_content_template": self.detail_content_template,
+            "detail_precontent_template": self.detail_precontent_template,
+            "detail_postcontent_template": self.detail_postcontent_template,
+            "footer_template": self.footer_template,
+            "header_template": self.header_template,
+            "list_content_template": self.list_content_template,
+            "list_postcontent_template": self.list_postcontent_template,
+            "list_precontent_template": self.list_precontent_template,
+            "paginate_by": self.paginate_by,
+            "paginate_orphans": self.paginate_orphans,
+        }
+
     def ready(self):
         # Add genericsite thumbnail aliases to the easy_thumbnails aliases.
         # This makes them accessible on thumbnail image fields.
@@ -99,12 +116,13 @@ class GenericsiteConfig(AppConfig):
 # A context processor to add our vars to template contexts:
 def context_defaults(request):
     """Supply default context variables for GenericSite templates"""
-    var = request.site.vars
-    return {
-        "header_template": var.get_value("header_template"),
-        "footer_template": var.get_value("footer_template"),
-        "precontent_template": var.get_value("detail_precontent_template"),
-        "postcontent_template": var.get_value("detail_postcontent_template"),
-        "content_template": var.get_value("detail_content_template"),
-        "bootstrap_container_class": var.get_value("bootstrap_container_class"),
-    }
+    # User could have installed a custom appconfig rather than using the default one
+    # above, so always fetch it from Django.
+    conf = apps.get_app_config("genericsite")
+    # Grab all the default configurations as a dictionary.
+    gvars = conf.as_dict()
+    # Grab all the sitvars from the DB and add them to the dictionary, overriding any
+    # fallback defaults.
+    gvars.update(request.site.vars.all().values_list("name", "value"))
+    # And don't forget to return the value!!!
+    return gvars

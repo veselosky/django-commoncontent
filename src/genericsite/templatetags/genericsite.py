@@ -1,7 +1,7 @@
 from django import template
 from django.contrib.sites.shortcuts import get_current_site
-from django.utils.html import format_html
 from django.utils import timezone
+from django.utils.html import format_html
 
 from genericsite.models import Menu, SectionMenu, SiteVar
 
@@ -155,30 +155,3 @@ def opengraph_image(context, og):
         if img := og.section.og_image:
             return img
     return None
-
-
-@register.simple_tag(takes_context=True)
-def sitevar(context, name, default=""):
-    """Retrieves the value of a SiteVar from the database, either printing it
-    or storing it in a variable.
-
-    ::
-
-        {% sitevar "custom" as custom %}
-        This site is called {% sitevar "brand" %}. It has a custom var: {{custom}}
-    """
-    site = get_current_site(context["request"])
-    return SiteVar.For(site).get_value(name, default)
-
-
-@register.simple_tag(takes_context=True)
-def sitevars(context):
-    """Retrieves a dict of all site vars for the current site, storing it in a variable.
-
-    ::
-
-        {% sitevars as sv %}
-        This site is called {{sv.brand}}. It has a custom var: {{sv.custom}}
-    """
-    site = get_current_site(context["request"])
-    return dict(site.vars.all().values_list("name", "value"))

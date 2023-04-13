@@ -2,8 +2,8 @@
 {% load i18n account genericsite %}
 {% block title %}{% trans "Confirm E-mail Address" %}
 {% endblock title %}
-{% block content %}{% sitevar "bootstrap_container_class" %}
-  <main class="{% sitevar "bootstrap_container_class" %}">
+{% block content %}{{ bootstrap_container_class }}
+  <main class="{{ bootstrap_container_class }}">
     <div class="col-md-6">
       {% include "genericsite/includes/messages.html" %}
       <h1>{% trans "Confirm E-mail Address" %}</h1>
