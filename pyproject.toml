@@ -27,6 +27,7 @@ dev = [
     "django-allauth >= 0.51.0",
     "django-debug-toolbar",
     "django_extensions",
+    "django-environ",
     "isort",
     "pip-tools",
     "pycodestyle",
