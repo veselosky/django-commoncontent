@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Django",
+      "name": "Runserver",
       "type": "python",
       "request": "launch",
       "program": "${workspaceFolder}/manage.py",
@@ -14,7 +14,7 @@
       "justMyCode": true
     },
     {
-      "name": "Python: Debug Tests",
+      "name": "Tests Debug",
       "type": "python",
       "request": "launch",
       "program": "${file}",
