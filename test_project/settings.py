@@ -27,7 +27,6 @@ DEBUG = True
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 ALLOWED_HOSTS = []
-SITE_ID = 1
 LOGIN_REDIRECT_URL = "/"
 
 
@@ -164,6 +163,8 @@ TINYMCE_DEFAULT_CONFIG = {
 #######################################################################
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
+    #    SITE_ID = 1
+
     # Use the basic storage with no manifest
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
     try:
