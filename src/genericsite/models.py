@@ -67,6 +67,7 @@ class SiteVar(models.Model):
 
     - ``base_template`` - The base template to use for generic pages. Defaults to
       ``genericsite/base.html``.
+    - ``brand`` - Site's brand name. Uses Site.name if not set.
     - ``copyright_holder`` - Custom name for the copyright holder if using the default
       copyright notice. Falls back to ``site.name`` if not provided.
     - ``copyright_notice`` - HTML to include in the copyright notice section of the
@@ -92,6 +93,7 @@ class SiteVar(models.Model):
       block for list pages.
     - ``list_content_template`` - Default template to use for the ``content`` block for
       list pages.
+    - ``logo`` - The URL to your site's logo image.
     - ``paginate_by`` - Items per page on list pages, same as Django's ListView, see
       `pagination <https://docs.djangoproject.com/en/dev/ref/paginator/>`_ in the
       Django docs.
