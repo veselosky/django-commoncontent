@@ -1,6 +1,6 @@
 {% load genericsite i18n %}
 <div class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
-  <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+  <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
     {% if logo %}<img src="{{ logo }}" alt="{{ request.site.name }}" />{% endif %}
     <span class="fs-4">{% firstof brand request.site.name %}</span>
   </a>
