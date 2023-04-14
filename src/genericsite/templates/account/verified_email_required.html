@@ -2,7 +2,7 @@
 {% load i18n genericsite %}
 {% block title %}{% trans "Verify Your E-mail Address" %}
 {% endblock %}
-{% block content %}{% sitevar "bootstrap_container_class" as bootstrap_container_class %}
+{% block content %}
   <main class="{{bootstrap_container_class}}">
     <div class="col-md-6">
       {% include "genericsite/includes/messages.html" %}

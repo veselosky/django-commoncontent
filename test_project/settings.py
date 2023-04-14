@@ -9,12 +9,19 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-
 from pathlib import Path
+
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 VAR = BASE_DIR / "var"
+
+# Get environment settings
+env = environ.Env()
+DOTENV = BASE_DIR / ".env"
+if DOTENV.exists() and not env("IGNORE_ENV_FILE", default=False):
+    environ.Env.read_env(DOTENV)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -27,7 +34,7 @@ DEBUG = True
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 ALLOWED_HOSTS = []
-SITE_ID = 1
+SITE_ID = env("SITE_ID", cast=int, default=None)
 LOGIN_REDIRECT_URL = "/"
 
 
@@ -35,6 +42,7 @@ LOGIN_REDIRECT_URL = "/"
 
 INSTALLED_APPS = [
     "genericsite",
+    "django_extensions",
     # 3rd party apps for "full" usage style
     "allauth",
     "allauth.account",
@@ -110,6 +118,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images) and Media
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
+STATICFILES_DIRS = [BASE_DIR / "test_project" / "static"]
 STATIC_URL = "static/"
 STATIC_ROOT = VAR / "static"
 MEDIA_ROOT = VAR / "media"
@@ -163,6 +172,7 @@ TINYMCE_DEFAULT_CONFIG = {
 #######################################################################
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
+
     # Use the basic storage with no manifest
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
     try:
@@ -174,14 +184,6 @@ if DEBUG:
             "127.0.0.1",
         ]
         # See also urls.py for debug_toolbar urls
-    except ImportError:
-        # Dev tools are optional
-        pass
-
-    try:
-        import django_extensions
-
-        INSTALLED_APPS.append("django_extensions")
     except ImportError:
         # Dev tools are optional
         pass

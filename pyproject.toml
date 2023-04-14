@@ -8,6 +8,7 @@ requires-python = ">=3.8"
 dependencies = [
     "django >= 3.2, < 5.0",
     "django-bootstrap-icons >= 0.7.8",
+    "docutils >= 0.19",
     "pillow >= 2.3.0",
     "easy-thumbnails >= 2.8.4",
     "django-taggit >= 3.0.0, < 4.0",
@@ -26,6 +27,8 @@ dev = [
     "django-allauth >= 0.51.0",
     "django-debug-toolbar",
     "django_extensions",
+    "django-environ",
+    "isort",
     "pip-tools",
     "pycodestyle",
     "pytest",
