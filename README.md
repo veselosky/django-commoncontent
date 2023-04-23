@@ -45,6 +45,7 @@ Note that the Python used to run this script will be the one used in your virtua
 Add the following to your INSTALLED_APPS:
 
 ```python
+    # genericsite must be ABOVE standard Django apps
     "genericsite",
     # 3rd party apps used by GenericSite
     "django_bootstrap_icons",
@@ -52,8 +53,12 @@ Add the following to your INSTALLED_APPS:
     "taggit",
     "tinymce",
     # Standard Django stuff used by GenericSite
+    "django.contrib.auth",
+    "django.contrib.admin",
     "django.contrib.contenttypes",
     "django.contrib.sites",
+    # genericsite.adminoverride must be BELOW standard Django apps
+    "genericsite.adminoverride",
 ```
 
 Add `genericsite.apps.context_defaults` to your context processors.

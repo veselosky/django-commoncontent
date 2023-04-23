@@ -60,6 +60,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.staticfiles",
+    # Below contrib.admin so it can unregister default admins
+    "genericsite.adminoverride",
 ]
 
 MIDDLEWARE = [
