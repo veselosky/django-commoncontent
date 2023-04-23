@@ -106,8 +106,8 @@ class SiteVar(models.Model):
     class Meta:
         base_manager_name = "objects"
         unique_together = ("site", "name")
-        verbose_name = _("sitevar")
-        verbose_name_plural = _("sitevars")
+        verbose_name = _("site variable")
+        verbose_name_plural = _("site variables")
 
     site = models.ForeignKey(
         "sites.Site",
