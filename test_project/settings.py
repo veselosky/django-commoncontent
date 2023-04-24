@@ -165,7 +165,7 @@ TINYMCE_DEFAULT_CONFIG = {
         {"title": "Left", "value": "float-left"},
         {"title": "Right", "value": "float-right"},
     ],
-    "image_list": "/mce/recent_images.json",
+    "image_list": "/images/recent.json",
 }
 
 #######################################################################
