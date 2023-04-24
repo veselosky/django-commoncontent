@@ -5,13 +5,18 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.syndication.views import Feed
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.feedgenerator import Rss201rev2Feed
+from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
-from genericsite.models import Article, HomePage, Page, Section
+from easy_thumbnails.files import get_thumbnailer
+
+from genericsite.models import Article, HomePage, Image, Page, Section
 
 
+######################################################################################
 class OpenGraphDetailView(DetailView):
     template_name_field = "base_template"
 
@@ -50,6 +55,7 @@ class OpenGraphDetailView(DetailView):
         return names
 
 
+######################################################################################
 class ArticleDetailView(OpenGraphDetailView):
     def get_object(self):
         return Article.objects.live().get(
@@ -59,6 +65,7 @@ class ArticleDetailView(OpenGraphDetailView):
         )
 
 
+######################################################################################
 class PageDetailView(OpenGraphDetailView):
     def get_object(self):
         return Page.objects.live().get(
@@ -67,6 +74,7 @@ class PageDetailView(OpenGraphDetailView):
         )
 
 
+######################################################################################
 class OpenGraphListView(ListView):
     """View for pages that present a list of articles (e.g. SectionPage, HomePage).
 
@@ -160,10 +168,12 @@ class OpenGraphListView(ListView):
         return names
 
 
+######################################################################################
 class ArticleListView(OpenGraphListView):
     model = Article
 
 
+######################################################################################
 class SectionView(ArticleListView):
     allow_empty: bool = True
     object = None
@@ -175,6 +185,7 @@ class SectionView(ArticleListView):
         )
 
 
+######################################################################################
 class HomePageView(ArticleListView):
     allow_empty: bool = True
 
@@ -203,6 +214,7 @@ class HomePageView(ArticleListView):
         return context
 
 
+######################################################################################
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = "registration/profile.html"
 
@@ -216,6 +228,9 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         return context
 
 
+######################################################################################
+# FEEDS AND APIS
+######################################################################################
 # Custom feeds are not very well documented. This snippet shows how to
 # do this: https://djangosnippets.org/snippets/2202/
 class ContentFeed(Rss201rev2Feed):
@@ -231,6 +246,7 @@ class ContentFeed(Rss201rev2Feed):
         handler.addQuickElement("content:encoded", item["content_encoded"])
 
 
+######################################################################################
 class SiteFeed(Feed):
     "RSS feed of site Article Pages"
     feed_type = ContentFeed
@@ -294,6 +310,7 @@ class SiteFeed(Feed):
         return item.excerpt
 
 
+######################################################################################
 class SectionFeed(SiteFeed):
     "Feed of Articles in a specified section"
 
@@ -324,3 +341,26 @@ class SectionFeed(SiteFeed):
     def items(self, obj):
         paginate_by = obj.site.vars.get_value("paginate_by", 15, asa=int)
         return Article.objects.live().filter(section=obj)[:paginate_by]
+
+
+######################################################################################
+class TinyMCEImageListView(ListView):
+    """This view provides an image list for the TinyMCE editor for easy insertion."""
+
+    model = Image
+    ordering = "-uploaded_dt"
+    paginate_by = 25
+
+    def render_to_response(
+        self, context: T.Dict[str, T.Any], **response_kwargs: T.Any
+    ) -> HttpResponse:
+        images = context.get("page_obj")
+        if images is None:
+            images = context.get("object_list")
+        return JsonResponse(
+            [
+                {"title": i.title, "value": get_thumbnailer(i.image_file)["large"].url}
+                for i in images
+            ],
+            safe=False,
+        )

@@ -60,6 +60,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.staticfiles",
+    # Below contrib.admin so it can unregister default admins
+    "genericsite.adminoverride",
 ]
 
 MIDDLEWARE = [
@@ -163,7 +165,7 @@ TINYMCE_DEFAULT_CONFIG = {
         {"title": "Left", "value": "float-left"},
         {"title": "Right", "value": "float-right"},
     ],
-    "image_list": "/mce/recent_images.json",
+    "image_list": "/images/recent.json",
 }
 
 #######################################################################

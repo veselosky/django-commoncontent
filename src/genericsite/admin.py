@@ -1,5 +1,4 @@
 from django.contrib import admin
-
 from easy_thumbnails.fields import ThumbnailerImageField
 from easy_thumbnails.widgets import ImageClearableFileInput
 
@@ -7,14 +6,15 @@ from genericsite.models import (
     Article,
     HomePage,
     Image,
+    Link,
+    Menu,
     Page,
     Section,
     SiteVar,
-    Link,
-    Menu,
 )
 
 
+#######################################################################################
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
     formfield_overrides = {
@@ -37,12 +37,14 @@ class ImageAdmin(admin.ModelAdmin):
     )
 
 
+#######################################################################################
 @admin.register(SiteVar)
 class SiteVarAdmin(admin.ModelAdmin):
     list_display = ("name", "value", "site")
     list_filter = ("site",)
 
 
+#######################################################################################
 class OpenGraphAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     date_hierarchy = "published_time"
@@ -88,9 +90,11 @@ class OpenGraphAdmin(admin.ModelAdmin):
     )
 
 
+#######################################################################################
 @admin.register(Article)
 class ArticleAdmin(OpenGraphAdmin):
     list_display = ("title", "section", "published_time", "site", "status")
+    list_filter = ("section", "site", "status")
     raw_id_fields = ["image_set"]
     fieldsets = (
         (
@@ -135,16 +139,19 @@ class ArticleAdmin(OpenGraphAdmin):
     )
 
 
+#######################################################################################
 @admin.register(Section)
 class SectionAdmin(OpenGraphAdmin):
     pass
 
 
+#######################################################################################
 @admin.register(Page)
 class PageAdmin(OpenGraphAdmin):
     pass
 
 
+#######################################################################################
 @admin.register(HomePage)
 class HomePageAdmin(OpenGraphAdmin):
     prepopulated_fields = {"slug": ("admin_name",)}
@@ -189,6 +196,7 @@ class HomePageAdmin(OpenGraphAdmin):
     )
 
 
+#######################################################################################
 class LinkInline(admin.StackedInline):
     extra: int = 1
     model = Link

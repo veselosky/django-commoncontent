@@ -1,0 +1,15 @@
+:root {
+  --bs-font-monospace: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas,
+    "DejaVu Sans Mono", monospace;
+  --bs-body-font-family: var(--bs-font-monospace);
+}
+
+/* Article
+For readability, line length for text blocks should be restricted to ~80 chars.
+https://baymard.com/blog/line-length-readability
+Because we are using a monospace font, we get fewer characters per em than a
+typical variable space font, so we use a wider constraint than generic.css
+*/
+article {
+  max-width: 50em;
+}

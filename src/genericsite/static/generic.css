@@ -32,7 +32,6 @@ https://css-tricks.com/line-clampin/
 For readability, line length for text blocks should be restricted to ~80 chars.
 https://baymard.com/blog/line-length-readability
 */
-.article-full,
-.article-excerpt {
+article {
   max-width: 34em;
 }
