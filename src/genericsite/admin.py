@@ -94,6 +94,7 @@ class OpenGraphAdmin(admin.ModelAdmin):
 @admin.register(Article)
 class ArticleAdmin(OpenGraphAdmin):
     list_display = ("title", "section", "published_time", "site", "status")
+    list_filter = ("section", "site", "status")
     raw_id_fields = ["image_set"]
     fieldsets = (
         (
