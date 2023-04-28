@@ -596,7 +596,12 @@ class Menu(models.Model):
 
     site = models.ForeignKey(Site, on_delete=models.CASCADE, verbose_name=_("site"))
     admin_name = models.CharField(_("admin name"), max_length=255)
-    slug = models.SlugField(_("slug"))
+    slug = models.SlugField(
+        _("slug"),
+        help_text=_(
+            "Slug 'main-nav' will automatically be included in generic headers."
+        ),
+    )
     title = models.CharField(_("title"), max_length=255, blank=True)
 
     def __str__(self):
