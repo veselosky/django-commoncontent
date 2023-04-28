@@ -437,6 +437,14 @@ class AbstractOpenGraph(models.Model):
         return excerpt
 
     @property
+    def has_excerpt(self):
+        """True if there is more body text to read after the excerpt. False if
+        excerpt == body.
+        """
+        config = apps.get_app_config("genericsite")
+        return config.pagebreak_separator in self.body
+
+    @property
     def icon_name(self):
         "name of an icon to represent this object"
         return self.custom_icon or self.site.vars.get_value("default_icon", "file-text")
