@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.http import HttpResponseNotFound
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -49,6 +50,12 @@ class TestSectionView(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, section.title)
 
+    def test_section_not_found(self):
+        resp = self.client.get(
+            reverse("section_page", kwargs={"section_slug": "section-not-created"})
+        )
+        self.assertIsInstance(resp, HttpResponseNotFound)
+
 
 class TestArticlesAndFeeds(TestCase):
     @classmethod
@@ -91,6 +98,18 @@ class TestArticlesAndFeeds(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, self.article.title)
         self.assertContains(resp, '''property="og:type" content="article"''')
+
+    def test_article_not_found(self):
+        resp = self.client.get(
+            reverse(
+                "article_page",
+                kwargs={
+                    "section_slug": "test-section",
+                    "article_slug": "article-not-published",
+                },
+            )
+        )
+        self.assertIsInstance(resp, HttpResponseNotFound)
 
     def test_site_rss(self):
         resp = self.client.get(reverse("site_feed"))
