@@ -11,7 +11,7 @@ class TemporaryRedirectFallbackMiddleware(RedirectFallbackMiddleware):
 
 
 class PermanentRedirectFallbackMiddleware(RedirectFallbackMiddleware):
-    """For completeness, and empty subclass so users can always get their middleware
+    """For completeness, an empty subclass so users can always get their middleware
     from genericsite.
     """
 
