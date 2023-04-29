@@ -437,6 +437,14 @@ class AbstractOpenGraph(models.Model):
         return excerpt
 
     @property
+    def has_excerpt(self):
+        """True if there is more body text to read after the excerpt. False if
+        excerpt == body.
+        """
+        config = apps.get_app_config("genericsite")
+        return config.pagebreak_separator in self.body
+
+    @property
     def icon_name(self):
         "name of an icon to represent this object"
         return self.custom_icon or self.site.vars.get_value("default_icon", "file-text")
@@ -596,7 +604,12 @@ class Menu(models.Model):
 
     site = models.ForeignKey(Site, on_delete=models.CASCADE, verbose_name=_("site"))
     admin_name = models.CharField(_("admin name"), max_length=255)
-    slug = models.SlugField(_("slug"))
+    slug = models.SlugField(
+        _("slug"),
+        help_text=_(
+            "Slug 'main-nav' will automatically be included in generic headers."
+        ),
+    )
     title = models.CharField(_("title"), max_length=255, blank=True)
 
     def __str__(self):

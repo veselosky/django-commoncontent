@@ -6,6 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.syndication.views import Feed
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.feedgenerator import Rss201rev2Feed
@@ -58,19 +59,23 @@ class OpenGraphDetailView(DetailView):
 ######################################################################################
 class ArticleDetailView(OpenGraphDetailView):
     def get_object(self):
-        return Article.objects.live().get(
-            site=get_current_site(self.request),
-            section__slug=self.kwargs["section_slug"],
-            slug=self.kwargs["article_slug"],
+        return get_object_or_404(
+            Article.objects.live().filter(
+                site=get_current_site(self.request),
+                section__slug=self.kwargs["section_slug"],
+                slug=self.kwargs["article_slug"],
+            )
         )
 
 
 ######################################################################################
 class PageDetailView(OpenGraphDetailView):
     def get_object(self):
-        return Page.objects.live().get(
-            site=get_current_site(self.request),
-            slug=self.kwargs["page_slug"],
+        return get_object_or_404(
+            Page.objects.live().filter(
+                site=get_current_site(self.request),
+                slug=self.kwargs["page_slug"],
+            )
         )
 
 
@@ -179,9 +184,11 @@ class SectionView(ArticleListView):
     object = None
 
     def get_object(self):
-        return Section.objects.live().get(
-            site=get_current_site(self.request),
-            slug=self.kwargs["section_slug"],
+        return get_object_or_404(
+            Section.objects.live().filter(
+                site=get_current_site(self.request),
+                slug=self.kwargs["section_slug"],
+            )
         )
 
 
@@ -316,8 +323,10 @@ class SectionFeed(SiteFeed):
 
     def get_object(self, request, *args, **kwargs):
         "Return the CategoryPage for this feed"
-        return Section.objects.live().get(
-            site=request.site, slug=kwargs["section_slug"]
+        return get_object_or_404(
+            Section.objects.live().filter(
+                site=request.site, slug=kwargs["section_slug"]
+            )
         )
 
     def title(self, obj):

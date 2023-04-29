@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.messages",
+    "django.contrib.redirects",
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.staticfiles",
@@ -75,6 +76,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "genericsite.redirects.TemporaryRedirectFallbackMiddleware",
 ]
 
 ROOT_URLCONF = "test_project.urls"

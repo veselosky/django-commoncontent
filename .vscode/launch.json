@@ -21,7 +21,7 @@
       "purpose": ["debug-test"],
       "console": "integratedTerminal",
       "justMyCode": false,
-      "env": { "PYTEST_ADDOPTS": "--no-cov" }
+      "env": { "PYTEST_ADDOPTS": "--no-cov", "SITE_ID": "1" }
     }
   ]
 }
