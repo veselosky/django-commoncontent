@@ -79,38 +79,43 @@ class GenericsiteConfig(AppConfig):
         # Add genericsite thumbnail aliases to the easy_thumbnails aliases.
         # This makes them accessible on thumbnail image fields.
         from easy_thumbnails.alias import aliases
+        from easy_thumbnails.signal_handlers import generate_aliases_global
+        from easy_thumbnails.signals import saved_file
 
         # Landscape aliases, most common in genericsite and many designs
         if not aliases.get("hd1080p"):
-            aliases.set("hd1080p", {"size": (1920, 1080), "crop": True})
+            aliases.set("hd1080p", {"size": (1920, 1080), "crop": False})
         if not aliases.get("hd720p"):
-            aliases.set("hd720p", {"size": (1280, 720), "crop": True})
+            aliases.set("hd720p", {"size": (1280, 720), "crop": False})
         # Ref https://buffer.com/library/ideal-image-sizes-social-media-posts/
         # Recommended size for sharing social images on FB, and close enough for others
         if not aliases.get("opengraph"):
-            aliases.set("opengraph", {"size": (1200, 630), "crop": True})
+            aliases.set("opengraph", {"size": (1200, 630), "crop": "smart"})
         if not aliases.get("large"):
-            aliases.set("large", {"size": (960, 540), "crop": True})
+            aliases.set("large", {"size": (960, 540), "crop": False})
         if not aliases.get("medium"):
-            aliases.set("medium", {"size": (400, 225), "crop": True})
+            aliases.set("medium", {"size": (400, 225), "crop": False})
         if not aliases.get("small"):
-            aliases.set("small", {"size": (160, 90), "crop": True})
+            aliases.set("small", {"size": (160, 90), "crop": False})
 
         # Portrait orientation aliases
         if not aliases.get("portrait_small"):
-            aliases.set("portrait_small", {"size": (90, 160), "crop": True})
+            aliases.set("portrait_small", {"size": (90, 160), "crop": False})
         if not aliases.get("portrait_medium"):
-            aliases.set("portrait_medium", {"size": (225, 400), "crop": True})
+            aliases.set("portrait_medium", {"size": (225, 400), "crop": False})
         if not aliases.get("portrait_large"):
-            aliases.set("portrait_large", {"size": (540, 960), "crop": True})
+            aliases.set("portrait_large", {"size": (540, 960), "crop": False})
         # Buffer post recommends this size for Pinterest
         if not aliases.get("portrait_cover"):
-            aliases.set("portrait_cover", {"size": (1000, 1500), "crop": True})
+            aliases.set("portrait_cover", {"size": (1000, 1500), "crop": False})
         # Buffer post recommends this size for Insta/FB
         if not aliases.get("portrait_social"):
-            aliases.set("portrait_social", {"size": (1080, 1350), "crop": True})
+            aliases.set("portrait_social", {"size": (1080, 1350), "crop": "smart"})
         if not aliases.get("portrait_hd"):
-            aliases.set("portrait_hd", {"size": (1080, 1920), "crop": True})
+            aliases.set("portrait_hd", {"size": (1080, 1920), "crop": False})
+
+        # Auto-generate thumbs on file upload
+        saved_file.connect(generate_aliases_global)
 
 
 # A context processor to add our vars to template contexts:
