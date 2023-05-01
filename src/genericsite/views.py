@@ -366,9 +366,18 @@ class TinyMCEImageListView(ListView):
         images = context.get("page_obj")
         if images is None:
             images = context.get("object_list")
+
+        def preset(i):
+            if i.image_width < i.image_height:
+                return "portrait_large"
+            return "large"
+
         return JsonResponse(
             [
-                {"title": i.title, "value": get_thumbnailer(i.image_file)["large"].url}
+                {
+                    "title": i.title,
+                    "value": get_thumbnailer(i.image_file)[preset(i)].url,
+                }
                 for i in images
             ],
             safe=False,
