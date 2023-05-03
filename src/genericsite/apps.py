@@ -94,15 +94,15 @@ class GenericsiteConfig(AppConfig):
         if not aliases.get("large"):
             aliases.set("large", {"size": (960, 540), "crop": False})
         if not aliases.get("medium"):
-            aliases.set("medium", {"size": (400, 225), "crop": False})
+            aliases.set("medium", {"size": (400, 225), "crop": "smart"})
         if not aliases.get("small"):
-            aliases.set("small", {"size": (160, 90), "crop": False})
+            aliases.set("small", {"size": (160, 90), "crop": "smart"})
 
         # Portrait orientation aliases
         if not aliases.get("portrait_small"):
-            aliases.set("portrait_small", {"size": (90, 160), "crop": False})
+            aliases.set("portrait_small", {"size": (90, 160), "crop": "smart"})
         if not aliases.get("portrait_medium"):
-            aliases.set("portrait_medium", {"size": (225, 400), "crop": False})
+            aliases.set("portrait_medium", {"size": (225, 400), "crop": "smart"})
         if not aliases.get("portrait_large"):
             aliases.set("portrait_large", {"size": (540, 960), "crop": False})
         # Buffer post recommends this size for Pinterest
