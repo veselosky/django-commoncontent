@@ -42,6 +42,7 @@ LOGIN_REDIRECT_URL = "/"
 
 # Application definition
 INSTALLED_APPS = genericsite.apps.plus(
+    "django_extensions",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
