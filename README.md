@@ -42,34 +42,68 @@ Note that the Python used to run this script will be the one used in your virtua
 
 ## How to use it
 
-Add the following to your INSTALLED_APPS:
+Add the following to your `settings.py`:
 
 ```python
-    # genericsite must be ABOVE standard Django apps
-    "genericsite",
-    # 3rd party apps used by GenericSite
-    "django_bootstrap_icons",
-    "easy_thumbnails",
-    "taggit",
-    "tinymce",
-    # Standard Django stuff used by GenericSite
-    "django.contrib.auth",
-    "django.contrib.admin",
-    "django.contrib.contenttypes",
-    "django.contrib.sites",
-    # genericsite.adminoverride must be BELOW standard Django apps
-    "genericsite.adminoverride",
+import genericsite.apps
+INSTALLED_APPS = genericsite.apps.plus(
+  # Your apps here
+)
+MIDDLEWARE += [
+  "django.contrib.sites.middleware.CurrentSiteMiddleware",
+  "genericsite.redirects.TemporaryRedirectFallbackMiddleware",
+]
+THUMBNAIL_PROCESSORS = genericsite.apps.THUMBNAIL_PROCESSORS
+THUMBNAIL_WIDGET_OPTIONS = genericsite.apps.THUMBNAIL_WIDGET_OPTIONS
+THUMBNAIL_DEBUG = DEBUG
+TINYMCE_DEFAULT_CONFIG = genericsite.apps.TINYMCE_CONFIG
+
+# Add `genericsite.apps.context_defaults` to your context processors. You will also
+# need to add the request, auth, and messages context processors if not already there.
+# Probably looks like this:
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "genericsite.apps.context_defaults",
+            ],
+        },
+    },
+]
+
 ```
 
-Add `genericsite.apps.context_defaults` to your context processors.
+In your project's `urls.py`, insert the GenericSite URLs where you want them. To have
+GenericSite manage your home page and top-level pages, make it the LAST url pattern, and
+list it like this:
 
-Also ensure that your MIDDLWARE list includes
-`django.contrib.sites.middleware.CurrentSiteMiddleware` near the top.
+```python
+from genericsite import views as generic
 
-The app currently does not include a urls.py, but see the included test_project for
-examples.
-
-TODO: Add a default urls.py that can be `include`d.
+urlpatterns = [
+    # This needs to be above the "accounts/" pattern to be found (or you could mount
+    # your auth urls at some other path and skip this, it's included in the GenericSite
+    # urlconf).
+    path("accounts/profile/", generic.ProfileView.as_view(), name="account_profile"),
+    # GenericSite provides templates for auth pages
+    path("accounts/", include("django.contrib.auth.urls")),
+    # GenericSite also provides templates that work with django-allauth:
+    # path("accounts/", include("allauth.urls")),
+    # You need to add the admin yourself:
+    path("admin/", admin.site.urls),
+    # Admin docs are included in the GenericSite urlconf, don't add your own.
+    # TinyMCE urls are included in the GenericSite urlconf, too.
+    # All other urls are handed to GenericSite
+    path("", include("genericsite.urls")),
+]
+```
 
 TODO: When closer to "1.0" create a project template for use with startproject.
 
