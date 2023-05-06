@@ -126,8 +126,31 @@ def context_defaults(request):
     conf = apps.get_app_config("genericsite")
     # Grab all the default configurations as a dictionary.
     gvars = conf.as_dict()
-    # Grab all the sitvars from the DB and add them to the dictionary, overriding any
+
+    # Grab all the site vars from the DB and add them to the dictionary, overriding any
     # fallback defaults.
     gvars.update(request.site.vars.all().values_list("name", "value"))
+
+    # Set the content blocks based on whether the current view is a list or detail view
+    # (using a simple heuristic to determine listness.)
+    view = request.resolver_match.func
+    name = view.__name__
+    if hasattr(view, "view_class"):
+        name = view.view_class.__name__
+
+    is_list = False
+    for flag in ("home", "section", "list"):
+        if flag in name.lower():
+            is_list = True
+
+    if is_list:
+        gvars["content_template"] = gvars["list_content_template"]
+        gvars["precontent_template"] = gvars["list_precontent_template"]
+        gvars["postcontent_template"] = gvars["list_postcontent_template"]
+    else:
+        gvars["content_template"] = gvars["detail_content_template"]
+        gvars["precontent_template"] = gvars["detail_precontent_template"]
+        gvars["postcontent_template"] = gvars["detail_postcontent_template"]
+
     # And don't forget to return the value!!!
     return gvars

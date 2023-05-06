@@ -1,12 +1,13 @@
 from datetime import timedelta
 
+from django.apps import apps
 from django.contrib.auth.models import User
 from django.http import HttpResponseNotFound
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from genericsite.models import Article, HomePage, Page, Section, Site, Status
+from genericsite.models import Article, HomePage, Page, Section, Site, SiteVar, Status
 
 
 class TestHomePageView(TestCase):
@@ -230,7 +231,27 @@ class TestSectionView(TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
-class TestArticlesAndFeeds(TestCase):
+class TestProfileView(TestCase):
+    """User profile view"""
+
+    def test_profile_view(self):
+        "profile view"
+        self.user = User.objects.create(
+            username="test_admin",
+            password="super-secure",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.client.force_login(self.user)
+
+        resp = self.client.get(reverse("account_profile"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("registration/profile.html", [t.name for t in resp.templates])
+
+
+class BaseContentTestCase(TestCase):
+    """A base class that sets up some content for testing"""
+
     @classmethod
     def setUpTestData(cls):
         site = Site.objects.get_current()
@@ -277,6 +298,8 @@ class TestArticlesAndFeeds(TestCase):
         cls.article = article
         cls.article2 = article2
 
+
+class TestArticlesAndFeeds(BaseContentTestCase):
     def test_article(self):
         """Article page should contain metadata."""
         resp = self.client.get(
@@ -354,19 +377,116 @@ class TestArticlesAndFeeds(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-class TestProfileView(TestCase):
-    """User profile view"""
+class TestViewsGetRightTemplateVars(BaseContentTestCase):
+    """Issue #42, ensure views have the correct block variables set."""
 
-    def test_profile_view(self):
-        "profile view"
-        self.user = User.objects.create(
-            username="test_admin",
-            password="super-secure",
-            is_staff=True,
-            is_superuser=True,
+    def test_all_blocks_in_context(self):
+        config = apps.get_app_config("genericsite")
+
+        resp = self.client.get(
+            reverse(
+                "article_page",
+                kwargs={"section_slug": "test-section", "article_slug": "test-article"},
+            )
         )
-        self.client.force_login(self.user)
+        for tpl in config.base_blocks:
+            with self.subTest("Check for var in context", block=tpl):
+                self.assertIn(tpl, resp.context)
 
-        resp = self.client.get(reverse("account_profile"))
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn("registration/profile.html", [t.name for t in resp.templates])
+    def test_detail_pages(self):
+        config = apps.get_app_config("genericsite")
+
+        resp = self.client.get(
+            reverse(
+                "article_page",
+                kwargs={"section_slug": "test-section", "article_slug": "test-article"},
+            )
+        )
+        self.assertEqual(
+            config.detail_content_template, resp.context["content_template"]
+        )
+        self.assertEqual(
+            config.detail_precontent_template, resp.context["precontent_template"]
+        )
+        self.assertEqual(
+            config.detail_postcontent_template, resp.context["postcontent_template"]
+        )
+
+    def test_detail_pages_custom(self):
+        site = Site.objects.get_current()
+        SiteVar.objects.create(
+            site=site,
+            name="detail_content_template",
+            value="account/messages/logged_in.txt",
+        )
+        SiteVar.objects.create(
+            site=site,
+            name="detail_precontent_template",
+            value="account/messages/logged_out.txt",
+        )
+        SiteVar.objects.create(
+            site=site,
+            name="detail_postcontent_template",
+            value="account/messages/password_set.txt",
+        )
+
+        resp = self.client.get(
+            reverse(
+                "article_page",
+                kwargs={"section_slug": "test-section", "article_slug": "test-article"},
+            )
+        )
+        self.assertEqual(
+            "account/messages/logged_in.txt", resp.context["content_template"]
+        )
+        self.assertEqual(
+            "account/messages/logged_out.txt", resp.context["precontent_template"]
+        )
+        self.assertEqual(
+            "account/messages/password_set.txt", resp.context["postcontent_template"]
+        )
+
+    def test_list_pages(self):
+        config = apps.get_app_config("genericsite")
+
+        resp = self.client.get(
+            reverse("section_page", kwargs={"section_slug": "test-section"})
+        )
+        self.assertEqual(config.list_content_template, resp.context["content_template"])
+        self.assertEqual(
+            config.list_precontent_template, resp.context["precontent_template"]
+        )
+        self.assertEqual(
+            config.list_postcontent_template, resp.context["postcontent_template"]
+        )
+
+    def test_list_pages_custom(self):
+        site = Site.objects.get_current()
+        SiteVar.objects.create(
+            site=site,
+            name="list_content_template",
+            value="account/messages/logged_in.txt",
+        )
+        SiteVar.objects.create(
+            site=site,
+            name="list_precontent_template",
+            value="account/messages/logged_out.txt",
+        )
+        SiteVar.objects.create(
+            site=site,
+            name="list_postcontent_template",
+            value="account/messages/password_set.txt",
+        )
+
+        resp = self.client.get(
+            reverse("section_page", kwargs={"section_slug": "test-section"})
+        )
+        self.assertEqual(
+            "account/messages/logged_in.txt", resp.context["content_template"]
+        )
+        self.assertEqual(
+            "account/messages/logged_out.txt", resp.context["precontent_template"]
+        )
+        self.assertEqual(
+            "account/messages/password_set.txt", resp.context["postcontent_template"]
+        )
