@@ -103,7 +103,10 @@ class ArticleAdmin(OpenGraphAdmin):
                 "fields": (
                     "title",
                     "slug",
+                    "site",
                     "section",
+                    "status",
+                    "published_time",
                     "author_display_name",
                     "author_profile_url",
                     "description",
@@ -117,9 +120,6 @@ class ArticleAdmin(OpenGraphAdmin):
             "Metadata",
             {
                 "fields": (
-                    "site",
-                    "status",
-                    "published_time",
                     "modified_time",
                     "expiration_time",
                     "seo_title",
