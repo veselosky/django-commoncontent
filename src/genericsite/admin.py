@@ -58,6 +58,9 @@ class OpenGraphAdmin(admin.ModelAdmin):
                 "fields": (
                     "title",
                     "slug",
+                    "site",
+                    "status",
+                    "published_time",
                     "description",
                     "og_image",
                     "body",
@@ -68,9 +71,6 @@ class OpenGraphAdmin(admin.ModelAdmin):
             "Metadata",
             {
                 "fields": (
-                    "site",
-                    "status",
-                    "published_time",
                     "modified_time",
                     "expiration_time",
                     "seo_title",
