@@ -162,14 +162,14 @@ def context_defaults(request):
     # Set the content blocks based on whether the current view is a list or detail view
     # (using a simple heuristic to determine listness.)
     view = request.resolver_match.func
+    # For function-based views, check the name for obvious prefix/suffix
     name = view.__name__
+    is_list = "_list" in name or name.startswith("list_")
+    # For class-based views, the func name is "view". Check for inheritence of List features.
     if hasattr(view, "view_class"):
-        name = view.view_class.__name__
+        from django.views.generic.list import MultipleObjectMixin
 
-    is_list = False
-    for flag in ("home", "section", "list"):
-        if flag in name.lower():
-            is_list = True
+        is_list = isinstance(view.view_class, MultipleObjectMixin)
 
     if is_list:
         gvars["content_template"] = gvars["list_content_template"]
