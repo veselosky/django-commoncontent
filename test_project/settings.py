@@ -13,6 +13,8 @@ from pathlib import Path
 
 import environ
 
+import genericsite.apps
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 VAR = BASE_DIR / "var"
@@ -39,35 +41,15 @@ LOGIN_REDIRECT_URL = "/"
 
 
 # Application definition
-
-INSTALLED_APPS = [
-    "genericsite",
+INSTALLED_APPS = genericsite.apps.plus(
     "django_extensions",
-    # 3rd party apps for "full" usage style
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "django_bootstrap_icons",
-    "easy_thumbnails",
-    "taggit",
-    "tinymce",
-    # Standard Django stuff
-    "django.contrib.admin",
-    "django.contrib.admindocs",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.messages",
-    "django.contrib.redirects",
-    "django.contrib.sessions",
-    "django.contrib.sites",
-    "django.contrib.staticfiles",
-    # Below contrib.admin so it can unregister default admins
-    "genericsite.adminoverride",
-]
+)
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     # UpdateCacheMiddleware must be above LocaleMiddleware
     "django.middleware.locale.LocaleMiddleware",
@@ -76,6 +58,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+MIDDLEWARE += [
+    "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "genericsite.redirects.TemporaryRedirectFallbackMiddleware",
 ]
 
@@ -141,34 +126,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CONN_HEALTH_CHECKS = True
 
 
-THUMBNAIL_PROCESSORS = (
-    "easy_thumbnails.processors.colorspace",
-    "easy_thumbnails.processors.autocrop",
-    "easy_thumbnails.processors.scale_and_crop",
-    "easy_thumbnails.processors.filters",
-)
-THUMBNAIL_WIDGET_OPTIONS = {"size": (160, 90)}
+THUMBNAIL_PROCESSORS = genericsite.apps.THUMBNAIL_PROCESSORS
 THUMBNAIL_DEBUG = DEBUG
 
-TINYMCE_DEFAULT_CONFIG = {
-    "height": "320px",
-    "width": "960px",
-    "menubar": "edit view insert format tools table help",
-    "pagebreak_separator": "<!-- pagebreak --><span id=continue-reading></span>",
-    "plugins": "advlist autoresize charmap code codesample help hr image imagetools "
-    "link lists media pagebreak paste searchreplace table toc visualblocks "
-    "visualchars wordcount",
-    "toolbar": "undo redo | bold italic strikethrough | styleselect | removeformat | "
-    "numlist bullist indent outdent | image pagebreak | code",
-    "image_advtab": True,
-    "image_caption": True,
-    "image_class_list": [
-        {"title": "Responsive", "value": "img-fluid"},
-        {"title": "Left", "value": "float-left"},
-        {"title": "Right", "value": "float-right"},
-    ],
-    "image_list": "/images/recent.json",
-}
+TINYMCE_DEFAULT_CONFIG = genericsite.apps.TINYMCE_CONFIG
 
 #######################################################################
 # DEVELOPMENT: If running in a dev environment, loosen restrictions

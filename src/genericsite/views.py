@@ -10,7 +10,6 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.feedgenerator import Rss201rev2Feed
-from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 from easy_thumbnails.files import get_thumbnailer
 

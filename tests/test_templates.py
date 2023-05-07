@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest import TestCase
 
 from django.core.paginator import Paginator
