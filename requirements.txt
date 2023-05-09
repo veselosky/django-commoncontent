@@ -13,7 +13,7 @@ certifi==2022.12.7
     # via requests
 charset-normalizer==3.1.0
     # via requests
-django==4.2
+django==4.2.1
     # via
     #   django-bootstrap-icons
     #   django-genericsite (pyproject.toml)
