@@ -505,6 +505,9 @@ class Section(AbstractOpenGraph):
 
     objects = GenericPageManager.from_queryset(OpenGraphQuerySet)()
 
+    def __str__(self):
+        return f"{self.title} ({self.site.name})"
+
     def get_absolute_url(self):
         return reverse("section_page", kwargs={"section_slug": self.slug})
 
