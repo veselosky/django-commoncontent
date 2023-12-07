@@ -6,14 +6,14 @@ description = "basic templates for Django's generic views to produce a decent-lo
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
-    "django >= 3.2, < 5.0",
-    "django-bootstrap-icons >= 0.7.8",
-    "docutils >= 0.19",
-    "pillow >= 2.3.0",
-    "easy-thumbnails >= 2.8.4",
-    "django-taggit >= 3.0.0, < 4.0",
-    "django-tinymce >= 3.4.0, < 3.5",
-    "pydantic >= 1.9.1, < 2.0",
+    "django-bootstrap-icons>=0.7.8",
+    "django-taggit<4.0,>=3.0.0",
+    "django-tinymce<3.5,>=3.4.0",
+    "django<5.1,>=3.2",
+    "docutils>=0.19",
+    "easy-thumbnails>=2.8.4",
+    "pillow>=2.3.0",
+    "pydantic<2.0,>=1.9.1",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -24,10 +24,10 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
     "black",
-    "django-allauth >= 0.51.0",
+    "django-allauth>=0.51.0",
     "django-debug-toolbar",
-    "django_extensions",
     "django-environ",
+    "django-extensions",
     "isort",
     "pip-tools",
     "pycodestyle",
@@ -37,7 +37,7 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/veselosky/django-genericsite"
+Homepage = "https://github.com/veselosky/django-genericsite"
 "Bug Tracker" = "https://github.com/veselosky/django-genericsite/issues"
 
 [build-system]
@@ -47,5 +47,5 @@ dev = [
 requires = ["setuptools>=65.0", "setuptools-scm>=7.0.5", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.dynamic]
-version = { attr = "genericsite.__version__" }
+[tool.setuptools.dynamic.version]
+attr = "genericsite.__version__"
