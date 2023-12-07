@@ -1,8 +1,7 @@
 {
   "recommendations": [
-    "ms-python.black-formatter",
     "batisteo.vscode-django",
-    "ms-python.isort",
-    "ms-python.python"
+    "ms-python.python",
+    "charliermarsh.ruff"
   ]
 }
