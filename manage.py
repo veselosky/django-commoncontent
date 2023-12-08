@@ -28,7 +28,9 @@ def devsetup(rebuild=False):
     activate = f"source {venvdir}/bin/activate"
     if sys.platform == "win32":
         python = venvdir / "Scripts" / "python.exe"
-        activate = f"{venvdir}\Scripts\Activate.ps1 or {venvdir}\Scripts\activate.bat"
+        activate = (
+            f"{venvdir}\\Scripts\\Activate.ps1 or {venvdir}\\Scripts\\activate.bat"
+        )
 
     # Upgrade pip in virtualenv. Need pip >= 22.1 for -e with pyproject.toml
     # 3.8's pip won't cut it.
