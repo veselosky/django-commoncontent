@@ -7,8 +7,8 @@ readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "django-bootstrap-icons>=0.7.8",
-    "django-taggit<4.0,>=3.0.0",
-    "django-tinymce<3.5,>=3.4.0",
+    "django-taggit>=3.0.0",
+    "django-tinymce>=3.4.0",
     "django<5.1,>=3.2",
     "docutils>=0.19",
     "easy-thumbnails>=2.8.4",
