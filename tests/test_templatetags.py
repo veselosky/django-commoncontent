@@ -1,11 +1,10 @@
 from datetime import datetime
-from unittest import TestCase
 from unittest.mock import Mock
 
 from django.core.paginator import Paginator
 from django.template import Context, Template
-from django.test import RequestFactory, SimpleTestCase, TestCase as DjangoTestCase
-
+from django.test import RequestFactory, SimpleTestCase
+from django.test import TestCase as DjangoTestCase
 from genericsite.models import Page, Site, SiteVar, Status
 
 
@@ -17,7 +16,7 @@ class TestAddClassesFilter(SimpleTestCase):
             '{% load genericsite %}{{ fakefield|add_classes:"newclass" }} '
         ).render(Context({"fakefield": mock}))
         print(output)
-        assert mock.as_widget.called_with({"class": "newclass"})
+        mock.as_widget.assert_called_with(attrs={"class": "newclass"})
 
     def test_add_classes_append(self):
         mock = Mock()
@@ -26,8 +25,8 @@ class TestAddClassesFilter(SimpleTestCase):
             '{% load genericsite %}{{ fakefield|add_classes:"newclass secondclass" }} '
         ).render(Context({"fakefield": mock}))
         print(output)
-        assert mock.as_widget.called_with(
-            {"class": "class1 classB newclass secondclass"}
+        mock.as_widget.assert_called_with(
+            attrs={"class": "class1 classB newclass secondclass"}
         )
 
 
