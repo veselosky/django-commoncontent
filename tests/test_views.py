@@ -6,7 +6,6 @@ from django.http import HttpResponseNotFound
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-
 from genericsite.models import Article, HomePage, Page, Section, Site, SiteVar, Status
 
 
@@ -367,6 +366,8 @@ class TestArticlesAndFeeds(BaseContentTestCase):
         self.assertIsInstance(resp, HttpResponseNotFound)
 
     def test_site_rss(self):
+        site = Site.objects.get_current()
+        site.vars.create(name="tagline", value="Test Tagline")
         resp = self.client.get(reverse("site_feed"))
         self.assertEqual(resp.status_code, 200)
 

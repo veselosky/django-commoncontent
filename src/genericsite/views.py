@@ -101,9 +101,9 @@ class OpenGraphListView(ListView):
         context["object"] = self.object
         context["opengraph"] = self.object.opengraph
         context["precontent_template"] = site.vars.get_value("list_precontent_template")
-        context[
-            "content_template"
-        ] = self.object.content_template or site.vars.get_value("list_content_template")
+        context["content_template"] = (
+            self.object.content_template or site.vars.get_value("list_content_template")
+        )
         context["postcontent_template"] = site.vars.get_value(
             "list_postcontent_template"
         )
@@ -255,6 +255,7 @@ class ContentFeed(Rss201rev2Feed):
 ######################################################################################
 class SiteFeed(Feed):
     "RSS feed of site Article Pages"
+
     feed_type = ContentFeed
 
     def get_object(self, request, *args, **kwargs):
@@ -264,7 +265,7 @@ class SiteFeed(Feed):
     def title(self, obj):
         tagline = obj.vars.get_value("tagline")
         if tagline:
-            return f"{obj.name} -- {obj.tagline}"
+            return f"{obj.name} -- {tagline}"
         return obj.name
 
     def link(self, obj):
