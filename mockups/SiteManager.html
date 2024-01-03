@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html
+  prefix="og: https://ogp.me/ns#
+article: https://ogp.me/ns/article#
+book: https://ogp.me/ns/book#
+profile: https://ogp.me/ns/profile#
+video: https://ogp.me/ns/video#
+"
+  lang="en"
+>
+  <head>
+    <meta charset="utf-8" />
+    <title>Site Manager Mock Up</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        /* Default variable for "light mode" */
+        --border-color: #ccc;
+        --color: black;
+        --color-muted: dimgray;
+        --color-inverse: white;
+        --background-color-muted: ghostwhite;
+        --background-color-inverse: darkslategray;
+        --border-radius: 0.25rem;
+        --link-color: darkgreen;
+        --link-color-inverse: greenyellow;
+        --symbol-button-size: 1.5em;
+        --max-list-column-width: 25%;
+      }
+      *,
+      *:before,
+      *:after {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      }
+      main {
+        display: flex;
+        flex-direction: row;
+        justify-content: start;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+      .page-tree {
+        flex: 1 1 20%;
+        background-color: var(--background-color-muted);
+        color: var(--color-muted);
+      }
+      .page-tree p {
+        margin: 0;
+        padding: 0;
+      }
+      .page-tree p.add-page {
+        display: list-item;
+        list-style: inside "+";
+      }
+      .page-tree details p.add-page {
+        margin-left: 1rem;
+      }
+      details details {
+        margin-left: 1rem;
+      }
+      details details details {
+        margin-left: 2rem;
+      }
+      details details details details {
+        margin-left: 3rem;
+      }
+      details details details details details {
+        margin-left: 4rem;
+      }
+      details details details details details details {
+        margin-left: 5rem;
+      }
+      details details details details details details details {
+        margin-left: 6rem;
+      }
+      .page-content {
+        flex: 1 1 80%;
+      }
+      .go-button {
+        background-color: greenyellow;
+        color: darkgreen;
+        transition: box-shadow 0.25s ease-in-out;
+        display: flex;
+        align-items: center;
+      }
+      /* .go-button:hover,
+      .go-button:focus {
+        box-shadow: 0 0 1em 0.5em greenyellow;
+      } */
+      .symbol-button {
+        border: 1px solid green;
+        width: var(--symbol-button-size);
+        height: var(--symbol-button-size);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-decoration: none;
+      }
+      i.bi-plus {
+        width: var(--symbol-button-size);
+        height: var(--symbol-button-size);
+      }
+      i.bi-plus::before {
+        content: "";
+        color: darkgreen;
+        display: inline-block;
+        background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='currentColor' class='bi bi-plus' viewBox='0 0 16 16'> <path d='M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4'/></svg>");
+        background-repeat: no-repeat;
+        width: var(--symbol-button-size);
+        height: var(--symbol-button-size);
+      }
+    </style>
+  </head>
+  <body class="">
+    <header class="page_header">
+      <h1>Site Manager Mock Up</h1>
+    </header>
+    <div class="precontent"></div>
+    <main class="">
+      <section class="page-tree">
+        <h2>Page Tree</h2>
+        <p class="add-page">
+          <a href="#">Add Page</a>
+        </p>
+        <details>
+          <summary>Home</summary>
+          <p class="add-page">
+            <a href="#">Add Child Page</a>
+          </p>
+        </details>
+        <details>
+          <summary>About</summary>
+          <details>
+            <summary>Contact</summary>
+            <p class="add-page">
+              <a href="#">Add Child Page</a>
+            </p>
+          </details>
+          <details>
+            <summary>Media Kit</summary>
+            <p class="add-page">
+              <a href="#">Add Child Page</a>
+            </p>
+          </details>
+          <p class="add-page">
+            <a href="#">Add Child Page</a>
+          </p>
+        </details>
+      </section>
+      <section class="page-content">
+        <h2 id="page-title">Page Content Here</h2>
+        <div class="page-content">
+          <p>This is where the page content will go.</p>
+        </div>
+      </section>
+    </main>
+    <div class="postcontent"></div>
+    <footer class="page_footer"></footer>
+    <script>
+      const pageTitle = document.getElementById("page-title");
+    </script>
+  </body>
+</html>
