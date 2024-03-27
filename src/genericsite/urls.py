@@ -17,7 +17,7 @@ Including another URLconf
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from genericsite import views as optional
+from genericsite import views as generic
 
 urlpatterns = [
     # Above pages are used for admin/publishing, not live site. These redirects are for
@@ -28,24 +28,22 @@ urlpatterns = [
     path("feed/", RedirectView.as_view(pattern_name="site_feed")),
     # URLs below can be statically generated.
     # Home page pagination needs to come before the other page patterns to match.
-    path(
-        "page_<int:page>.html", optional.HomePageView.as_view(), name="home_paginated"
-    ),
+    path("page_<int:page>.html", generic.HomePageView.as_view(), name="home_paginated"),
     path(
         "<slug:section_slug>/page_<int:page>.html",
-        optional.SectionView.as_view(),
+        generic.SectionView.as_view(),
         name="section_paginated",
     ),
     path(
         "<slug:section_slug>/<slug:article_slug>.html",
-        optional.ArticleDetailView.as_view(),
+        generic.ArticleDetailView.as_view(),
         name="article_page",
     ),
     path(
-        "<slug:page_slug>.html", optional.PageDetailView.as_view(), name="landing_page"
+        "<slug:page_slug>.html", generic.PageDetailView.as_view(), name="landing_page"
     ),
-    path("<slug:section_slug>/", optional.SectionView.as_view(), name="section_page"),
-    path("<slug:section_slug>/index.rss", optional.SectionFeed(), name="section_feed"),
-    path("index.rss", optional.SiteFeed(), name="site_feed"),
-    path("", optional.HomePageView.as_view(), name="home_page"),
+    path("<slug:section_slug>/", generic.SectionView.as_view(), name="section_page"),
+    path("<slug:section_slug>/index.rss", generic.SectionFeed(), name="section_feed"),
+    path("index.rss", generic.SiteFeed(), name="site_feed"),
+    path("", generic.HomePageView.as_view(), name="home_page"),
 ]
