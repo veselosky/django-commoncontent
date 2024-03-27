@@ -9,10 +9,10 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
+
 from pathlib import Path
 
 import environ
-
 import genericsite.apps
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -41,13 +41,30 @@ LOGIN_REDIRECT_URL = "/"
 
 
 # Application definition
-INSTALLED_APPS = genericsite.apps.plus(
+INSTALLED_APPS = [
+    # genericsite apps for static site generation
+    *genericsite.apps.CONTENT,
+    # genericsite apps for publishing tools
     "django_extensions",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-)
+    # contrib apps required by genericsite for statics
+    "django.contrib.contenttypes",
+    "django.contrib.redirects",
+    "django.contrib.sites",
+    "django.contrib.staticfiles",
+    # contrib apps required by genericsite for dynamically served apps
+    "django.contrib.auth",
+    "django.contrib.messages",
+    "django.contrib.sessions",
+    # Optional admin with genericsite extensions
+    "django.contrib.admin",
+    "django.contrib.admindocs",
+    *genericsite.apps.ADMIN,
+]
 
+# Note: most of these middlewares are not required for static generation
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

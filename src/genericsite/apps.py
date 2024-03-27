@@ -1,6 +1,18 @@
 from django.apps import AppConfig, apps
 from django.utils.translation import gettext_lazy as _
 
+# Apps required for static site generation
+CONTENT = [
+    "genericsite",
+    # 3rd party apps we require
+    "django_bootstrap_icons",
+    "easy_thumbnails",
+    "taggit",
+]
+# Apps required for admin with genericsite extensions
+ADMIN = [
+    "genericsite.adminoverride",
+]
 THUMBNAIL_PROCESSORS = (
     "easy_thumbnails.processors.colorspace",
     "easy_thumbnails.processors.autocrop",
