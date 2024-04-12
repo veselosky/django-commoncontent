@@ -29,7 +29,7 @@ docutils==0.19
     # via django-genericsite (pyproject.toml)
 easy-thumbnails==2.8.5
     # via django-genericsite (pyproject.toml)
-idna==3.4
+idna==3.7
     # via requests
 pillow==10.2.0
     # via
