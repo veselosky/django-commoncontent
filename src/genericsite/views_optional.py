@@ -4,7 +4,6 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, JsonResponse
 from django.views.generic import ListView, TemplateView
-from easy_thumbnails.files import get_thumbnailer
 
 from genericsite.models import Image
 
@@ -47,7 +46,7 @@ class TinyMCEImageListView(ListView):
             [
                 {
                     "title": i.title,
-                    "value": get_thumbnailer(i.image_file)[preset(i)].url,
+                    # "value": get_thumbnailer(i.image_file)[preset(i)].url,
                 }
                 for i in images
             ],

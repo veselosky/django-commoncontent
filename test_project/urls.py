@@ -20,7 +20,6 @@ from django.urls import include, path
 from genericsite import views_optional as optional
 
 urlpatterns = [
-    path("tinymce/", include("tinymce.urls")),
     path(
         "images/recent.json",
         optional.TinyMCEImageListView.as_view(),

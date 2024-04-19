@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from django.test import TestCase as DjangoTestCase
-
 from genericsite.models import Page, Site, SiteVar, Status
 
 
@@ -16,7 +15,7 @@ class TestModels(DjangoTestCase):
             slug="test-page",
             status=Status.USABLE,
             site=site,
-            published_time=datetime.fromisoformat("2021-11-22T19:00"),
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
             custom_copyright_notice="{} custom copyright notice",
         )
         assert "2021 custom copyright notice" in page.copyright_notice
@@ -35,7 +34,7 @@ class TestModels(DjangoTestCase):
             slug="test-page",
             status=Status.USABLE,
             site=site,
-            published_time=datetime.fromisoformat("2021-11-22T19:00"),
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
         assert f"2021 sitewide copyright" in page.copyright_notice
 
@@ -53,7 +52,7 @@ class TestModels(DjangoTestCase):
             slug="test-page",
             status=Status.USABLE,
             site=site,
-            published_time=datetime.fromisoformat("2021-11-22T19:00"),
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
         assert f"2021 custom holder. All rights" in page.copyright_notice
 
@@ -68,7 +67,7 @@ class TestModels(DjangoTestCase):
             slug="test-page",
             status=Status.USABLE,
             site=site,
-            published_time=datetime.fromisoformat("2021-11-22T19:00"),
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
         assert f"2021 example.com. All rights" in page.copyright_notice
 
@@ -82,7 +81,7 @@ class TestModels(DjangoTestCase):
             slug="test-page",
             status=Status.USABLE,
             site=site,
-            published_time=datetime.fromisoformat("2021-11-22T19:00"),
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
             body="""First paragraph.
             <!-- pagebreak --><span id=continue-reading></span>
             Second paragraph.
@@ -99,7 +98,7 @@ class TestModels(DjangoTestCase):
             slug="test-page",
             status=Status.USABLE,
             site=site,
-            published_time=datetime.fromisoformat("2021-11-22T19:00"),
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
             body="""First paragraph.
             Second paragraph.
             """,

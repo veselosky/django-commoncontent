@@ -2,7 +2,6 @@ from django import template
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
 from django.utils.html import format_html
-
 from genericsite.models import Menu, SectionMenu, SiteVar
 
 register = template.Library()
@@ -146,12 +145,12 @@ def opengraph_image(context, og):
 
     ``{% opengraph_image article as img %}``
     """
-    if img := getattr(og, "og_image"):
+    if img := getattr(og, "share_image"):
         return img
     if hasattr(og, "image_set"):
         if img := og.image_set.first():
             return img
     if hasattr(og, "section"):
-        if img := og.section.og_image:
+        if img := og.section.share_image:
             return img
     return None

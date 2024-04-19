@@ -144,10 +144,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CONN_HEALTH_CHECKS = True
 
 
-THUMBNAIL_PROCESSORS = genericsite.apps.THUMBNAIL_PROCESSORS
-THUMBNAIL_DEBUG = DEBUG
+# THUMBNAIL_PROCESSORS = genericsite.apps.THUMBNAIL_PROCESSORS
+# THUMBNAIL_DEBUG = DEBUG
 
-TINYMCE_DEFAULT_CONFIG = genericsite.apps.TINYMCE_CONFIG
+# TINYMCE_DEFAULT_CONFIG = genericsite.apps.TINYMCE_CONFIG
 
 #######################################################################
 # DEVELOPMENT: If running in a dev environment, loosen restrictions

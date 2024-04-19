@@ -204,7 +204,7 @@ class HomePageView(ArticleListView):
                 site=get_current_site(self.request),
                 admin_name="__DEBUG__",
                 title="Generic Site",
-                published_time=timezone.now(),
+                date_published=timezone.now(),
             )
         return hp
 
@@ -281,13 +281,16 @@ class SiteFeed(Feed):
         return item.get_absolute_url()
 
     def item_author_name(self, item):
-        return item.author_display_name
+        if item.author:
+            return item.author.name
+        else:
+            return item.site.vars.get_value("author_display_name")
 
     def item_pubdate(self, item):
-        return item.published_time
+        return item.date_published
 
     def item_updateddate(self, item):
-        return item.modified_time
+        return item.date_modified
 
     def item_copyright(self, item):
         return item.copyright_notice
@@ -324,7 +327,10 @@ class SectionFeed(SiteFeed):
         return reverse("section_feed", kwargs={"section_slug": obj.slug})
 
     def author_name(self, obj):
-        return obj.author_display_name or obj.site.vars.get_value("author_display_name")
+        if obj.author:
+            return obj.author.name
+        else:
+            return obj.site.vars.get_value("author_display_name")
 
     def feed_copyright(self, obj):
         return obj.copyright_notice

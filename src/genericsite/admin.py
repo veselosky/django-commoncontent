@@ -1,6 +1,4 @@
 from django.contrib import admin
-from easy_thumbnails.fields import ThumbnailerImageField
-from easy_thumbnails.widgets import ImageClearableFileInput
 
 from genericsite.models import (
     Article,
@@ -17,10 +15,7 @@ from genericsite.models import (
 #######################################################################################
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    formfield_overrides = {
-        ThumbnailerImageField: {"widget": ImageClearableFileInput},
-    }
-    readonly_fields = ("image_width", "image_height", "mime_type")
+    readonly_fields = ("width", "height", "mime_type")
     fields = (
         "title",
         "image_file",
@@ -28,11 +23,12 @@ class ImageAdmin(admin.ModelAdmin):
         "alt_text",
         "tags",
         "description",
-        "copyright_holder",
+        "custom_copyright_holder",
         "custom_copyright_notice",
-        "created_dt",
-        "image_width",
-        "image_height",
+        "date_created",
+        "date_published",
+        "width",
+        "height",
         "mime_type",
     )
 
@@ -45,10 +41,10 @@ class SiteVarAdmin(admin.ModelAdmin):
 
 
 #######################################################################################
-class OpenGraphAdmin(admin.ModelAdmin):
+class CreativeWorkAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
-    date_hierarchy = "published_time"
-    list_display = ("title", "published_time", "site", "status")
+    date_hierarchy = "date_published"
+    list_display = ("title", "date_published", "site", "status")
     list_filter = ("site", "status")
     search_fields = ("title", "description")
     fieldsets = (
@@ -60,9 +56,9 @@ class OpenGraphAdmin(admin.ModelAdmin):
                     "slug",
                     "site",
                     "status",
-                    "published_time",
+                    "date_published",
                     "description",
-                    "og_image",
+                    "share_image",
                     "body",
                 ),
             },
@@ -71,8 +67,8 @@ class OpenGraphAdmin(admin.ModelAdmin):
             "Metadata",
             {
                 "fields": (
-                    "modified_time",
-                    "expiration_time",
+                    "date_modified",
+                    "expires",
                     "seo_title",
                     "seo_description",
                     "content_template",
@@ -84,7 +80,7 @@ class OpenGraphAdmin(admin.ModelAdmin):
             "Additional metadata",
             {
                 "classes": ("collapse",),
-                "fields": ("type", "locale", "custom_icon", "custom_copyright_notice"),
+                "fields": ("locale", "custom_icon", "custom_copyright_notice"),
             },
         ),
     )
@@ -92,8 +88,8 @@ class OpenGraphAdmin(admin.ModelAdmin):
 
 #######################################################################################
 @admin.register(Article)
-class ArticleAdmin(OpenGraphAdmin):
-    list_display = ("title", "section", "published_time", "site", "status")
+class ArticleAdmin(CreativeWorkAdmin):
+    list_display = ("title", "section", "date_published", "site", "status")
     list_filter = ("section", "site", "status")
     raw_id_fields = ["image_set"]
     fieldsets = (
@@ -106,11 +102,9 @@ class ArticleAdmin(OpenGraphAdmin):
                     "site",
                     "section",
                     "status",
-                    "published_time",
-                    "author_display_name",
-                    "author_profile_url",
+                    "date_published",
                     "description",
-                    "og_image",
+                    "share_image",
                     "tags",
                     "body",
                 ),
@@ -120,8 +114,8 @@ class ArticleAdmin(OpenGraphAdmin):
             "Metadata",
             {
                 "fields": (
-                    "modified_time",
-                    "expiration_time",
+                    "date_modified",
+                    "expires",
                     "seo_title",
                     "seo_description",
                     "content_template",
@@ -133,7 +127,7 @@ class ArticleAdmin(OpenGraphAdmin):
             "Additional metadata",
             {
                 "classes": ("collapse",),
-                "fields": ("type", "locale", "custom_icon", "custom_copyright_notice"),
+                "fields": ("locale", "custom_icon", "custom_copyright_notice"),
             },
         ),
     )
@@ -141,21 +135,21 @@ class ArticleAdmin(OpenGraphAdmin):
 
 #######################################################################################
 @admin.register(Section)
-class SectionAdmin(OpenGraphAdmin):
+class SectionAdmin(CreativeWorkAdmin):
     pass
 
 
 #######################################################################################
 @admin.register(Page)
-class PageAdmin(OpenGraphAdmin):
+class PageAdmin(CreativeWorkAdmin):
     pass
 
 
 #######################################################################################
 @admin.register(HomePage)
-class HomePageAdmin(OpenGraphAdmin):
+class HomePageAdmin(CreativeWorkAdmin):
     prepopulated_fields = {"slug": ("admin_name",)}
-    list_display = ("admin_name", "published_time", "site", "status")
+    list_display = ("admin_name", "date_published", "site", "status")
     fieldsets = (
         (
             None,
@@ -165,7 +159,7 @@ class HomePageAdmin(OpenGraphAdmin):
                     "slug",
                     "title",
                     "description",
-                    "og_image",
+                    "share_image",
                     "body",
                 ),
             },
@@ -176,9 +170,9 @@ class HomePageAdmin(OpenGraphAdmin):
                 "fields": (
                     "site",
                     "status",
-                    "published_time",
-                    "modified_time",
-                    "expiration_time",
+                    "date_published",
+                    "date_modified",
+                    "expires",
                     "seo_title",
                     "seo_description",
                     "content_template",
@@ -190,7 +184,7 @@ class HomePageAdmin(OpenGraphAdmin):
             "Additional metadata",
             {
                 "classes": ("collapse",),
-                "fields": ("type", "locale", "custom_icon", "custom_copyright_notice"),
+                "fields": ("locale", "custom_icon", "custom_copyright_notice"),
             },
         ),
     )

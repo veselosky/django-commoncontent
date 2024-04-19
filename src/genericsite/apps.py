@@ -6,40 +6,39 @@ CONTENT = [
     "genericsite",
     # 3rd party apps we require
     "django_bootstrap_icons",
-    "easy_thumbnails",
     "taggit",
 ]
 # Apps required for admin with genericsite extensions
 ADMIN = [
     "genericsite.adminoverride",
 ]
-THUMBNAIL_PROCESSORS = (
-    "easy_thumbnails.processors.colorspace",
-    "easy_thumbnails.processors.autocrop",
-    "easy_thumbnails.processors.scale_and_crop",
-    "easy_thumbnails.processors.filters",
-)
-THUMBNAIL_WIDGET_OPTIONS = {"size": (160, 90)}
+# THUMBNAIL_PROCESSORS = (
+#     "easy_thumbnails.processors.colorspace",
+#     "easy_thumbnails.processors.autocrop",
+#     "easy_thumbnails.processors.scale_and_crop",
+#     "easy_thumbnails.processors.filters",
+# )
+# THUMBNAIL_WIDGET_OPTIONS = {"size": (160, 90)}
 
-TINYMCE_CONFIG = {
-    "height": "320px",
-    "width": "960px",
-    "menubar": "edit view insert format tools table help",
-    "pagebreak_separator": "<!-- pagebreak --><span id=continue-reading></span>",
-    "plugins": "advlist autoresize charmap code codesample help hr image imagetools "
-    "link lists media pagebreak paste searchreplace table toc visualblocks "
-    "visualchars wordcount",
-    "toolbar": "undo redo | bold italic strikethrough | styleselect | removeformat | "
-    "numlist bullist indent outdent | image pagebreak | code",
-    "image_advtab": True,
-    "image_caption": True,
-    "image_class_list": [
-        {"title": "Responsive", "value": "img-fluid"},
-        {"title": "Left", "value": "float-left"},
-        {"title": "Right", "value": "float-right"},
-    ],
-    "image_list": "/images/recent.json",
-}
+# TINYMCE_CONFIG = {
+#     "height": "320px",
+#     "width": "960px",
+#     "menubar": "edit view insert format tools table help",
+#     "pagebreak_separator": "<!-- pagebreak --><span id=continue-reading></span>",
+#     "plugins": "advlist autoresize charmap code codesample help hr image imagetools "
+#     "link lists media pagebreak paste searchreplace table toc visualblocks "
+#     "visualchars wordcount",
+#     "toolbar": "undo redo | bold italic strikethrough | styleselect | removeformat | "
+#     "numlist bullist indent outdent | image pagebreak | code",
+#     "image_advtab": True,
+#     "image_caption": True,
+#     "image_class_list": [
+#         {"title": "Responsive", "value": "img-fluid"},
+#         {"title": "Left", "value": "float-left"},
+#         {"title": "Right", "value": "float-right"},
+#     ],
+#     "image_list": "/images/recent.json",
+# }
 
 
 class GenericsiteConfig(AppConfig):
@@ -96,7 +95,7 @@ class GenericsiteConfig(AppConfig):
             return settings.TINYMCE_DEFAULT_CONFIG["pagebreak_separator"]
         except Exception:
             # May not be configured
-            return "<!-- MORE -->"
+            return "<!-- pagebreak -->"
 
     def as_dict(self) -> dict:
         return {
@@ -115,47 +114,41 @@ class GenericsiteConfig(AppConfig):
             "paginate_orphans": self.paginate_orphans,
         }
 
-    def ready(self):
-        # Add genericsite thumbnail aliases to the easy_thumbnails aliases.
-        # This makes them accessible on thumbnail image fields.
-        from easy_thumbnails.alias import aliases
-        from easy_thumbnails.signal_handlers import generate_aliases_global
-        from easy_thumbnails.signals import saved_file
+    # def ready(self):
+    # Landscape aliases, most common in genericsite and many designs
+    # if not aliases.get("hd1080p"):
+    #     aliases.set("hd1080p", {"size": (1920, 1080), "crop": False})
+    # if not aliases.get("hd720p"):
+    #     aliases.set("hd720p", {"size": (1280, 720), "crop": False})
+    # # Ref https://buffer.com/library/ideal-image-sizes-social-media-posts/
+    # # Recommended size for sharing social images on FB, and close enough for others
+    # if not aliases.get("opengraph"):
+    #     aliases.set("opengraph", {"size": (1200, 630), "crop": "smart"})
+    # if not aliases.get("large"):
+    #     aliases.set("large", {"size": (960, 540), "crop": False})
+    # if not aliases.get("medium"):
+    #     aliases.set("medium", {"size": (400, 225), "crop": "smart"})
+    # if not aliases.get("small"):
+    #     aliases.set("small", {"size": (160, 90), "crop": "smart"})
 
-        # Landscape aliases, most common in genericsite and many designs
-        if not aliases.get("hd1080p"):
-            aliases.set("hd1080p", {"size": (1920, 1080), "crop": False})
-        if not aliases.get("hd720p"):
-            aliases.set("hd720p", {"size": (1280, 720), "crop": False})
-        # Ref https://buffer.com/library/ideal-image-sizes-social-media-posts/
-        # Recommended size for sharing social images on FB, and close enough for others
-        if not aliases.get("opengraph"):
-            aliases.set("opengraph", {"size": (1200, 630), "crop": "smart"})
-        if not aliases.get("large"):
-            aliases.set("large", {"size": (960, 540), "crop": False})
-        if not aliases.get("medium"):
-            aliases.set("medium", {"size": (400, 225), "crop": "smart"})
-        if not aliases.get("small"):
-            aliases.set("small", {"size": (160, 90), "crop": "smart"})
+    # # Portrait orientation aliases
+    # if not aliases.get("portrait_small"):
+    #     aliases.set("portrait_small", {"size": (90, 160), "crop": "smart"})
+    # if not aliases.get("portrait_medium"):
+    #     aliases.set("portrait_medium", {"size": (225, 400), "crop": "smart"})
+    # if not aliases.get("portrait_large"):
+    #     aliases.set("portrait_large", {"size": (540, 960), "crop": False})
+    # # Buffer post recommends this size for Pinterest
+    # if not aliases.get("portrait_cover"):
+    #     aliases.set("portrait_cover", {"size": (1000, 1500), "crop": False})
+    # # Buffer post recommends this size for Insta/FB
+    # if not aliases.get("portrait_social"):
+    #     aliases.set("portrait_social", {"size": (1080, 1350), "crop": "smart"})
+    # if not aliases.get("portrait_hd"):
+    #     aliases.set("portrait_hd", {"size": (1080, 1920), "crop": False})
 
-        # Portrait orientation aliases
-        if not aliases.get("portrait_small"):
-            aliases.set("portrait_small", {"size": (90, 160), "crop": "smart"})
-        if not aliases.get("portrait_medium"):
-            aliases.set("portrait_medium", {"size": (225, 400), "crop": "smart"})
-        if not aliases.get("portrait_large"):
-            aliases.set("portrait_large", {"size": (540, 960), "crop": False})
-        # Buffer post recommends this size for Pinterest
-        if not aliases.get("portrait_cover"):
-            aliases.set("portrait_cover", {"size": (1000, 1500), "crop": False})
-        # Buffer post recommends this size for Insta/FB
-        if not aliases.get("portrait_social"):
-            aliases.set("portrait_social", {"size": (1080, 1350), "crop": "smart"})
-        if not aliases.get("portrait_hd"):
-            aliases.set("portrait_hd", {"size": (1080, 1920), "crop": False})
-
-        # Auto-generate thumbs on file upload
-        saved_file.connect(generate_aliases_global)
+    # # Auto-generate thumbs on file upload
+    # saved_file.connect(generate_aliases_global)
 
 
 # A context processor to add our vars to template contexts:
@@ -221,9 +214,7 @@ def plus(*args):
         "genericsite",
         # 3rd party apps we require
         "django_bootstrap_icons",
-        "easy_thumbnails",
         "taggit",
-        "tinymce",
         # Insert the user's stuff here, above Django defaults, in case they
         # want to override default templates.
         *args,

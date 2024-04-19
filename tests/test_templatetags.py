@@ -62,7 +62,7 @@ class TestCopyrightNoticeTag(DjangoTestCase):
             slug="test-page",
             status=Status.USABLE,
             site=site,
-            published_time=datetime.fromisoformat("2021-11-22T19:00"),
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
             custom_copyright_notice="{} custom copyright notice",
         )
         output = Template("{% load genericsite %}{% copyright_notice %} ").render(

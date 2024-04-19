@@ -27,7 +27,7 @@ class TestHomePageView(TestCase):
             site=site,
             admin_name="Test HomePage",
             title="Test HomePage 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         resp = self.client.get(reverse("home_page"))
         self.assertEqual(resp.status_code, 200)
@@ -43,13 +43,13 @@ class TestHomePageView(TestCase):
             site=site,
             admin_name="Test HomePage",
             title="Test HomePage 1",
-            published_time=timezone.now() - timedelta(days=1),
+            date_published=timezone.now() - timedelta(days=1),
         )
         hp2 = HomePage.objects.create(
             site=site2,
             admin_name="NOT MY HomePage",
             title="NOT MY HomePage",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         resp = self.client.get(reverse("home_page"))
         self.assertEqual(resp.status_code, 200)
@@ -62,13 +62,13 @@ class TestHomePageView(TestCase):
             site=site,
             admin_name="Test HomePage",
             title="Test HomePage 1",
-            published_time=timezone.now() - timedelta(days=1),
+            date_published=timezone.now() - timedelta(days=1),
         )
         hp_draft = HomePage.objects.create(
             site=site,
             admin_name="DRAFT HomePage",
             title="DRAFT HomePage 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
             status=Status.WITHHELD,
         )
         # Draft is newer and would be selected if not filtering on status.
@@ -83,13 +83,13 @@ class TestHomePageView(TestCase):
             site=site,
             admin_name="Test HomePage",
             title="Test HomePage 1",
-            published_time=timezone.now() - timedelta(days=1),
+            date_published=timezone.now() - timedelta(days=1),
         )
         hp_tomorrow = HomePage.objects.create(
             site=site,
             admin_name="FUTURE HomePage",
             title="FUTURE HomePage 1",
-            published_time=timezone.now() + timedelta(days=1),
+            date_published=timezone.now() + timedelta(days=1),
         )
         # HP scheduled for tomorrow should not be selected today
         resp = self.client.get(reverse("home_page"))
@@ -110,7 +110,7 @@ class TestPageView(TestCase):
             site=site,
             slug="test-page",
             title="Test Page 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
             status=Status.WITHHELD,
         )
         resp = self.client.get(
@@ -124,7 +124,7 @@ class TestPageView(TestCase):
             site=site,
             slug="test-page",
             title="Test Page 1",
-            published_time=timezone.now() + timedelta(days=1),
+            date_published=timezone.now() + timedelta(days=1),
         )
         resp = self.client.get(
             reverse("landing_page", kwargs={"page_slug": "test-page"})
@@ -140,7 +140,7 @@ class TestPageView(TestCase):
             site=site2,
             slug="test-page",
             title="Test Page 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         resp = self.client.get(
             reverse("landing_page", kwargs={"page_slug": "test-page"})
@@ -153,7 +153,7 @@ class TestPageView(TestCase):
             site=site,
             slug="test-page",
             title="Test Page 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         resp = self.client.get(
             reverse("landing_page", kwargs={"page_slug": "test-page"})
@@ -172,7 +172,7 @@ class TestSectionView(TestCase):
             site=site,
             slug="test-section",
             title="Test Section 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         resp = self.client.get(
             reverse("section_page", kwargs={"section_slug": "test-section"})
@@ -192,7 +192,7 @@ class TestSectionView(TestCase):
             site=site,
             slug="test-section",
             title="Test Section 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
             status=Status.WITHHELD,
         )
         resp = self.client.get(
@@ -206,7 +206,7 @@ class TestSectionView(TestCase):
             site=site,
             slug="test-section",
             title="Test Section 1",
-            published_time=timezone.now() + timedelta(days=1),
+            date_published=timezone.now() + timedelta(days=1),
         )
         resp = self.client.get(
             reverse("section_page", kwargs={"section_slug": "test-section"})
@@ -222,7 +222,7 @@ class TestSectionView(TestCase):
             site=site2,
             slug="test-section",
             title="Test Section 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         resp = self.client.get(
             reverse("section_page", kwargs={"section_slug": "test-section"})
@@ -261,33 +261,33 @@ class BaseContentTestCase(TestCase):
             site=site,
             title="Test Home Page",
             slug="test-home-page",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         section = Section.objects.create(
             site=site,
             slug="test-section",
             title="Test Section 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         section2 = Section.objects.create(
             site=site2,
             slug="test-section",
             title="Test Section 2",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         article = Article.objects.create(
             site=site,
             slug="test-article",
             section=section,
             title="Test Article 1",
-            published_time=timezone.now() - timedelta(days=1),
+            date_published=timezone.now() - timedelta(days=1),
         )
         article2 = Article.objects.create(
             site=site2,
             slug="test-article",
             section=section2,
             title="Test Article 2",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
         )
         cls.site = site
         cls.site2 = site2
@@ -319,7 +319,7 @@ class TestArticlesAndFeeds(BaseContentTestCase):
             slug="draft-article",
             section=self.section,
             title="DRAFT Article 1",
-            published_time=timezone.now(),
+            date_published=timezone.now(),
             status=Status.WITHHELD,
         )
         resp = self.client.get(
@@ -340,7 +340,7 @@ class TestArticlesAndFeeds(BaseContentTestCase):
             slug="future-article",
             section=self.section,
             title="FUTURE Article 1",
-            published_time=timezone.now() + timedelta(days=1),
+            date_published=timezone.now() + timedelta(days=1),
         )
         resp = self.client.get(
             reverse(

@@ -4,12 +4,12 @@
   <h2 class="article-title"><a href="{{ article.get_absolute_url}}"
     >{% firstof article.headline article.title article.opengraph.title %}</a></h2>
   {% if article.author_display_name and article.author_profile_url %}
-  <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}
+  <p class="article-meta">{{ article.opengraph.date_published|date:"DATE_FORMAT"}}
     <a href="{{ article.author_profile_url }}">{{ article.author_display_name }}</a></p>
   {% elif article.author_display_name %}
-  <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}} {{ article.author_display_name }}</p>
+  <p class="article-meta">{{ article.opengraph.date_published|date:"DATE_FORMAT"}} {{ article.author_display_name }}</p>
   {% else %}
-  <p class="article-meta">{{ article.opengraph.published_time|date:"DATE_FORMAT"}}</p>
+  <p class="article-meta">{{ article.opengraph.date_published|date:"DATE_FORMAT"}}</p>
   {% endif %}<div class="article-excerpt">
   {{ article.excerpt|safe }}
   </div>
