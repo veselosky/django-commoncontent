@@ -7,6 +7,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "django-bootstrap-icons>=0.7.8",
+    "django-imagekit>=5.0.0",
     "django-taggit>=5.0.0",
     "django<5.3,>=4.2",
     "docutils>=0.19",

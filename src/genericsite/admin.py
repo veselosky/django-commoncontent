@@ -1,4 +1,5 @@
 from django.contrib import admin
+from imagekit.admin import AdminThumbnail
 
 from genericsite.models import (
     Article,
@@ -15,9 +16,15 @@ from genericsite.models import (
 #######################################################################################
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    readonly_fields = ("width", "height", "mime_type")
+    def thumbnail(self, instance):
+        if instance.is_portrait:
+            return AdminThumbnail(image_field="portrait_small").__call__(instance)
+        return AdminThumbnail(image_field="small").__call__(instance)
+
+    readonly_fields = ("width", "height", "mime_type", "thumbnail")
     fields = (
         "title",
+        "thumbnail",
         "image_file",
         "site",
         "alt_text",

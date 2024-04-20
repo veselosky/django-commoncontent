@@ -11,10 +11,18 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import to_locale
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFill
 from taggit.managers import TaggableManager
 
 from genericsite.common import Status
-from genericsite.schemas import ImageProp, OGArticle, OGProfile, OpenGraph
+from genericsite.schemas import (
+    CreativeWorkSchema,
+    ImageProp,
+    OGArticle,
+    OGProfile,
+    OpenGraph,
+)
 
 # Transform "en-us" to "en_US"
 DEFAULT_LOCALE = to_locale(settings.LANGUAGE_CODE)
@@ -390,6 +398,27 @@ class AbstractCreativeWork(models.Model):
         return f"https://{self.site.domain}{self.get_absolute_url()}"
 
     @property
+    def schema(self) -> CreativeWorkSchema:
+        """Return the data as a schema.org object."""
+        schema = CreativeWorkSchema(
+            name=self.title,
+            headline=self.title,
+            description=self.description,
+            creativeWorkStatus=self.status,
+            url=self.url,
+            dateCreated=self.date_created,
+            datePublished=self.date_published,
+            dateModified=self.date_modified,
+            expires=self.expires,
+        )
+        if self.author:
+            schema.author = self.author.schema
+        tags = list(self.tags.names())
+        if tags:
+            schema.keywords = tags
+        return schema
+
+    @property
     def opengraph(self) -> OpenGraph:
         """Serialize data to Open Graph metatags.
 
@@ -483,8 +512,87 @@ class Image(MediaObject):
     alt_text = models.CharField(_("alt text"), max_length=255, blank=True)
     width = models.PositiveIntegerField(_("width"), blank=True, null=True)
     height = models.PositiveIntegerField(_("height"), blank=True, null=True)
+
+    # ImageSpec fields defining different renditions
+    hd1080p = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(1920, 1080)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    hd720p = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(1280, 720)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    social = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(1200, 630)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    large = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(960, 540)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    medium = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(400, 225)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    small = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(160, 90)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    portrait_small = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(90, 160)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    portrait_medium = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(225, 400)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    portrait_large = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(540, 960)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    portrait_cover = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(1000, 1500)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    portrait_social = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(1080, 1350)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+    portrait_hd = ImageSpecField(
+        source="image_file",
+        processors=[ResizeToFill(1080, 1920)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+
     content_field = "image_file"
     icon_name = "image"
+
+    @property
+    def is_portrait(self):
+        return self.height > self.width
 
     @property
     def opengraph(self):

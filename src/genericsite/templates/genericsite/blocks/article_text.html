@@ -1,13 +1,11 @@
 {% with object as article %}
 <article class="article-full">
-  <h1 class="article-title">{% firstof article.headline article.title article.opengraph.title %}</h1>
-  {% if article.author_display_name and article.author_profile_url %}
-  <p class="article-meta">{{ article.opengraph.date_published|date:"DATE_FORMAT"}}
-    <a href="{{ article.author_profile_url }}">{{ article.author_display_name }}</a></p>
-  {% elif article.author_display_name %}
-  <p class="article-meta">{{ article.opengraph.date_published|date:"DATE_FORMAT"}} {{ article.author_display_name }}</p>
+  <h1 class="article-title">{% firstof article.headline article.title article.schema.headline %}</h1>
+  {% if article.author %}
+  <p class="article-meta">{{ article.date_published|date:"DATE_FORMAT"}}
+    <a href="{{ article.author.url }}">{{ article.author.name }}</a></p>
   {% else %}
-  <p class="article-meta">{{ article.opengraph.date_published|date:"DATE_FORMAT"}}</p>
+  <p class="article-meta">{{ article.date_published|date:"DATE_FORMAT"}}</p>
   {% endif %}
   {{ article.body|safe }}
 </article>
