@@ -3,7 +3,7 @@ import site
 from django.apps import apps
 from django.contrib.sitemaps import Sitemap
 
-from genericsite.models import Article, Author, Page, Section
+from genericsite.models import Article, Author, HomePage, Page, Section
 
 conf = apps.get_app_config("genericsite")
 
@@ -50,9 +50,19 @@ class SectionSitemap(SiteAwareSiteMap):
     model = Section
 
 
+class HomePageSitemap(SiteAwareSiteMap):
+    changefreq = "weekly"
+    priority = 0.5
+    model = HomePage
+
+    def items(self):
+        return [HomePage.objects.live().filter(site=self.site).latest()]
+
+
 sitemaps = {
     "articles": ArticleSitemap,
     "authors": AuthorSitemap,
     "pages": PageSitemap,
     "sections": SectionSitemap,
+    "home": HomePageSitemap,
 }
