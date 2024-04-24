@@ -91,6 +91,16 @@ class GenericsiteConfig(AppConfig):
             # May not be configured
             return "<!-- pagebreak -->"
 
+    @property
+    def sitemap_changefreq(self):
+        """How often search engines should check for article updates"""
+        from django.conf import settings
+
+        try:
+            return settings.SITEMAP_CHANGEFREQ
+        except Exception:
+            return "weekly"
+
     def as_dict(self) -> dict:
         return {
             "base_template": self.base_template,

@@ -1,0 +1,58 @@
+import site
+
+from django.apps import apps
+from django.contrib.sitemaps import Sitemap
+
+from genericsite.models import Article, Author, Page, Section
+
+conf = apps.get_app_config("genericsite")
+
+
+class SiteAwareSiteMap(Sitemap):
+    site = None
+    model = None
+
+    def get_urls(self, site=None, **kwargs):
+        self.site = site
+        return super().get_urls(site=site, **kwargs)
+
+    def items(self):
+        return self.model.objects.live().filter(site=self.site)
+
+    def lastmod(self, obj):
+        return obj.date_modified
+
+
+class ArticleSitemap(SiteAwareSiteMap):
+    changefreq = conf.sitemap_changefreq
+    priority = 0.5
+    model = Article
+
+
+class AuthorSitemap(SiteAwareSiteMap):
+    changefreq = "weekly"
+    priority = 0.5
+    model = Author
+
+    def items(self):
+        return self.model.objects.filter(site=self.site)
+
+
+class PageSitemap(SiteAwareSiteMap):
+    changefreq = "weekly"
+    priority = 0.5
+    model = Page
+
+
+class SectionSitemap(SiteAwareSiteMap):
+    changefreq = "weekly"
+    priority = 0.5
+    model = Section
+
+
+sitemaps = {
+    "articles": ArticleSitemap,
+    "authors": AuthorSitemap,
+    "pages": PageSitemap,
+    "sections": SectionSitemap,
+}

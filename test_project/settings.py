@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     # contrib apps required by genericsite for statics
     "django.contrib.contenttypes",
     "django.contrib.redirects",
+    "django.contrib.sitemaps",
     "django.contrib.sites",
     "django.contrib.staticfiles",
     # contrib apps required by genericsite for dynamically served apps
