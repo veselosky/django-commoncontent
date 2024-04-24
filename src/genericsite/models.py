@@ -12,7 +12,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import to_locale
 from imagekit.models import ImageSpecField
-from imagekit.processors import ResizeToFill
+from imagekit.processors import ResizeToFill, ResizeToFit
 from taggit.managers import TaggableManager
 
 from genericsite.common import Status
@@ -168,6 +168,7 @@ class Author(models.Model):
         max_length=255,
         help_text=_("e.g. 'Dr. Samuel Clemens, Phd.'"),
     )
+    slug = models.SlugField(_("slug"), help_text=_("e.g. 'samuel-clemens'"))
     description = models.CharField(
         _("description (text only, no markup)"),
         max_length=255,
@@ -220,6 +221,12 @@ class Author(models.Model):
             r"include a pair of curly braces {} where you want the year inserted"
         ),
     )
+    date_modified = models.DateTimeField(
+        _("date modified"),
+        blank=True,
+        null=True,
+        help_text=_("Time of last significant editorial update"),
+    )
 
     # Class properties
     icon_name = "person-vcard"
@@ -233,6 +240,13 @@ class Author(models.Model):
         if self.profile_image:
             og.image = [self.profile_image.opengraph]
         return og
+
+    def get_absolute_url(self):
+        return reverse("author_page", kwargs={"author_slug": self.slug})
+
+    @property
+    def url(self):
+        return f"https://{self.site.domain}{self.get_absolute_url()}"
 
 
 ######################################################################################
@@ -514,15 +528,18 @@ class Image(MediaObject):
     height = models.PositiveIntegerField(_("height"), blank=True, null=True)
 
     # ImageSpec fields defining different renditions
+    # Small, medium, and social renditions are used in layouts, so they are ResizeToFill
+    # which crops to exact dimensions. Large and HD are ResizeToFit, which scales to fit
+    # the bounding box, preserving aspect ratio, for featured images.
     hd1080p = ImageSpecField(
         source="image_file",
-        processors=[ResizeToFill(1920, 1080)],
+        processors=[ResizeToFit(1920, 1080)],
         format="JPEG",
         options={"quality": 60},
     )
     hd720p = ImageSpecField(
         source="image_file",
-        processors=[ResizeToFill(1280, 720)],
+        processors=[ResizeToFit(1280, 720)],
         format="JPEG",
         options={"quality": 60},
     )
@@ -534,7 +551,7 @@ class Image(MediaObject):
     )
     large = ImageSpecField(
         source="image_file",
-        processors=[ResizeToFill(960, 540)],
+        processors=[ResizeToFit(960, 540)],
         format="JPEG",
         options={"quality": 60},
     )
@@ -564,7 +581,7 @@ class Image(MediaObject):
     )
     portrait_large = ImageSpecField(
         source="image_file",
-        processors=[ResizeToFill(540, 960)],
+        processors=[ResizeToFit(540, 960)],
         format="JPEG",
         options={"quality": 60},
     )
@@ -582,7 +599,7 @@ class Image(MediaObject):
     )
     portrait_hd = ImageSpecField(
         source="image_file",
-        processors=[ResizeToFill(1080, 1920)],
+        processors=[ResizeToFit(1080, 1920)],
         format="JPEG",
         options={"quality": 60},
     )
@@ -592,7 +609,11 @@ class Image(MediaObject):
 
     @property
     def is_portrait(self):
-        return self.height > self.width
+        try:
+            return self.height > self.width
+        except TypeError:
+            # Probably not saved yet
+            return False
 
     @property
     def opengraph(self):

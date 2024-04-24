@@ -3,7 +3,7 @@
   <h1 class="article-title">{% firstof article.headline article.title article.schema.headline %}</h1>
   {% if article.author %}
   <p class="article-meta">{{ article.date_published|date:"DATE_FORMAT"}}
-    <a href="{{ article.author.url }}">{{ article.author.name }}</a></p>
+    <a href="{{ article.author.get_absolute_url }}">{{ article.author.name }}</a></p>
   {% else %}
   <p class="article-meta">{{ article.date_published|date:"DATE_FORMAT"}}</p>
   {% endif %}

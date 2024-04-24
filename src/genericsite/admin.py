@@ -3,6 +3,7 @@ from imagekit.admin import AdminThumbnail
 
 from genericsite.models import (
     Article,
+    Author,
     HomePage,
     Image,
     Link,
@@ -11,6 +12,14 @@ from genericsite.models import (
     Section,
     SiteVar,
 )
+
+
+#######################################################################################
+@admin.register(Author)
+class AuthorAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ("name",)}
+    list_display = ("name", "site")
+    list_filter = ("site",)
 
 
 #######################################################################################
@@ -66,6 +75,7 @@ class CreativeWorkAdmin(admin.ModelAdmin):
                     "date_published",
                     "description",
                     "share_image",
+                    "author",
                     "body",
                 ),
             },
@@ -112,6 +122,7 @@ class ArticleAdmin(CreativeWorkAdmin):
                     "date_published",
                     "description",
                     "share_image",
+                    "author",
                     "tags",
                     "body",
                 ),

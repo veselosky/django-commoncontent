@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.feedgenerator import Rss201rev2Feed
 from django.views.generic import DetailView, ListView
 
-from genericsite.models import Article, HomePage, Page, Section
+from genericsite.models import Article, Author, HomePage, Page, Section
 
 
 ######################################################################################
@@ -97,9 +97,9 @@ class OpenGraphListView(ListView):
         context["object"] = self.object
         context["opengraph"] = self.object.opengraph
         context["precontent_template"] = site.vars.get_value("list_precontent_template")
-        context["content_template"] = (
-            self.object.content_template or site.vars.get_value("list_content_template")
-        )
+        context["content_template"] = getattr(
+            self.object, "content_template", None
+        ) or site.vars.get_value("list_content_template")
         context["postcontent_template"] = site.vars.get_value(
             "list_postcontent_template"
         )
@@ -141,13 +141,13 @@ class OpenGraphListView(ListView):
     def get_template_names(self):
         names = []
         # Per Django convention, `template_name` on the View takes precedence
-        if tname := getattr(self, "template_name"):
+        if tname := getattr(self, "template_name", None):
             names.append(tname)
 
         # Django's ListView doesn't account for an object overriding the template,
         # so we need to do that ourselves.
-        if self.object.base_template:
-            names.append(self.object.base_template)
+        if base_template := getattr(self.object, "base_template", None):
+            names.append(base_template)
 
         # Allow using the Django convention <app>/<model>_list.html
         if hasattr(self.object_list, "model"):
@@ -171,6 +171,65 @@ class OpenGraphListView(ListView):
 ######################################################################################
 class ArticleListView(OpenGraphListView):
     model = Article
+
+
+######################################################################################
+class AuthorView(ArticleListView):
+    allow_empty: bool = True
+    object = None
+
+    def get_context_data(self, **kwargs) -> dict[str, T.Any]:
+        context = super().get_context_data(**kwargs)
+        context["precontent_template"] = "genericsite/blocks/author_profile.html"
+        return context
+
+    def get_object(self):
+        return get_object_or_404(
+            Author.objects.filter(
+                site=get_current_site(self.request),
+                slug=self.kwargs["author_slug"],
+            )
+        )
+
+    def get_queryset(self):
+        return super().get_queryset().filter(author=self.get_object())
+
+
+######################################################################################
+class AuthorListView(ListView):
+    model = Author
+    object = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs) -> dict[str, T.Any]:
+        context = super().get_context_data(**kwargs)
+        context["content_template"] = "genericsite/blocks/author_list_album.html"
+        return context
+
+    def get_object(self):
+        site_name = self.request.site.vars.get_value("brand", self.request.site.name)
+        self.object = Page(
+            site=get_current_site(self.request),
+            title=f"Contributors to {site_name}",
+            description="Authors who have contributed to this site.",
+            date_published=timezone.now(),
+        )
+        return self.object
+
+    def get_template_names(self) -> list[str]:
+        names = super().get_template_names()
+
+        # Fall back to site default if set
+        var = self.object.site.vars
+        if site_default := var.get_value("base_template"):
+            names.append(site_default)
+
+        # Fall back to Genericsite default
+        names.append("genericsite/base.html")
+        return names
 
 
 ######################################################################################
