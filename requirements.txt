@@ -35,7 +35,7 @@ pillow==10.2.0
     # via
     #   django-genericsite (pyproject.toml)
     #   easy-thumbnails
-pydantic==1.10.7
+pydantic==1.10.13
     # via django-genericsite (pyproject.toml)
 requests==2.31.0
     # via django-bootstrap-icons
