@@ -27,9 +27,9 @@ urlpatterns = [
     # Home page pagination needs to come before the other page patterns to match.
     path("page_<int:page>.html", generic.HomePageView.as_view(), name="home_paginated"),
     path("author/", generic.AuthorListView.as_view(), name="author_list"),
-    # path(
-    #     "author/<slug:author_slug>/index.rss", generic.AuthorFeed(), name="author_feed"
-    # ),
+    path(
+        "author/<slug:author_slug>/index.rss", generic.AuthorFeed(), name="author_feed"
+    ),
     path(
         "author/<slug:author_slug>/page_<int:page>.html",
         generic.AuthorView.as_view(),

@@ -374,13 +374,13 @@ class SectionFeed(SiteFeed):
         )
 
     def title(self, obj):
-        return obj.opengraph.title
+        return obj.title
 
     def link(self, obj):
         return obj.get_absolute_url()
 
     def description(self, obj):
-        return obj.opengraph.description
+        return obj.description
 
     def feed_url(self, obj):
         return reverse("section_feed", kwargs={"section_slug": obj.slug})
@@ -397,3 +397,36 @@ class SectionFeed(SiteFeed):
     def items(self, obj):
         paginate_by = obj.site.vars.get_value("paginate_by", 15, asa=int)
         return Article.objects.live().filter(section=obj)[:paginate_by]
+
+
+######################################################################################
+class AuthorFeed(SiteFeed):
+    "Feed of Articles by a specified author"
+
+    def get_object(self, request, *args, **kwargs):
+        "Return the Author for this feed"
+        return get_object_or_404(
+            Author.objects.filter(site=request.site, slug=kwargs["author_slug"])
+        )
+
+    def title(self, obj):
+        return obj.name
+
+    def link(self, obj):
+        return obj.get_absolute_url()
+
+    def description(self, obj):
+        return obj.description
+
+    def feed_url(self, obj):
+        return reverse("author_feed", kwargs={"author_slug": obj.slug})
+
+    def author_name(self, obj):
+        return obj.name
+
+    def feed_copyright(self, obj):
+        return obj.copyright_notice
+
+    def items(self, obj):
+        paginate_by = obj.site.vars.get_value("paginate_by", 15, asa=int)
+        return Article.objects.live().filter(author=obj)[:paginate_by]
