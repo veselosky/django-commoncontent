@@ -1,9 +1,10 @@
+from django.conf import settings
 from django.contrib import admin
-from easy_thumbnails.fields import ThumbnailerImageField
-from easy_thumbnails.widgets import ImageClearableFileInput
+from imagekit.admin import AdminThumbnail
 
 from genericsite.models import (
     Article,
+    Author,
     HomePage,
     Image,
     Link,
@@ -15,24 +16,36 @@ from genericsite.models import (
 
 
 #######################################################################################
+@admin.register(Author)
+class AuthorAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ("name",)}
+    list_display = ("name", "site")
+    list_filter = ("site",)
+
+
+#######################################################################################
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    formfield_overrides = {
-        ThumbnailerImageField: {"widget": ImageClearableFileInput},
-    }
-    readonly_fields = ("image_width", "image_height", "mime_type")
+    def thumbnail(self, instance):
+        if instance.is_portrait:
+            return AdminThumbnail(image_field="portrait_small").__call__(instance)
+        return AdminThumbnail(image_field="small").__call__(instance)
+
+    readonly_fields = ("width", "height", "mime_type", "thumbnail")
     fields = (
         "title",
+        "thumbnail",
         "image_file",
         "site",
         "alt_text",
         "tags",
         "description",
-        "copyright_holder",
+        "custom_copyright_holder",
         "custom_copyright_notice",
-        "created_dt",
-        "image_width",
-        "image_height",
+        "date_created",
+        "date_published",
+        "width",
+        "height",
         "mime_type",
     )
 
@@ -45,10 +58,10 @@ class SiteVarAdmin(admin.ModelAdmin):
 
 
 #######################################################################################
-class OpenGraphAdmin(admin.ModelAdmin):
+class CreativeWorkAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
-    date_hierarchy = "published_time"
-    list_display = ("title", "published_time", "site", "status")
+    date_hierarchy = "date_published"
+    list_display = ("title", "date_published", "site", "status")
     list_filter = ("site", "status")
     search_fields = ("title", "description")
     fieldsets = (
@@ -60,9 +73,10 @@ class OpenGraphAdmin(admin.ModelAdmin):
                     "slug",
                     "site",
                     "status",
-                    "published_time",
+                    "date_published",
                     "description",
-                    "og_image",
+                    "share_image",
+                    "author",
                     "body",
                 ),
             },
@@ -71,8 +85,8 @@ class OpenGraphAdmin(admin.ModelAdmin):
             "Metadata",
             {
                 "fields": (
-                    "modified_time",
-                    "expiration_time",
+                    "date_modified",
+                    "expires",
                     "seo_title",
                     "seo_description",
                     "content_template",
@@ -84,16 +98,30 @@ class OpenGraphAdmin(admin.ModelAdmin):
             "Additional metadata",
             {
                 "classes": ("collapse",),
-                "fields": ("type", "locale", "custom_icon", "custom_copyright_notice"),
+                "fields": ("locale", "custom_icon", "custom_copyright_notice"),
             },
         ),
     )
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if "tinymce" in settings.INSTALLED_APPS and db_field.name == "body":
+            from tinymce.widgets import TinyMCE
+
+            from genericsite.apps import TINYMCE_CONFIG
+
+            return db_field.formfield(
+                widget=TinyMCE(
+                    attrs={"cols": 90, "rows": 40},
+                    mce_attrs=TINYMCE_CONFIG,
+                )
+            )
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
 
 #######################################################################################
 @admin.register(Article)
-class ArticleAdmin(OpenGraphAdmin):
-    list_display = ("title", "section", "published_time", "site", "status")
+class ArticleAdmin(CreativeWorkAdmin):
+    list_display = ("title", "section", "date_published", "site", "status")
     list_filter = ("section", "site", "status")
     raw_id_fields = ["image_set"]
     fieldsets = (
@@ -106,11 +134,10 @@ class ArticleAdmin(OpenGraphAdmin):
                     "site",
                     "section",
                     "status",
-                    "published_time",
-                    "author_display_name",
-                    "author_profile_url",
+                    "date_published",
                     "description",
-                    "og_image",
+                    "share_image",
+                    "author",
                     "tags",
                     "body",
                 ),
@@ -120,8 +147,8 @@ class ArticleAdmin(OpenGraphAdmin):
             "Metadata",
             {
                 "fields": (
-                    "modified_time",
-                    "expiration_time",
+                    "date_modified",
+                    "expires",
                     "seo_title",
                     "seo_description",
                     "content_template",
@@ -133,7 +160,7 @@ class ArticleAdmin(OpenGraphAdmin):
             "Additional metadata",
             {
                 "classes": ("collapse",),
-                "fields": ("type", "locale", "custom_icon", "custom_copyright_notice"),
+                "fields": ("locale", "custom_icon", "custom_copyright_notice"),
             },
         ),
     )
@@ -141,21 +168,21 @@ class ArticleAdmin(OpenGraphAdmin):
 
 #######################################################################################
 @admin.register(Section)
-class SectionAdmin(OpenGraphAdmin):
+class SectionAdmin(CreativeWorkAdmin):
     pass
 
 
 #######################################################################################
 @admin.register(Page)
-class PageAdmin(OpenGraphAdmin):
+class PageAdmin(CreativeWorkAdmin):
     pass
 
 
 #######################################################################################
 @admin.register(HomePage)
-class HomePageAdmin(OpenGraphAdmin):
+class HomePageAdmin(CreativeWorkAdmin):
     prepopulated_fields = {"slug": ("admin_name",)}
-    list_display = ("admin_name", "published_time", "site", "status")
+    list_display = ("admin_name", "date_published", "site", "status")
     fieldsets = (
         (
             None,
@@ -165,7 +192,7 @@ class HomePageAdmin(OpenGraphAdmin):
                     "slug",
                     "title",
                     "description",
-                    "og_image",
+                    "share_image",
                     "body",
                 ),
             },
@@ -176,9 +203,9 @@ class HomePageAdmin(OpenGraphAdmin):
                 "fields": (
                     "site",
                     "status",
-                    "published_time",
-                    "modified_time",
-                    "expiration_time",
+                    "date_published",
+                    "date_modified",
+                    "expires",
                     "seo_title",
                     "seo_description",
                     "content_template",
@@ -190,7 +217,7 @@ class HomePageAdmin(OpenGraphAdmin):
             "Additional metadata",
             {
                 "classes": ("collapse",),
-                "fields": ("type", "locale", "custom_icon", "custom_copyright_notice"),
+                "fields": ("locale", "custom_icon", "custom_copyright_notice"),
             },
         ),
     )

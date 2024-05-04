@@ -1,0 +1,6 @@
+<ul class="menu">
+  {% for item in menu.links %}{% firstof item.get_absolute_url item.url as url %}
+  <li class="menu-item"><a href="{{ url }}" class="menu-link"
+    >{% firstof item.headline item.title item.name %}</a></li>
+  {% endfor %}
+</ul>

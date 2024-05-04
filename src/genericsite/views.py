@@ -1,19 +1,15 @@
 import typing as T
 
 from django.apps import apps
-from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.syndication.views import Feed
-from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.feedgenerator import Rss201rev2Feed
-from django.views.generic import DetailView, ListView, TemplateView
-from easy_thumbnails.files import get_thumbnailer
+from django.views.generic import DetailView, ListView
 
-from genericsite.models import Article, HomePage, Image, Page, Section
+from genericsite.models import Article, Author, HomePage, Page, Section
 
 
 ######################################################################################
@@ -101,9 +97,9 @@ class OpenGraphListView(ListView):
         context["object"] = self.object
         context["opengraph"] = self.object.opengraph
         context["precontent_template"] = site.vars.get_value("list_precontent_template")
-        context["content_template"] = (
-            self.object.content_template or site.vars.get_value("list_content_template")
-        )
+        context["content_template"] = getattr(
+            self.object, "content_template", None
+        ) or site.vars.get_value("list_content_template")
         context["postcontent_template"] = site.vars.get_value(
             "list_postcontent_template"
         )
@@ -145,13 +141,13 @@ class OpenGraphListView(ListView):
     def get_template_names(self):
         names = []
         # Per Django convention, `template_name` on the View takes precedence
-        if tname := getattr(self, "template_name"):
+        if tname := getattr(self, "template_name", None):
             names.append(tname)
 
         # Django's ListView doesn't account for an object overriding the template,
         # so we need to do that ourselves.
-        if self.object.base_template:
-            names.append(self.object.base_template)
+        if base_template := getattr(self.object, "base_template", None):
+            names.append(base_template)
 
         # Allow using the Django convention <app>/<model>_list.html
         if hasattr(self.object_list, "model"):
@@ -175,6 +171,65 @@ class OpenGraphListView(ListView):
 ######################################################################################
 class ArticleListView(OpenGraphListView):
     model = Article
+
+
+######################################################################################
+class AuthorView(ArticleListView):
+    allow_empty: bool = True
+    object = None
+
+    def get_context_data(self, **kwargs) -> T.Dict[str, T.Any]:
+        context = super().get_context_data(**kwargs)
+        context["precontent_template"] = "genericsite/blocks/author_profile.html"
+        return context
+
+    def get_object(self):
+        return get_object_or_404(
+            Author.objects.filter(
+                site=get_current_site(self.request),
+                slug=self.kwargs["author_slug"],
+            )
+        )
+
+    def get_queryset(self):
+        return super().get_queryset().filter(author=self.get_object())
+
+
+######################################################################################
+class AuthorListView(ListView):
+    model = Author
+    object = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs) -> T.Dict[str, T.Any]:
+        context = super().get_context_data(**kwargs)
+        context["content_template"] = "genericsite/blocks/author_list_album.html"
+        return context
+
+    def get_object(self):
+        site_name = self.request.site.vars.get_value("brand", self.request.site.name)
+        self.object = Page(
+            site=get_current_site(self.request),
+            title=f"Contributors to {site_name}",
+            description="Authors who have contributed to this site.",
+            date_published=timezone.now(),
+        )
+        return self.object
+
+    def get_template_names(self) -> T.List[str]:
+        names = super().get_template_names()
+
+        # Fall back to site default if set
+        var = self.object.site.vars
+        if site_default := var.get_value("base_template"):
+            names.append(site_default)
+
+        # Fall back to Genericsite default
+        names.append("genericsite/base.html")
+        return names
 
 
 ######################################################################################
@@ -208,7 +263,7 @@ class HomePageView(ArticleListView):
                 site=get_current_site(self.request),
                 admin_name="__DEBUG__",
                 title="Generic Site",
-                published_time=timezone.now(),
+                date_published=timezone.now(),
             )
         return hp
 
@@ -217,20 +272,6 @@ class HomePageView(ArticleListView):
         hp = self.object
         if hp.admin_name == "__DEBUG__":
             context["precontent_template"] = "genericsite/blocks/debug_newsite.html"
-        return context
-
-
-######################################################################################
-class ProfileView(LoginRequiredMixin, TemplateView):
-    template_name = "registration/profile.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if "allauth" in settings.INSTALLED_APPS:  # use allauth views
-            context["change_password_view"] = "account_change_password"
-        else:  # use django.contrib.auth views
-            context["change_password_view"] = "password_change"
-
         return context
 
 
@@ -299,13 +340,16 @@ class SiteFeed(Feed):
         return item.get_absolute_url()
 
     def item_author_name(self, item):
-        return item.author_display_name
+        if item.author:
+            return item.author.name
+        else:
+            return item.site.vars.get_value("author_display_name")
 
     def item_pubdate(self, item):
-        return item.published_time
+        return item.date_published
 
     def item_updateddate(self, item):
-        return item.modified_time
+        return item.date_modified
 
     def item_copyright(self, item):
         return item.copyright_notice
@@ -330,19 +374,22 @@ class SectionFeed(SiteFeed):
         )
 
     def title(self, obj):
-        return obj.opengraph.title
+        return obj.title
 
     def link(self, obj):
         return obj.get_absolute_url()
 
     def description(self, obj):
-        return obj.opengraph.description
+        return obj.description
 
     def feed_url(self, obj):
         return reverse("section_feed", kwargs={"section_slug": obj.slug})
 
     def author_name(self, obj):
-        return obj.author_display_name or obj.site.vars.get_value("author_display_name")
+        if obj.author:
+            return obj.author.name
+        else:
+            return obj.site.vars.get_value("author_display_name")
 
     def feed_copyright(self, obj):
         return obj.copyright_notice
@@ -353,32 +400,33 @@ class SectionFeed(SiteFeed):
 
 
 ######################################################################################
-class TinyMCEImageListView(ListView):
-    """This view provides an image list for the TinyMCE editor for easy insertion."""
+class AuthorFeed(SiteFeed):
+    "Feed of Articles by a specified author"
 
-    model = Image
-    ordering = "-uploaded_dt"
-    paginate_by = 25
-
-    def render_to_response(
-        self, context: T.Dict[str, T.Any], **response_kwargs: T.Any
-    ) -> HttpResponse:
-        images = context.get("page_obj")
-        if images is None:
-            images = context.get("object_list")
-
-        def preset(i):
-            if i.image_width < i.image_height:
-                return "portrait_large"
-            return "large"
-
-        return JsonResponse(
-            [
-                {
-                    "title": i.title,
-                    "value": get_thumbnailer(i.image_file)[preset(i)].url,
-                }
-                for i in images
-            ],
-            safe=False,
+    def get_object(self, request, *args, **kwargs):
+        "Return the Author for this feed"
+        return get_object_or_404(
+            Author.objects.filter(site=request.site, slug=kwargs["author_slug"])
         )
+
+    def title(self, obj):
+        return obj.name
+
+    def link(self, obj):
+        return obj.get_absolute_url()
+
+    def description(self, obj):
+        return obj.description
+
+    def feed_url(self, obj):
+        return reverse("author_feed", kwargs={"author_slug": obj.slug})
+
+    def author_name(self, obj):
+        return obj.name
+
+    def feed_copyright(self, obj):
+        return obj.copyright_notice
+
+    def items(self, obj):
+        paginate_by = obj.site.vars.get_value("paginate_by", 15, asa=int)
+        return Article.objects.live().filter(author=obj)[:paginate_by]

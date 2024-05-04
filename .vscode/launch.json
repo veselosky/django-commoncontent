@@ -22,6 +22,13 @@
       "console": "integratedTerminal",
       "justMyCode": false,
       "env": { "PYTEST_ADDOPTS": "--no-cov", "SITE_ID": "1" }
+    },
+    {
+      "name": "Static Mocks",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/mockups/serve.py",
+      "cwd": "${workspaceFolder}/mockups"
     }
   ]
 }

@@ -13,28 +13,31 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import include, path
+
+from django.urls import path
 from django.views.generic import RedirectView
 
 from genericsite import views as generic
 
 urlpatterns = [
-    path("tinymce/", include("tinymce.urls")),
-    path("accounts/profile/", generic.ProfileView.as_view(), name="account_profile"),
-    path(
-        "images/recent.json",
-        generic.TinyMCEImageListView.as_view(),
-        name="tinymce_image_list",
-    ),
-    # Above pages are used for admin/publishing, not live site. These redirects are for
-    # live site but cannot be statically generated. Users will have to deal with that.
     path(
         "<slug:section_slug>/feed/", RedirectView.as_view(pattern_name="section_feed")
     ),
     path("feed/", RedirectView.as_view(pattern_name="site_feed")),
-    # URLs below can be statically generated.
     # Home page pagination needs to come before the other page patterns to match.
     path("page_<int:page>.html", generic.HomePageView.as_view(), name="home_paginated"),
+    path("author/", generic.AuthorListView.as_view(), name="author_list"),
+    path(
+        "author/<slug:author_slug>/index.rss", generic.AuthorFeed(), name="author_feed"
+    ),
+    path(
+        "author/<slug:author_slug>/page_<int:page>.html",
+        generic.AuthorView.as_view(),
+        name="author_page_paginated",
+    ),
+    path(
+        "author/<slug:author_slug>/", generic.AuthorView.as_view(), name="author_page"
+    ),
     path(
         "<slug:section_slug>/page_<int:page>.html",
         generic.SectionView.as_view(),

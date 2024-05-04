@@ -13,17 +13,30 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
-
-from genericsite import views as generic
+from genericsite import views_optional as optional
+from genericsite.sitemaps import sitemaps
 
 urlpatterns = [
-    path("accounts/profile/", generic.ProfileView.as_view(), name="account_profile"),
+    path(
+        "images/recent.json",
+        optional.TinyMCEImageListView.as_view(),
+        name="tinymce_image_list",
+    ),
+    path("accounts/profile/", optional.ProfileView.as_view(), name="account_profile"),
     path("accounts/", include("allauth.urls")),
     path("django_accounts/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),
+    path(
+        "sitemap.xml",
+        sitemap,
+        {"sitemaps": sitemaps},
+        name="django.contrib.sitemaps.views.sitemap",
+    ),
     path("", include("genericsite.urls")),
 ]
 if settings.DEBUG:

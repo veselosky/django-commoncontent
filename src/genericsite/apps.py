@@ -1,13 +1,18 @@
 from django.apps import AppConfig, apps
 from django.utils.translation import gettext_lazy as _
 
-THUMBNAIL_PROCESSORS = (
-    "easy_thumbnails.processors.colorspace",
-    "easy_thumbnails.processors.autocrop",
-    "easy_thumbnails.processors.scale_and_crop",
-    "easy_thumbnails.processors.filters",
-)
-THUMBNAIL_WIDGET_OPTIONS = {"size": (160, 90)}
+# Apps required for static site generation
+CONTENT = [
+    "genericsite",
+    # 3rd party apps we require
+    "django_bootstrap_icons",
+    "imagekit",
+    "taggit",
+]
+# Apps required for admin with genericsite extensions
+ADMIN = [
+    "genericsite.adminoverride",
+]
 
 TINYMCE_CONFIG = {
     "height": "320px",
@@ -84,7 +89,17 @@ class GenericsiteConfig(AppConfig):
             return settings.TINYMCE_DEFAULT_CONFIG["pagebreak_separator"]
         except Exception:
             # May not be configured
-            return "<!-- MORE -->"
+            return "<!-- pagebreak -->"
+
+    @property
+    def sitemap_changefreq(self):
+        """How often search engines should check for article updates"""
+        from django.conf import settings
+
+        try:
+            return settings.SITEMAP_CHANGEFREQ
+        except Exception:
+            return "weekly"
 
     def as_dict(self) -> dict:
         return {
@@ -102,48 +117,6 @@ class GenericsiteConfig(AppConfig):
             "paginate_by": self.paginate_by,
             "paginate_orphans": self.paginate_orphans,
         }
-
-    def ready(self):
-        # Add genericsite thumbnail aliases to the easy_thumbnails aliases.
-        # This makes them accessible on thumbnail image fields.
-        from easy_thumbnails.alias import aliases
-        from easy_thumbnails.signal_handlers import generate_aliases_global
-        from easy_thumbnails.signals import saved_file
-
-        # Landscape aliases, most common in genericsite and many designs
-        if not aliases.get("hd1080p"):
-            aliases.set("hd1080p", {"size": (1920, 1080), "crop": False})
-        if not aliases.get("hd720p"):
-            aliases.set("hd720p", {"size": (1280, 720), "crop": False})
-        # Ref https://buffer.com/library/ideal-image-sizes-social-media-posts/
-        # Recommended size for sharing social images on FB, and close enough for others
-        if not aliases.get("opengraph"):
-            aliases.set("opengraph", {"size": (1200, 630), "crop": "smart"})
-        if not aliases.get("large"):
-            aliases.set("large", {"size": (960, 540), "crop": False})
-        if not aliases.get("medium"):
-            aliases.set("medium", {"size": (400, 225), "crop": "smart"})
-        if not aliases.get("small"):
-            aliases.set("small", {"size": (160, 90), "crop": "smart"})
-
-        # Portrait orientation aliases
-        if not aliases.get("portrait_small"):
-            aliases.set("portrait_small", {"size": (90, 160), "crop": "smart"})
-        if not aliases.get("portrait_medium"):
-            aliases.set("portrait_medium", {"size": (225, 400), "crop": "smart"})
-        if not aliases.get("portrait_large"):
-            aliases.set("portrait_large", {"size": (540, 960), "crop": False})
-        # Buffer post recommends this size for Pinterest
-        if not aliases.get("portrait_cover"):
-            aliases.set("portrait_cover", {"size": (1000, 1500), "crop": False})
-        # Buffer post recommends this size for Insta/FB
-        if not aliases.get("portrait_social"):
-            aliases.set("portrait_social", {"size": (1080, 1350), "crop": "smart"})
-        if not aliases.get("portrait_hd"):
-            aliases.set("portrait_hd", {"size": (1080, 1920), "crop": False})
-
-        # Auto-generate thumbs on file upload
-        saved_file.connect(generate_aliases_global)
 
 
 # A context processor to add our vars to template contexts:
@@ -209,9 +182,7 @@ def plus(*args):
         "genericsite",
         # 3rd party apps we require
         "django_bootstrap_icons",
-        "easy_thumbnails",
         "taggit",
-        "tinymce",
         # Insert the user's stuff here, above Django defaults, in case they
         # want to override default templates.
         *args,

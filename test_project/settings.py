@@ -9,10 +9,10 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
+
 from pathlib import Path
 
 import environ
-
 import genericsite.apps
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -35,19 +35,38 @@ SECRET_KEY = "django-insecure-ri51as9!afs^d0y_&%cf#jv)uud!dfky0k0ydioc_3u^va&5^+
 DEBUG = True
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 SITE_ID = env("SITE_ID", cast=int, default=None)
 LOGIN_REDIRECT_URL = "/"
 
 
 # Application definition
-INSTALLED_APPS = genericsite.apps.plus(
+INSTALLED_APPS = [
+    # genericsite apps for static site generation
+    *genericsite.apps.CONTENT,
+    # genericsite apps for publishing tools
     "django_extensions",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-)
+    "tinymce",
+    # contrib apps required by genericsite for statics
+    "django.contrib.contenttypes",
+    "django.contrib.redirects",
+    "django.contrib.sitemaps",
+    "django.contrib.sites",
+    "django.contrib.staticfiles",
+    # contrib apps required by genericsite for dynamically served apps
+    "django.contrib.auth",
+    "django.contrib.messages",
+    "django.contrib.sessions",
+    # Optional admin with genericsite extensions
+    "django.contrib.admin",
+    "django.contrib.admindocs",
+    *genericsite.apps.ADMIN,
+]
 
+# Note: most of these middlewares are not required for static generation
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -83,6 +102,15 @@ TEMPLATES = [
         },
     },
 ]
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 WSGI_APPLICATION = "test_project.wsgi.application"
 
@@ -127,10 +155,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CONN_HEALTH_CHECKS = True
 
 
-THUMBNAIL_PROCESSORS = genericsite.apps.THUMBNAIL_PROCESSORS
-THUMBNAIL_DEBUG = DEBUG
+# THUMBNAIL_PROCESSORS = genericsite.apps.THUMBNAIL_PROCESSORS
+# THUMBNAIL_DEBUG = DEBUG
 
-TINYMCE_DEFAULT_CONFIG = genericsite.apps.TINYMCE_CONFIG
+# TINYMCE_DEFAULT_CONFIG = genericsite.apps.TINYMCE_CONFIG
 
 #######################################################################
 # DEVELOPMENT: If running in a dev environment, loosen restrictions
@@ -140,7 +168,9 @@ if DEBUG:
     ALLOWED_HOSTS = ["*"]
 
     # Use the basic storage with no manifest
-    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    STORAGES["staticfiles"]["BACKEND"] = (
+        "django.contrib.staticfiles.storage.StaticFilesStorage"
+    )
     try:
         import debug_toolbar
 
