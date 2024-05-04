@@ -35,7 +35,7 @@ SECRET_KEY = "django-insecure-ri51as9!afs^d0y_&%cf#jv)uud!dfky0k0ydioc_3u^va&5^+
 DEBUG = True
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 SITE_ID = env("SITE_ID", cast=int, default=None)
 LOGIN_REDIRECT_URL = "/"
 
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "tinymce",
     # contrib apps required by genericsite for statics
     "django.contrib.contenttypes",
     "django.contrib.redirects",
@@ -101,6 +102,15 @@ TEMPLATES = [
         },
     },
 ]
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 WSGI_APPLICATION = "test_project.wsgi.application"
 
@@ -158,7 +168,9 @@ if DEBUG:
     ALLOWED_HOSTS = ["*"]
 
     # Use the basic storage with no manifest
-    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    STORAGES["staticfiles"]["BACKEND"] = (
+        "django.contrib.staticfiles.storage.StaticFilesStorage"
+    )
     try:
         import debug_toolbar
 

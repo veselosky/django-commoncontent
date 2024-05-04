@@ -68,9 +68,8 @@ class TestCopyrightNoticeTag(DjangoTestCase):
         output = Template("{% load genericsite %}{% copyright_notice %} ").render(
             Context({"object": page})
         )
-        print(output)
-        assert page.copyright_notice in output
-        assert "2021 custom copyright notice" in output
+        self.assertIn(page.copyright_notice, output)
+        self.assertIn("2021 custom copyright notice", output)
 
     def test_copyright_notice_site_has_fallback(self):
         """Context contains an object that has no copyright_notice prop.
@@ -87,8 +86,8 @@ class TestCopyrightNoticeTag(DjangoTestCase):
         output = Template("{% load genericsite %}{% copyright_notice %} ").render(
             Context({"request": request, "object": object()})
         )
-        print(output)
-        assert f"{year} sitewide copyright" in output
+
+        self.assertIn(f"{year} sitewide copyright", output)
 
     def test_copyright_notice_site_has_holder(self):
         """Context contains an object that has no copyright_notice prop.
@@ -105,8 +104,8 @@ class TestCopyrightNoticeTag(DjangoTestCase):
         output = Template("{% load genericsite %}{% copyright_notice %} ").render(
             Context({"request": request, "object": object()})
         )
-        print(output)
-        assert f"{year} custom holder. All rights" in output
+
+        self.assertIn(f"{year} custom holder. All rights", output)
 
     def test_copyright_notice_site_default(self):
         """Context contains an object that has no copyright_notice prop.
@@ -119,5 +118,4 @@ class TestCopyrightNoticeTag(DjangoTestCase):
         output = Template("{% load genericsite %}{% copyright_notice %} ").render(
             Context({"request": request, "object": object()})
         )
-        print(output)
-        assert f"{year} example.com. All rights" in output
+        self.assertIn(f"{year} example.com. All rights", output)

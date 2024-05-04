@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from imagekit.admin import AdminThumbnail
 
@@ -101,6 +102,20 @@ class CreativeWorkAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if "tinymce" in settings.INSTALLED_APPS and db_field.name == "body":
+            from tinymce.widgets import TinyMCE
+
+            from genericsite.apps import TINYMCE_CONFIG
+
+            return db_field.formfield(
+                widget=TinyMCE(
+                    attrs={"cols": 90, "rows": 40},
+                    mce_attrs=TINYMCE_CONFIG,
+                )
+            )
+        return super().formfield_for_dbfield(db_field, **kwargs)
 
 
 #######################################################################################

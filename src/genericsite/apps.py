@@ -14,25 +14,25 @@ ADMIN = [
     "genericsite.adminoverride",
 ]
 
-# TINYMCE_CONFIG = {
-#     "height": "320px",
-#     "width": "960px",
-#     "menubar": "edit view insert format tools table help",
-#     "pagebreak_separator": "<!-- pagebreak --><span id=continue-reading></span>",
-#     "plugins": "advlist autoresize charmap code codesample help hr image imagetools "
-#     "link lists media pagebreak paste searchreplace table toc visualblocks "
-#     "visualchars wordcount",
-#     "toolbar": "undo redo | bold italic strikethrough | styleselect | removeformat | "
-#     "numlist bullist indent outdent | image pagebreak | code",
-#     "image_advtab": True,
-#     "image_caption": True,
-#     "image_class_list": [
-#         {"title": "Responsive", "value": "img-fluid"},
-#         {"title": "Left", "value": "float-left"},
-#         {"title": "Right", "value": "float-right"},
-#     ],
-#     "image_list": "/images/recent.json",
-# }
+TINYMCE_CONFIG = {
+    "height": "320px",
+    "width": "960px",
+    "menubar": "edit view insert format tools table help",
+    "pagebreak_separator": "<!-- pagebreak --><span id=continue-reading></span>",
+    "plugins": "advlist autoresize charmap code codesample help hr image imagetools "
+    "link lists media pagebreak paste searchreplace table toc visualblocks "
+    "visualchars wordcount",
+    "toolbar": "undo redo | bold italic strikethrough | styleselect | removeformat | "
+    "numlist bullist indent outdent | image pagebreak | code",
+    "image_advtab": True,
+    "image_caption": True,
+    "image_class_list": [
+        {"title": "Responsive", "value": "img-fluid"},
+        {"title": "Left", "value": "float-left"},
+        {"title": "Right", "value": "float-right"},
+    ],
+    "image_list": "/images/recent.json",
+}
 
 
 class GenericsiteConfig(AppConfig):
