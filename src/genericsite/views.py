@@ -178,7 +178,7 @@ class AuthorView(ArticleListView):
     allow_empty: bool = True
     object = None
 
-    def get_context_data(self, **kwargs) -> dict[str, T.Any]:
+    def get_context_data(self, **kwargs) -> T.Dict[str, T.Any]:
         context = super().get_context_data(**kwargs)
         context["precontent_template"] = "genericsite/blocks/author_profile.html"
         return context
@@ -204,7 +204,7 @@ class AuthorListView(ListView):
         self.object = self.get_object()
         return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs) -> dict[str, T.Any]:
+    def get_context_data(self, **kwargs) -> T.Dict[str, T.Any]:
         context = super().get_context_data(**kwargs)
         context["content_template"] = "genericsite/blocks/author_list_album.html"
         return context
@@ -219,7 +219,7 @@ class AuthorListView(ListView):
         )
         return self.object
 
-    def get_template_names(self) -> list[str]:
+    def get_template_names(self) -> T.List[str]:
         names = super().get_template_names()
 
         # Fall back to site default if set
