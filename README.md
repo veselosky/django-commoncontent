@@ -9,10 +9,10 @@ GenericSite is a Django app designed to get you that first 80% of your website
 functionality as quickly as possible. It performs the undifferentiated heavy lifting so
 you can focus on the 20% of the work that makes your site special.
 
-GenericSite defines a data model based on the [open graph protocol](https://ogp.me),
-extended in some places using fields from [Schema.org](https://schema.org) or other web
-standards. It provides both concrete Django models for common web objects, and abstract
-Django models if your prefer full customization of your data model.
+GenericSite defines a data model based on [Schema.org](https://schema.org), extended in
+some places using fields from the [open graph protocol](https://ogp.me), or other web
+standards. It provides concrete Django models for common web objects, as well as an
+abstract CreativeWork model for extending the available page types.
 
 GenericSite includes a set of views to be used with the included models. These are based
 on Django's generic class-based views. They can be used directly or subclassed to meet
@@ -46,16 +46,18 @@ Add the following to your `settings.py`:
 
 ```python
 import genericsite.apps
-INSTALLED_APPS = genericsite.apps.plus(
-  # Your apps here
-)
+INSTALLED_APPS = [
+  *genericsite.apps.CONTENT
+  # Optionally use tinymce in the admin
+  "tinymce",
+  # Other Django apps here, then
+  *genericsite.apps.ADMIN
+]
 MIDDLEWARE += [
   "django.contrib.sites.middleware.CurrentSiteMiddleware",
   "genericsite.redirects.TemporaryRedirectFallbackMiddleware",
 ]
-THUMBNAIL_PROCESSORS = genericsite.apps.THUMBNAIL_PROCESSORS
-THUMBNAIL_WIDGET_OPTIONS = genericsite.apps.THUMBNAIL_WIDGET_OPTIONS
-THUMBNAIL_DEBUG = DEBUG
+# If using tinymce
 TINYMCE_DEFAULT_CONFIG = genericsite.apps.TINYMCE_CONFIG
 
 # Add `genericsite.apps.context_defaults` to your context processors. You will also
@@ -98,8 +100,8 @@ urlpatterns = [
     # path("accounts/", include("allauth.urls")),
     # You need to add the admin yourself:
     path("admin/", admin.site.urls),
-    # Admin docs are included in the GenericSite urlconf, don't add your own.
-    # TinyMCE urls are included in the GenericSite urlconf, too.
+    # TinyMCE urls if desired
+    path("tinymce/", include("tinymce.urls")),
     # All other urls are handed to GenericSite
     path("", include("genericsite.urls")),
 ]
@@ -156,7 +158,7 @@ the default templates/models can be found on the Admin Documentation page for Si
 
 ## Images and Media
 
-GenericSite takes advantage of easy_thumbnails to manage images. Models are provided for
+GenericSite takes advantage of Django Imagekit to manage images. Models are provided for
 storing file metadata including copyright information.
 
 GenericSite uses presets to produce images in specific sizes as recommended by
@@ -176,27 +178,3 @@ These named thumbnail settings are available:
 - portrait_cover: 1000x1500
 - portrait_social: 1080x1350
 - portrait_hd: 1080x1920
-
-## Open Graph attributes used by the templates
-
-- title
-- url
-- type
-- description
-- locale
-- site_name
-- fb:app_id
-- image.alt
-- image.url
-- image.secure_url
-- image.type
-- image.width
-- image.height
-- audio.url
-- audio.secure_url
-- audio.type
-- video.url
-- video.secure_url
-- video.type
-- video.width
-- video.height

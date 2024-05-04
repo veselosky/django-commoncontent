@@ -2,7 +2,7 @@
 name = "django-genericsite"
 dynamic = ["version"]
 authors = [{ name = "Vince Veselosky", email = "vince@veselosky.com" }]
-description = "basic templates for Django's generic views to produce a decent-looking website with minimal effort"
+description = "basic data model and templates for Django's generic views to produce a decent-looking website with minimal effort"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
@@ -10,8 +10,7 @@ dependencies = [
     "django-imagekit>=5.0.0",
     "django-taggit>=5.0.0",
     "django<5.3,>=4.2",
-    "docutils>=0.19",
-    "pillow>=2.3.0",
+    "pillow>=10.1.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -26,6 +25,7 @@ dev = [
     "django-environ",
     "django-extensions",
     "djlint",
+    "docutils>=0.19",
     "pytest",
     "pytest-cov",
     "pytest-django",
