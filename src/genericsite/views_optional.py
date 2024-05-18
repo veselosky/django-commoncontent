@@ -27,7 +27,7 @@ class TinyMCEImageListView(ListView):
     """This view provides an image list for the TinyMCE editor for easy insertion."""
 
     model = Image
-    ordering = "-uploaded_dt"
+    ordering = "-upload_date"
     paginate_by = 25
 
     def render_to_response(
@@ -37,16 +37,11 @@ class TinyMCEImageListView(ListView):
         if images is None:
             images = context.get("object_list")
 
-        def preset(i):
-            if i.image_width < i.image_height:
-                return "portrait_large"
-            return "large"
-
         return JsonResponse(
             [
                 {
                     "title": i.title,
-                    # "value": get_thumbnailer(i.image_file)[preset(i)].url,
+                    "value": i.portrait_large.url if i.is_portrait else i.large.url,
                 }
                 for i in images
             ],
