@@ -1,4 +1,6 @@
+import json
 from datetime import timedelta
+from io import BytesIO
 
 from django.apps import apps
 from django.contrib.auth.models import User
@@ -6,7 +8,9 @@ from django.http import HttpResponseNotFound
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-from genericsite.models import Article, HomePage, Page, Section, Site, SiteVar, Status
+from django.core.files.base import ContentFile
+from PIL import Image as PILImage
+from genericsite.models import Article, HomePage, Image, Page, Section, Site, SiteVar, Status
 
 
 class TestHomePageView(TestCase):
@@ -491,3 +495,25 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
         self.assertEqual(
             "account/messages/password_set.txt", resp.context["postcontent_template"]
         )
+
+
+class TestTinyMCEImageListView(TestCase):
+    def test_get(self):
+        # create an in-memory PILImage to be used as a test image
+        img = PILImage.new("RGB", (100, 100))
+        # Create a BytesIO object containing the image data
+        img_io = BytesIO()
+        img.save(img_io, format='PNG',)
+        img_io.seek(0)
+
+        Image.objects.create(
+            title="test image",
+            image_file=ContentFile(img_io.read(), name="test.png"),
+            alt_text="test alt",
+        )
+        resp = self.client.get(reverse("tinymce_image_list"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "application/json")
+        data = json.loads(resp.content)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["title"], "test image")
