@@ -1,6 +1,9 @@
 from datetime import datetime
+from unittest import mock
 
 from django.test import TestCase as DjangoTestCase
+from django.test import override_settings
+from genericsite.common import upload_to
 from genericsite.models import Page, Site, SiteVar, Status
 
 
@@ -105,3 +108,54 @@ class TestModels(DjangoTestCase):
         )
         assert f"First paragraph." in page.excerpt
         assert f"Second paragraph." in page.excerpt
+
+
+def upload_to_target_for_test(instance, filename):
+    return "arf.jpg"
+
+
+class TestUploadTo(DjangoTestCase):
+    def test_upload_to_target(self):
+        """upload_to function should use the target function if set."""
+
+        site = Site.objects.get(id=1)
+        page = Page(
+            title="Test Page",
+            slug="test-page",
+            status=Status.USABLE,
+            site=site,
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
+        )
+        with override_settings(GENERICSITE_UPLOAD_TO=upload_to_target_for_test):
+            self.assertEqual(upload_to(page, "test.jpg"), "arf.jpg")
+
+    def test_upload_to_target_is_string(self):
+        """upload_to function should use the target function if set."""
+        site = Site.objects.get(id=1)
+        page = Page(
+            title="Test Page",
+            slug="test-page",
+            status=Status.USABLE,
+            site=site,
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
+        )
+        with override_settings(
+            GENERICSITE_UPLOAD_TO="tests.test_models.upload_to_target_for_test"
+        ):
+            self.assertEqual(upload_to(page, "test.jpg"), "arf.jpg")
+
+    def test_upload_to_default(self):
+        """upload_to function should use the default path if target not set."""
+        site = Site.objects.get(id=1)
+        page = Page(
+            title="Test Page",
+            slug="test-page",
+            status=Status.USABLE,
+            site=site,
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
+        )
+        with mock.patch("genericsite.common.now") as mock_tz:
+            mock_tz.return_value = datetime.fromisoformat("2021-11-22T19:00")
+            self.assertEqual(
+                upload_to(page, "test.jpg"), "example.com/2021/11/22/test.jpg"
+            )

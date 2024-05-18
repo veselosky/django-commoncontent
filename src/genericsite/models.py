@@ -15,7 +15,7 @@ from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill, ResizeToFit
 from taggit.managers import TaggableManager
 
-from genericsite.common import Status
+from genericsite.common import Status, upload_to
 from genericsite.schemas import (
     CreativeWorkSchema,
     ImageProp,
@@ -522,6 +522,7 @@ class Image(MediaObject):
         null=True,
         width_field="width",
         height_field="height",
+        upload_to=upload_to,
     )
     alt_text = models.CharField(_("alt text"), max_length=255, blank=True)
     width = models.PositiveIntegerField(_("width"), blank=True, null=True)
@@ -633,7 +634,7 @@ class Attachment(MediaObject):
 
     content_field = "file"
 
-    file = models.FileField(_("file"), max_length=255)
+    file = models.FileField(_("file"), max_length=255, upload_to=upload_to)
 
 
 #######################################################################
