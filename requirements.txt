@@ -37,7 +37,7 @@ pillow==10.3.0
     # via
     #   django-genericsite (pyproject.toml)
     #   pilkit
-requests==2.31.0
+requests==2.32.0
     # via django-bootstrap-icons
 sqlparse==0.5.0
     # via django
