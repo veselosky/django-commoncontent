@@ -4,13 +4,24 @@ from io import BytesIO
 
 from django.apps import apps
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.http import HttpResponseNotFound
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-from django.core.files.base import ContentFile
+from genericsite.models import (
+    Article,
+    ArticleSeries,
+    Author,
+    HomePage,
+    Image,
+    Page,
+    Section,
+    Site,
+    SiteVar,
+    Status,
+)
 from PIL import Image as PILImage
-from genericsite.models import Article, HomePage, Image, Page, Section, Site, SiteVar, Status
 
 
 class TestHomePageView(TestCase):
@@ -503,7 +514,10 @@ class TestTinyMCEImageListView(TestCase):
         img = PILImage.new("RGB", (100, 100))
         # Create a BytesIO object containing the image data
         img_io = BytesIO()
-        img.save(img_io, format='PNG',)
+        img.save(
+            img_io,
+            format="PNG",
+        )
         img_io.seek(0)
 
         Image.objects.create(
@@ -517,3 +531,116 @@ class TestTinyMCEImageListView(TestCase):
         data = json.loads(resp.content)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["title"], "test image")
+
+
+class ArticleSeriesViewsTest(BaseContentTestCase):
+    def setUp(self):
+        self.series = ArticleSeries.objects.create(site_id=1, slug="series_slug")
+        self.series_article = Article.objects.create(
+            section=self.section,
+            series=self.series,
+            slug="article_slug",
+            site=self.site,
+            status=Status.USABLE,
+            date_published=timezone.now(),
+        )
+
+    def test_redirect_url(self):
+        """Test <section>/<series>/ redirects to first article in series."""
+        response = self.client.get(
+            reverse(
+                "series_page",
+                kwargs={
+                    "section_slug": self.series_article.section.slug,
+                    "series_slug": self.series.slug,
+                },
+            )
+        )
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(
+            response.url,
+            reverse(
+                "article_series_page",
+                kwargs={
+                    "section_slug": self.series_article.section.slug,
+                    "series_slug": self.series.slug,
+                    "article_slug": self.series_article.slug,
+                },
+            ),
+        )
+
+    def test_article_with_series_redirect(self):
+        """
+        Test that a request to "<section_slug>/<article_slug>.html" redirects to
+        "<section_slug>/<series_slug>/<article_slug>.html" when the article has a series."""
+        response = self.client.get(
+            reverse(
+                "article_page",
+                kwargs={
+                    "section_slug": self.series_article.section.slug,
+                    "article_slug": self.series_article.slug,
+                },
+            )
+        )
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(
+            response.url,
+            reverse(
+                "article_series_page",
+                kwargs={
+                    "section_slug": self.series_article.section.slug,
+                    "series_slug": self.series.slug,
+                    "article_slug": self.series_article.slug,
+                },
+            ),
+        )
+
+
+class TestAuthorViews(TestCase):
+    def setUp(self):
+        self.author = Author.objects.create(
+            name="Test Author", site_id=1, slug="test-author"
+        )
+        self.section = Section.objects.create(
+            site_id=1, slug="section_slug", date_published=timezone.now()
+        )
+        self.article = Article.objects.create(
+            site_id=1,
+            section=self.section,
+            title="Test Article",
+            slug="test-article",
+            site=Site.objects.get_current(),
+            status=Status.USABLE,
+            date_published=timezone.now(),
+            author=self.author,
+        )
+
+    def test_author_list(self):
+        response = self.client.get(reverse("author_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.author.name)
+
+    def test_author_page(self):
+        response = self.client.get(
+            reverse("author_page", kwargs={"author_slug": self.author.slug})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.author.name)
+
+    def test_author_page_paginated(self):
+        response = self.client.get(
+            reverse(
+                "author_page_paginated",
+                kwargs={"author_slug": self.author.slug, "page": 1},
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.author.name)
+
+    def test_author_feed(self):
+        response = self.client.get(
+            reverse("author_feed", kwargs={"author_slug": self.author.slug})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.author.name)

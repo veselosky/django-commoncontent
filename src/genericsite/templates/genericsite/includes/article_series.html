@@ -1,0 +1,18 @@
+{% comment %}
+Given an article that belongs to a series, display a list of all the articles in the
+series, linking to all but the current article.
+{% endcomment %}
+{% with object.series as series %}
+  {% if series %}
+    <h2>Part of the Series: {{ series.name }}</h2>
+    <ol class="list-group list-group-numbered">
+      {% for article in series.article_set.all %}
+        {% if article != object %}
+          <li class="list-group-item"><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></li>
+        {% else %}
+          <li class="list-group-item">{{ article.title }}</li>
+        {% endif %}
+      {% endfor %}
+    </ol>
+  {% endif %}
+{% endwith %}
