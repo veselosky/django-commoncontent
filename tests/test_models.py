@@ -3,8 +3,18 @@ from unittest import mock
 
 from django.test import TestCase as DjangoTestCase
 from django.test import override_settings
+from django.urls import reverse
+from django.utils import timezone
 from genericsite.common import upload_to
-from genericsite.models import Page, Site, SiteVar, Status
+from genericsite.models import (
+    Article,
+    ArticleSeries,
+    Page,
+    Section,
+    Site,
+    SiteVar,
+    Status,
+)
 
 
 class TestModels(DjangoTestCase):
@@ -159,3 +169,45 @@ class TestUploadTo(DjangoTestCase):
             self.assertEqual(
                 upload_to(page, "test.jpg"), "example.com/2021/11/22/test.jpg"
             )
+
+
+class ArticleModelTest(DjangoTestCase):
+    def setUp(self):
+        self.section = Section.objects.create(
+            site_id=1, slug="section_slug", date_published=timezone.now()
+        )
+        self.series = ArticleSeries.objects.create(site_id=1, slug="series_slug")
+        self.article_with_series = Article.objects.create(
+            site_id=1,
+            section=self.section,
+            series=self.series,
+            slug="article-with-series",
+            date_published=timezone.now(),
+        )
+        self.article_without_series = Article.objects.create(
+            site_id=1,
+            section=self.section,
+            slug="article-without-series",
+            date_published=timezone.now(),
+        )
+
+    def test_get_absolute_url_with_series(self):
+        expected_url = reverse(
+            "article_series_page",
+            kwargs={
+                "section_slug": self.section.slug,
+                "series_slug": self.series.slug,
+                "article_slug": self.article_with_series.slug,
+            },
+        )
+        self.assertEqual(self.article_with_series.get_absolute_url(), expected_url)
+
+    def test_get_absolute_url_without_series(self):
+        expected_url = reverse(
+            "article_page",
+            kwargs={
+                "article_slug": self.article_without_series.slug,
+                "section_slug": self.section.slug,
+            },
+        )
+        self.assertEqual(self.article_without_series.get_absolute_url(), expected_url)

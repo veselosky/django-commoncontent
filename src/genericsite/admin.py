@@ -4,6 +4,7 @@ from imagekit.admin import AdminThumbnail
 
 from genericsite.models import (
     Article,
+    ArticleSeries,
     Author,
     HomePage,
     Image,
@@ -133,6 +134,7 @@ class ArticleAdmin(CreativeWorkAdmin):
                     "slug",
                     "site",
                     "section",
+                    "series",
                     "status",
                     "date_published",
                     "description",
@@ -164,6 +166,12 @@ class ArticleAdmin(CreativeWorkAdmin):
             },
         ),
     )
+
+
+#######################################################################################
+@admin.register(ArticleSeries)
+class ArticleSeriesAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ("name",)}
 
 
 #######################################################################################

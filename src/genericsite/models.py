@@ -797,17 +797,54 @@ class HomePage(BasePage):
 
 
 #######################################################################
+class ArticleSeries(models.Model):
+    """
+    A model to represent a series of articles. This model is used to group articles
+    together in a series. The series is not a page, but a way to group articles for
+    display in feeds and to provide a way to navigate between articles in the series.
+    """
+
+    name = models.CharField(_("name"), max_length=255)
+    slug = models.SlugField(_("slug"))
+    description = models.TextField(_("description"), blank=True)
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, verbose_name=_("site"))
+
+    def __str__(self):
+        return self.name
+
+
+#######################################################################
+class ArticleQuerySet(models.QuerySet):
+    def live(self, **kwargs):
+        qs = self.filter(
+            models.Q(expires__isnull=True) | models.Q(expires__gt=timezone.now()),
+            status=Status.USABLE,
+            date_published__lte=timezone.now(),
+        )
+        if kwargs:
+            qs = qs.filter(**kwargs)
+            if "series" not in kwargs and not qs.ordered:
+                qs = qs.order_by("-date_published")
+        return qs
+
+
 class ArticleManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().select_related("site", "section", "share_image")
+        return (
+            super()
+            .get_queryset()
+            .select_related("site", "section", "series", "share_image")
+        )
 
 
 class Article(BasePage):
     "Articles are the bread and butter of a site. They will appear in feeds."
 
-    class Meta(BasePage.Meta):
+    # Intentionally not inherting from AbstractCreativeWork's Meta because `ordering`
+    # and `order_with_respect_to` are not compatible with each other.
+    class Meta:
         get_latest_by = "date_published"
-        ordering = ["-date_published"]
+        order_with_respect_to = "series"
         verbose_name = _("article")
         verbose_name_plural = _("articles")
         constraints = [
@@ -832,15 +869,31 @@ class Article(BasePage):
     section = models.ForeignKey(
         Section, verbose_name=_("section"), on_delete=models.PROTECT
     )
+    series = models.ForeignKey(
+        ArticleSeries,
+        verbose_name=_("series"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     image_set = models.ManyToManyField(Image, verbose_name=_("related images"))
     attachment_set = models.ManyToManyField(Attachment, verbose_name=_("attachments"))
 
-    objects = ArticleManager.from_queryset(CreativeWorkQuerySet)()
+    objects = ArticleManager.from_queryset(ArticleQuerySet)()
 
     schema_type = "Article"
     opengraph_type = "article"
 
     def get_absolute_url(self):
+        if self.series:
+            return reverse(
+                "article_series_page",
+                kwargs={
+                    "section_slug": self.section.slug,
+                    "series_slug": self.series.slug,
+                    "article_slug": self.slug,
+                },
+            )
         return reverse(
             "article_page",
             kwargs={"article_slug": self.slug, "section_slug": self.section.slug},
@@ -867,6 +920,36 @@ class Article(BasePage):
         if tags:
             og.tag = tags
         return og
+
+    @property
+    def series_part(self):
+        if not self.series:
+            return None
+
+        # Return a string formatted as "Part 1 of 3" based on the order of the article in the series
+        ids = list(self.series.get_article_order())
+        return f"Part {ids.index(self.id) + 1} of {len(ids)}"
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            # Django should do the Right Thing setting _order on new instances
+            return super().save(*args, **kwargs)
+
+        # When adding a series to an existing article, Django does not set _order,
+        # so it has the default 0, which breaks get_next_in_order
+        if self.series and not self._order:
+            # Order not assigned, place at end of series
+            self._order = self.series.get_article_order().count() + 1
+        elif not self.series:
+            # If the series is removed, reset the order
+            self._order = 0
+        # Save before resetting series order so the query finds this instance
+        retval = super().save(*args, **kwargs)
+        if self.series:
+            # Possible the series has changed, which could cause dupes. This
+            # will reset the _order for all articles in the series.
+            self.series.set_article_order(self.series.get_article_order())
+        return retval
 
 
 #######################################################################

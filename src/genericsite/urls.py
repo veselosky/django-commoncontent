@@ -44,6 +44,16 @@ urlpatterns = [
         name="section_paginated",
     ),
     path(
+        "<slug:section_slug>/<slug:series_slug>/<slug:article_slug>.html",
+        generic.ArticleDetailView.as_view(),
+        name="article_series_page",
+    ),
+    path(
+        "<slug:section_slug>/<slug:series_slug>/",
+        generic.ArticleSeriesView.as_view(),
+        name="series_page",
+    ),
+    path(
         "<slug:section_slug>/<slug:article_slug>.html",
         generic.ArticleDetailView.as_view(),
         name="article_page",

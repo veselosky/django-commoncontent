@@ -1,3 +1,5 @@
+from django.apps import apps
+from django.contrib.admin import site
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -18,24 +20,18 @@ class AdminSmokeTest(TestCase):
         """Load each admin change and add page to check syntax in the admin classes."""
         self.client.force_login(self.user)
 
-        views = [
-            "admin:genericsite_article_add",
-            "admin:genericsite_article_changelist",
-            "admin:genericsite_homepage_add",
-            "admin:genericsite_homepage_changelist",
-            "admin:genericsite_image_add",
-            "admin:genericsite_image_changelist",
-            "admin:genericsite_menu_add",
-            "admin:genericsite_menu_changelist",
-            "admin:genericsite_page_add",
-            "admin:genericsite_page_changelist",
-            "admin:genericsite_section_add",
-            "admin:genericsite_section_changelist",
-            "admin:genericsite_sitevar_add",
-            "admin:genericsite_sitevar_changelist",
-        ]
+        app_label = "genericsite"
+        genericsite = apps.get_app_config(app_label)
+        for model in genericsite.get_models():
+            if not site.is_registered(model):
+                continue
 
-        for view in views:
-            with self.subTest(view=view):
-                resp = self.client.get(reverse(view))
-                self.assertEqual(resp.status_code, 200)
+            with self.subTest(model=model):
+                changelist_url = reverse(
+                    f"admin:{app_label}_{model._meta.model_name}_changelist"
+                )
+                add_url = reverse(f"admin:{app_label}_{model._meta.model_name}_add")
+                resp_changelist = self.client.get(changelist_url)
+                resp_add = self.client.get(add_url)
+                self.assertEqual(resp_changelist.status_code, 200)
+                self.assertEqual(resp_add.status_code, 200)

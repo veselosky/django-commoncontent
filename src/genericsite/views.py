@@ -3,13 +3,13 @@ import typing as T
 from django.apps import apps
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.syndication.views import Feed
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.feedgenerator import Rss201rev2Feed
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, RedirectView
 
-from genericsite.models import Article, Author, HomePage, Page, Section
+from genericsite.models import Article, ArticleSeries, Author, HomePage, Page, Section
 
 
 ######################################################################################
@@ -52,8 +52,44 @@ class OpenGraphDetailView(DetailView):
 
 
 ######################################################################################
+class ArticleSeriesView(RedirectView):
+    """Redirects to the first article in a series."""
+
+    permanent = True
+
+    def get_redirect_url(self, *args, **kwargs):
+        series = get_object_or_404(
+            ArticleSeries.objects.filter(
+                site=get_current_site(self.request),
+                slug=kwargs["series_slug"],
+            )
+        )
+        article = series.article_set.live().first()
+        return reverse(
+            "article_series_page",
+            kwargs={
+                "section_slug": article.section.slug,
+                "series_slug": article.series.slug,
+                "article_slug": article.slug,
+            },
+        )
+
+
+######################################################################################
 class ArticleDetailView(OpenGraphDetailView):
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        # Canonical URL for articles in a series includes the series slug
+        if self.object.series and (
+            "series_slug" not in kwargs
+            or kwargs["series_slug"] != self.object.series.slug
+        ):
+            return redirect(self.object, permanent=True)
+        return super().get(request, *args, **kwargs)
+
     def get_object(self):
+        # This lookup ignores the series_slug. Article slugs are still required to be
+        # unique within their section, even if in a series
         return get_object_or_404(
             Article.objects.live().filter(
                 site=get_current_site(self.request),
