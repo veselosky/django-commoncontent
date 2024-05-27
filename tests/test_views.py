@@ -1,5 +1,4 @@
 import json
-import stat
 from datetime import timedelta
 from io import BytesIO
 
@@ -13,6 +12,7 @@ from django.utils import timezone
 from genericsite.models import (
     Article,
     ArticleSeries,
+    Author,
     HomePage,
     Image,
     Page,
@@ -595,3 +595,52 @@ class ArticleSeriesViewsTest(BaseContentTestCase):
                 },
             ),
         )
+
+
+class TestAuthorViews(TestCase):
+    def setUp(self):
+        self.author = Author.objects.create(
+            name="Test Author", site_id=1, slug="test-author"
+        )
+        self.section = Section.objects.create(
+            site_id=1, slug="section_slug", date_published=timezone.now()
+        )
+        self.article = Article.objects.create(
+            site_id=1,
+            section=self.section,
+            title="Test Article",
+            slug="test-article",
+            site=Site.objects.get_current(),
+            status=Status.USABLE,
+            date_published=timezone.now(),
+            author=self.author,
+        )
+
+    def test_author_list(self):
+        response = self.client.get(reverse("author_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.author.name)
+
+    def test_author_page(self):
+        response = self.client.get(
+            reverse("author_page", kwargs={"author_slug": self.author.slug})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.author.name)
+
+    def test_author_page_paginated(self):
+        response = self.client.get(
+            reverse(
+                "author_page_paginated",
+                kwargs={"author_slug": self.author.slug, "page": 1},
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.author.name)
+
+    def test_author_feed(self):
+        response = self.client.get(
+            reverse("author_feed", kwargs={"author_slug": self.author.slug})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.author.name)
