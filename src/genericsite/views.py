@@ -208,6 +208,11 @@ class OpenGraphListView(ListView):
 class ArticleListView(OpenGraphListView):
     model = Article
 
+    def get_queryset(self):
+        # Because Articles can belong to ArticlesSeries, the default ordering doesn't
+        # work as expected, so we must explicitly order by date_published.
+        return super().get_queryset().order_by("-date_published")
+
 
 ######################################################################################
 class AuthorView(ArticleListView):
@@ -364,7 +369,11 @@ class SiteFeed(Feed):
 
     def items(self, obj):
         paginate_by = obj.vars.get_value("paginate_by", 15, asa=int)
-        return Article.objects.live().filter(site=obj)[:paginate_by]
+        return (
+            Article.objects.live()
+            .filter(site=obj)
+            .order_by("-date_published")[:paginate_by]
+        )
 
     def item_title(self, item):
         return item.opengraph.title
@@ -432,7 +441,11 @@ class SectionFeed(SiteFeed):
 
     def items(self, obj):
         paginate_by = obj.site.vars.get_value("paginate_by", 15, asa=int)
-        return Article.objects.live().filter(section=obj)[:paginate_by]
+        return (
+            Article.objects.live()
+            .filter(section=obj)
+            .order_by("-date_published")[:paginate_by]
+        )
 
 
 ######################################################################################
@@ -465,4 +478,8 @@ class AuthorFeed(SiteFeed):
 
     def items(self, obj):
         paginate_by = obj.site.vars.get_value("paginate_by", 15, asa=int)
-        return Article.objects.live().filter(author=obj)[:paginate_by]
+        return (
+            Article.objects.live()
+            .filter(author=obj)
+            .order_by("-date_published")[:paginate_by]
+        )

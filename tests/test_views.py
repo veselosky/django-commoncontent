@@ -21,6 +21,7 @@ from genericsite.models import (
     SiteVar,
     Status,
 )
+from genericsite.sitemaps import ArticleSitemap
 from PIL import Image as PILImage
 
 
@@ -110,6 +111,52 @@ class TestHomePageView(TestCase):
         resp = self.client.get(reverse("home_page"))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, hp.title)
+
+    def test_homepage_sorts_articles_by_date_published_descending(self):
+        site = Site.objects.get_current()
+        section = Section.objects.create(
+            site=site,
+            slug="test-section",
+            title="Test Section 1",
+            date_published=timezone.now(),
+        )
+        hp = HomePage.objects.create(
+            site=site,
+            admin_name="Test HomePage",
+            title="Test HomePage 1",
+            date_published=timezone.now(),
+        )
+        article1 = Article.objects.create(
+            site=site,
+            title="Article 1",
+            slug="article-1",
+            section=section,
+            date_published=timezone.now() - timedelta(days=1),
+        )
+        article2 = Article.objects.create(
+            site=site,
+            title="Article 2",
+            slug="article-2",
+            section=section,
+            date_published=timezone.now(),
+        )
+        article3 = Article.objects.create(
+            site=site,
+            title="Article 3",
+            slug="article-3",
+            section=section,
+            date_published=timezone.now() + timedelta(days=1),
+        )
+
+        resp = self.client.get(reverse("home_page"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, article3.title)
+        self.assertContains(resp, article2.title)
+        self.assertContains(resp, article1.title)
+        self.assertGreater(
+            resp.content.find(article1.title.encode()),
+            resp.content.find(article2.title.encode()),
+        )
 
 
 class TestPageView(TestCase):
@@ -243,6 +290,48 @@ class TestSectionView(TestCase):
             reverse("section_page", kwargs={"section_slug": "test-section"})
         )
         self.assertEqual(resp.status_code, 404)
+
+    def test_section_sorts_articles_by_date_published_descending(self):
+        site = Site.objects.get_current()
+        section = Section.objects.create(
+            site=site,
+            slug="test-section",
+            title="Test Section 1",
+            date_published=timezone.now(),
+        )
+        article1 = Article.objects.create(
+            site=site,
+            section=section,
+            title="Article 1",
+            slug="article-1",
+            date_published=timezone.now() - timedelta(days=1),
+        )
+        article2 = Article.objects.create(
+            site=site,
+            section=section,
+            title="Article 2",
+            slug="article-2",
+            date_published=timezone.now(),
+        )
+        article3 = Article.objects.create(
+            site=site,
+            section=section,
+            title="Article 3",
+            slug="article-3",
+            date_published=timezone.now() + timedelta(days=1),
+        )
+
+        resp = self.client.get(
+            reverse("section_page", kwargs={"section_slug": "test-section"})
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, article3.title)
+        self.assertContains(resp, article2.title)
+        self.assertContains(resp, article1.title)
+        self.assertGreater(
+            resp.content.find(article1.title.encode()),
+            resp.content.find(article2.title.encode()),
+        )
 
 
 class TestProfileView(TestCase):
@@ -391,6 +480,29 @@ class TestArticlesAndFeeds(BaseContentTestCase):
             reverse("section_feed", kwargs={"section_slug": self.section.slug})
         )
         self.assertEqual(resp.status_code, 200)
+
+    def test_article_rss_sort_order(self):
+        """RSS feed should be in reverse chronological order."""
+        article3 = Article.objects.create(
+            site=self.site,
+            section=self.section,
+            title="Test Article 3",
+            slug="test-article-3",
+            date_published=timezone.now(),
+        )
+        resp = self.client.get(
+            reverse(
+                "section_feed",
+                kwargs={"section_slug": self.section.slug},
+            )
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, self.article.title)
+        self.assertContains(resp, article3.title)
+        self.assertGreater(
+            resp.content.find(self.article.title.encode()),
+            resp.content.find(article3.title.encode()),
+        )
 
 
 class TestViewsGetRightTemplateVars(BaseContentTestCase):
@@ -644,3 +756,32 @@ class TestAuthorViews(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.author.name)
+
+
+class ArticleSitemapTest(BaseContentTestCase):
+    def setUp(self):
+        # Note: The base class provides a site, section, article, and article2,
+        # with self.article "Test Article 1" belonging to the site and published
+        # yesterday. Article2 is from a different site and should not be returned.
+        self.article3 = Article.objects.create(
+            site=self.site,
+            section=self.section,
+            title="Test Article 3",
+            slug="test-article-3",
+            date_published=timezone.now() - timezone.timedelta(days=2),
+        )
+        self.article4 = Article.objects.create(
+            site=self.site,
+            section=self.section,
+            title="Test Article 4",
+            slug="test-article-4",
+            date_published=timezone.now() - timezone.timedelta(days=3),
+        )
+        self.sitemap = ArticleSitemap()
+        self.sitemap.site = self.site
+
+    def test_items_order(self):
+        items = list(self.sitemap.items())
+        for item in items:
+            print(item.date_published)
+        self.assertEqual(items, [self.article, self.article3, self.article4])
