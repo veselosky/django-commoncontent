@@ -814,20 +814,6 @@ class ArticleSeries(models.Model):
 
 
 #######################################################################
-class ArticleQuerySet(models.QuerySet):
-    def live(self, **kwargs):
-        qs = self.filter(
-            models.Q(expires__isnull=True) | models.Q(expires__gt=timezone.now()),
-            status=Status.USABLE,
-            date_published__lte=timezone.now(),
-        )
-        if kwargs:
-            qs = qs.filter(**kwargs)
-            if "series" not in kwargs and not qs.ordered:
-                qs = qs.order_by("-date_published")
-        return qs
-
-
 class ArticleManager(models.Manager):
     def get_queryset(self):
         return (
@@ -879,7 +865,7 @@ class Article(BasePage):
     image_set = models.ManyToManyField(Image, verbose_name=_("related images"))
     attachment_set = models.ManyToManyField(Attachment, verbose_name=_("attachments"))
 
-    objects = ArticleManager.from_queryset(ArticleQuerySet)()
+    objects = ArticleManager.from_queryset(CreativeWorkQuerySet)()
 
     schema_type = "Article"
     opengraph_type = "article"

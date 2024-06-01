@@ -26,6 +26,9 @@ class ArticleSitemap(SiteAwareSiteMap):
     priority = 0.5
     model = Article
 
+    def items(self):
+        return super().items().order_by("-date_published")
+
 
 class AuthorSitemap(SiteAwareSiteMap):
     changefreq = "weekly"
