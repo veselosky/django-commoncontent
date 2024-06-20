@@ -16,13 +16,7 @@ from imagekit.processors import ResizeToFill, ResizeToFit
 from taggit.managers import TaggableManager
 
 from genericsite.common import Status, upload_to
-from genericsite.schemas import (
-    CreativeWorkSchema,
-    ImageProp,
-    OGArticle,
-    OGProfile,
-    OpenGraph,
-)
+from genericsite.schemas import ImageProp, OGArticle, OGProfile, OpenGraph, ThingSchema
 
 # Transform "en-us" to "en_US"
 DEFAULT_LOCALE = to_locale(settings.LANGUAGE_CODE)
@@ -241,6 +235,17 @@ class Author(models.Model):
             og.image = [self.profile_image.opengraph]
         return og
 
+    @property
+    def schema(self) -> ThingSchema:
+        """Return the data as a schema.org object."""
+        schema_class = ThingSchema.get_class_for_label("Person")
+        schema = schema_class(
+            name=self.name,
+            description=self.short_bio,
+            image=self.profile_image.url if self.profile_image else None,
+        )
+        return schema
+
     def get_absolute_url(self):
         return reverse("author_page", kwargs={"author_slug": self.slug})
 
@@ -412,10 +417,10 @@ class AbstractCreativeWork(models.Model):
         return f"https://{self.site.domain}{self.get_absolute_url()}"
 
     @property
-    def schema(self) -> CreativeWorkSchema:
+    def schema(self) -> ThingSchema:
         """Return the data as a schema.org object."""
-        schema = CreativeWorkSchema(
-            name=self.title,
+        schema_class = ThingSchema.get_class_for_label(self.schema_type)
+        schema = schema_class(
             headline=self.title,
             description=self.description,
             creativeWorkStatus=self.status,
@@ -427,7 +432,12 @@ class AbstractCreativeWork(models.Model):
         )
         if self.author:
             schema.author = self.author.schema
-        tags = list(self.tags.names())
+        try:
+            tags = list(self.tags.names())
+        except ValueError:
+            # ValueError: objects need to have a primary key value before you
+            # can access their tags.
+            tags = []
         if tags:
             schema.keywords = tags
         return schema

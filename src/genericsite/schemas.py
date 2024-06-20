@@ -4,14 +4,13 @@ Schema.org and Open Graph <https://ogp.me/>.
 """
 
 import dataclasses
-import json
 import typing as T
 import urllib.parse
 from datetime import date
 from enum import Enum
 
 from django.db import models
-from django.utils.html import format_html
+from django.utils.html import escape, format_html, json_script, mark_safe, strip_tags
 
 from genericsite.common import Status
 
@@ -25,6 +24,9 @@ def validate_http_url(value):
     return value
 
 
+########################################################################################
+# Schema.org objects
+########################################################################################
 class SchemaBase:
     def asdict(self):
         return {k: v for k, v in self.items() if v is not None}
@@ -36,10 +38,21 @@ class SchemaBase:
         for field in dataclasses.fields(self):
             yield field.name, getattr(self, field.name)
 
+    def safe_dict(self):
+        """Return a dictionary of the object's fields with HTML escaped values."""
+        items = {}
+        for k, v in self.items():
+            if v is None:
+                continue
+            if isinstance(v, SchemaBase):
+                items[k] = v.safe_dict()
+            else:
+                items[k] = escape(strip_tags(v))
+        items["@context"] = "https://schema.org"
+        items["@type"] = self._label
+        return items
 
-########################################################################################
-# Schema.org objects
-########################################################################################
+
 @dataclasses.dataclass
 class ThingSchema(SchemaBase):
     "Schema.org Thing object"
@@ -47,20 +60,34 @@ class ThingSchema(SchemaBase):
     name: T.Optional[str] = None
     description: T.Optional[str] = None
     url: T.Optional[str] = None
+    image: T.Optional[T.Union[str, SchemaBase]] = None
     _label: T.ClassVar[str] = "Thing"
+    _registry: T.ClassVar[dict] = {}
 
     def __post_init__(self):
         if self.url:
             self.url = validate_http_url(self.url)
 
-    def asdict(self):
-        schema = super().asdict()
-        schema["@context"] = "https://schema.org"
-        schema["@type"] = self._label
-        return schema
+    @classmethod
+    def _register(cls, subclass):
+        cls._registry[subclass._label] = subclass
 
     def __str__(self):
-        return json.dumps(self.asdict(), indent=2)
+        schema = super().safe_dict()
+        out = json_script(schema, element_id="schema-data")
+        return mark_safe(out.replace("application/json", "application/ld+json"))
+
+    def __init_subclass__(cls):
+        ThingSchema._register(cls)
+
+    @classmethod
+    def get_class_for_label(cls, label):
+        """
+        ThingSchema keeps a registry of all subclasses that have been defined. This
+        method returns the class that corresponds to the given label, or the base class
+        if no subclass has been defined for that label.
+        """
+        return cls._registry.get(label, cls)
 
 
 @dataclasses.dataclass
@@ -73,6 +100,7 @@ class CreativeWorkSchema(ThingSchema):
     copyrightNotice: T.Optional[str] = None
     copyrightYear: T.Optional[str] = None
     creativeWorkStatus: T.Optional[Status] = None
+    dateCreated: T.Optional[str] = None
     datePublished: T.Optional[str] = None
     dateModified: T.Optional[str] = None
     expires: T.Optional[str] = None
@@ -92,6 +120,39 @@ class CreativeWorkSchema(ThingSchema):
 
 
 @dataclasses.dataclass
+class WebPageSchema(CreativeWorkSchema):
+    "Schema.org WebPage object"
+
+    breadcrumb: T.Optional[str] = None
+    lastReviewed: T.Optional[str] = None
+    mainContentOfPage: T.Optional[str] = None
+    primaryImageOfPage: T.Optional[str] = None
+    relatedLink: T.Optional[str] = None
+    reviewedBy: T.Optional[str] = None
+    significantLink: T.Optional[str] = None
+    significantLinks: T.Optional[str] = None
+    _label: T.ClassVar[str] = "WebPage"
+
+
+@dataclasses.dataclass
+class MediaObjectSchema(CreativeWorkSchema):
+    "Schema.org MediaObject object"
+
+    contentUrl: T.Optional[str] = None
+    embedUrl: T.Optional[str] = None
+    encodingFormat: T.Optional[str] = None
+    fileSize: T.Optional[str] = None
+    height: T.Optional[str] = None
+    playerType: T.Optional[str] = None
+    productionCompany: T.Optional[str] = None
+    regionsAllowed: T.Optional[str] = None
+    requiresSubscription: T.Optional[str] = None
+    uploadDate: T.Optional[str] = None
+    width: T.Optional[str] = None
+    _label: T.ClassVar[str] = "MediaObject"
+
+
+@dataclasses.dataclass
 class ArticleSchema(CreativeWorkSchema):
     "Schema.org Article object"
 
@@ -99,6 +160,25 @@ class ArticleSchema(CreativeWorkSchema):
     articleSection: T.Optional[str] = None
     wordCount: T.Optional[int] = None
     _label: T.ClassVar[str] = "Article"
+
+
+@dataclasses.dataclass
+class PersonSchema(ThingSchema):
+    "Schema.org Person object"
+
+    additionalName: T.Optional[str] = None
+    address: T.Optional[str] = None
+    birthDate: T.Optional[str] = None
+    birthPlace: T.Optional[str] = None
+    brand: T.Optional[str] = None
+    contactPoint: T.Optional[str] = None
+    deathDate: T.Optional[str] = None
+    deathPlace: T.Optional[str] = None
+    email: T.Optional[str] = None
+    familyName: T.Optional[str] = None
+    givenName: T.Optional[str] = None
+    nationality: T.Optional[str] = None
+    _label: T.ClassVar[str] = "Person"
 
 
 ########################################################################################
