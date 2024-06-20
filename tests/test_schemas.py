@@ -1,7 +1,13 @@
 import datetime
 import unittest
 
-from genericsite.schemas import AudioProp, ImageProp, OGArticle, OGProfile
+from genericsite.schemas import (
+    AudioProp,
+    CreativeWorkSchema,
+    ImageProp,
+    OGArticle,
+    ThingSchema,
+)
 
 
 class TestOpenGraphSchemas(unittest.TestCase):
@@ -87,3 +93,26 @@ class TestOpenGraphSchemas(unittest.TestCase):
         )
         # When set to a date, value is converted to isoformat
         self.assertIn("2022-06-30", str(a))
+
+
+class TestThingSchema(unittest.TestCase):
+    def test_thing_schema_registry(self):
+        klass = ThingSchema.get_class_for_label("Thing")
+        self.assertEqual(klass, ThingSchema)
+        klass = ThingSchema.get_class_for_label("CreativeWork")
+        self.assertEqual(klass, CreativeWorkSchema)
+
+    def test_thing_schema_string(self):
+        t = ThingSchema(
+            name="My Thing",
+            description="A thing that is mine",
+            url="https://example.com/mything",
+        )
+        out = str(t)
+        expected = (
+            """<script id="schema-data" type="application/ld+json">"""
+            """{"name": "My Thing", "description": "A thing that is mine","""
+            """ "url": "https://example.com/mything", "@context": "https://schema.org","""
+            """ "@type": "Thing"}</script>"""
+        )
+        self.assertEqual(out, expected)
