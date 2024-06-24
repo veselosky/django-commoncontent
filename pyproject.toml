@@ -27,6 +27,7 @@ dev = [
     "django-tinymce",
     "djlint",
     "docutils>=0.19",
+    "model-bakery>=1.18.1",
     "pytest",
     "pytest-cov",
     "pytest-django",
