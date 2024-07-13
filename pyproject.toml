@@ -31,6 +31,7 @@ dev = [
     "django-tinymce",
     "djlint",
     "docutils>=0.19",
+    "pre-commit>=3.7.1",
     "pytest",
     "pytest-cov",
     "pytest-django",
@@ -49,3 +50,32 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic.version]
 attr = "genericsite.__version__"
+
+[tool.djlint]
+close_void_tags = true
+format_css = true
+format_js = true
+indent = 2
+max_line_length = 119
+profile = "django"
+# https://www.djlint.com/docs/linter/#rules
+# D018 (Django) Internal links should use the {% url ... %} pattern.
+# H017 Void tags should be self closing.
+# H023 Do not use entity references.
+# H031 Consider adding meta keywords.
+# H035 Meta tags should be self closing.
+# T001 Variables should be wrapped in whitespace. Ex: {{ this }}
+# T002 Double quotes should be used in tags.
+ignore = "D018,H023,H031,T002"
+include = "H017,H035"
+
+[tool.djlint.css]
+indent_size = 2
+
+[tool.djlint.js]
+indent_size = 2
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py310"

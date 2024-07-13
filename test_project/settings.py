@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+from importlib.util import find_spec
 from pathlib import Path
 
 import environ
@@ -171,15 +172,10 @@ if DEBUG:
     STORAGES["staticfiles"]["BACKEND"] = (
         "django.contrib.staticfiles.storage.StaticFilesStorage"
     )
-    try:
-        import debug_toolbar
-
+    if find_spec("debug_toolbar"):
         INSTALLED_APPS.append("debug_toolbar")
         MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
         INTERNAL_IPS = [
             "127.0.0.1",
         ]
         # See also urls.py for debug_toolbar urls
-    except ImportError:
-        # Dev tools are optional
-        pass

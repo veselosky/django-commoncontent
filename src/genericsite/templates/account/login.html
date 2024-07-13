@@ -1,21 +1,22 @@
 {% extends "account/base.html" %}
 {% load i18n account socialaccount genericsite %}
-{% block title %}{% trans "Sign In" %}
-{% endblock %}
+{% block title %}
+  {% trans "Sign In" %}
+{% endblock title %}
 {% block content %}
-  <main class="{{bootstrap_container_class}}">
+  <main class="{{ bootstrap_container_class }}">
     <div class="col-md-6">
       {% include "genericsite/includes/messages.html" %}
       <h1>{% trans "Sign In" %}</h1>
-
       {% get_providers as socialaccount_providers %}
       {% if socialaccount_providers %}
-        <p>{% blocktrans with site.name as site_name trimmed %}
-          Please sign in with one of your existing third party accounts. Or,
-          <a href="{{ signup_url }}">sign up</a>
-          for a
-          {{ site_name }}
-          account and sign in below:
+        <p>
+          {% blocktrans with site.name as site_name trimmed %}
+            Please sign in with one of your existing third party accounts. Or,
+            <a href="{{ signup_url }}">sign up</a>
+            for a
+            {{ site_name }}
+            account and sign in below:
           {% endblocktrans %}
         </p>
         <div class="socialaccount_ballot">
@@ -26,44 +27,46 @@
         </div>
         {% include "socialaccount/snippets/login_extra.html" %}
       {% else %}
-        <p>{% blocktrans trimmed %}If you have not created an account yet, then please
-          <a href="{{ signup_url }}">sign up</a>
-          first.{% endblocktrans %}</p>
+        <p>
+          {% blocktrans trimmed %}
+            If you have not created an account yet, then please
+            <a href="{{ signup_url }}">sign up</a>
+            first.
+          {% endblocktrans %}
+        </p>
       {% endif %}
-
-      <form class="login{% if form.is_bound %} was-validated{% endif %}" method="POST" action="{% url 'account_login' %}">
+      <form class="login{% if form.is_bound %} was-validated{% endif %}"
+            method="post"
+            action="{% url 'account_login' %}">
         {% csrf_token %}
         {% if redirect_field_value %}
-          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+          <input type="hidden"
+                 name="{{ redirect_field_name }}"
+                 value="{{ redirect_field_value }}" />
         {% endif %}
         <div class="form-floating mb-3">
-          {{form.login|add_classes:"form-control"}}
-          <label for="{{form.login.id_for_label}}" class="form-label">{{form.login.label}}</label>
-          {% for err in form.login.errors %}
-            <div class="invalid-feedback">{{err}}</div>
-          {% endfor %}
+          {{ form.login|add_classes:"form-control" }}
+          <label for="{{ form.login.id_for_label }}" class="form-label">{{ form.login.label }}</label>
+          {% for err in form.login.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
         </div>
         <div class="form-floating mb-3">
-          {{form.password|add_classes:"form-control"}}
-          <label for="{{form.password.id_for_label}}" class="form-label">{{form.password.label}}</label>
-          {% for err in form.password.errors %}
-            <div class="invalid-feedback">{{err}}</div>
-          {% endfor %}
+          {{ form.password|add_classes:"form-control" }}
+          <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label }}</label>
+          {% for err in form.password.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
         </div>
         {% if form.remember %}
           <div class="form-check mb-3">
-            {{form.remember|add_classes:"form-check-input"}}
-            <label for="{{form.remember.id_for_label}}" class="form-check-label">{{form.remember.label}}</label>
-            {% for err in form.remember.errors %}
-              <div class="invalid-feedback">{{err}}</div>
-            {% endfor %}
+            {{ form.remember|add_classes:"form-check-input" }}
+            <label for="{{ form.remember.id_for_label }}" class="form-check-label">{{ form.remember.label }}</label>
+            {% for err in form.remember.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
           </div>
         {% endif %}
         <div class="mb-3">
-          <a class="button secondaryAction" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
+          <a class="button secondaryAction"
+             href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
         </div>
         <button class="primaryAction btn btn-primary" type="submit">{% trans "Sign In" %}</button>
       </form>
     </div>
   </main>
-{% endblock %}
+{% endblock content %}

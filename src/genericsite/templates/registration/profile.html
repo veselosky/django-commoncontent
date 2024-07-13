@@ -1,13 +1,15 @@
 {% extends "genericsite/base.html" %}
 {% load genericsite %}
 {% block content %}
-<main class="{{bootstrap_container_class}}">
-  <div class="col-md-6">
-    {% include "genericsite/includes/messages.html" %}
-    <h1>Welcome {{ user.username }}!</h1>
-    <p>Your last login was on: {{ user.last_login }}</p>
-    <p>You first signed up on: {{ user.date_joined }}</p>
-    <p><a href="{% url change_password_view %}">Change your password</a></p>
-  </div>
-</main>
+  <main class="{{ bootstrap_container_class }}">
+    <div class="col-md-6">
+      {% include "genericsite/includes/messages.html" %}
+      <h1>Welcome {{ user.username }}!</h1>
+      <p>Your last login was on: {{ user.last_login }}</p>
+      <p>You first signed up on: {{ user.date_joined }}</p>
+      <p>
+        <a href="{% url change_password_view %}">Change your password</a>
+      </p>
+    </div>
+  </main>
 {% endblock content %}

@@ -298,7 +298,7 @@ class HomePageView(ArticleListView):
                 .filter(site=get_current_site(self.request))
                 .latest()
             )
-        except HomePage.DoesNotExist as e:
+        except HomePage.DoesNotExist:
             # Create a phony debug home page for bootstrapping.
             hp = HomePage(
                 site=get_current_site(self.request),

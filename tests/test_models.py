@@ -49,7 +49,7 @@ class TestModels(DjangoTestCase):
             site=site,
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
-        assert f"2021 sitewide copyright" in page.copyright_notice
+        assert "2021 sitewide copyright" in page.copyright_notice
 
     def test_copyright_notice_site_has_holder(self):
         """Page has no custom_copyright_notice.
@@ -67,7 +67,7 @@ class TestModels(DjangoTestCase):
             site=site,
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
-        assert f"2021 custom holder. All rights" in page.copyright_notice
+        assert "2021 custom holder. All rights" in page.copyright_notice
 
     def test_copyright_notice_default(self):
         """Page has no custom_copyright_notice.
@@ -82,7 +82,7 @@ class TestModels(DjangoTestCase):
             site=site,
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
-        assert f"2021 example.com. All rights" in page.copyright_notice
+        assert "2021 example.com. All rights" in page.copyright_notice
 
     def test_explicit_excerpt(self):
         """Page has a pagebreak marker for excerpt. Should return only content before
@@ -100,8 +100,8 @@ class TestModels(DjangoTestCase):
             Second paragraph.
             """,
         )
-        assert f"First paragraph." in page.excerpt
-        assert f"Second paragraph." not in page.excerpt
+        assert "First paragraph." in page.excerpt
+        assert "Second paragraph." not in page.excerpt
 
     def test_no_explicit_excerpt(self):
         """Page has no pagebreak marker for excerpt. Should return all content."""
@@ -116,8 +116,8 @@ class TestModels(DjangoTestCase):
             Second paragraph.
             """,
         )
-        assert f"First paragraph." in page.excerpt
-        assert f"Second paragraph." in page.excerpt
+        assert "First paragraph." in page.excerpt
+        assert "Second paragraph." in page.excerpt
 
 
 def upload_to_target_for_test(instance, filename):

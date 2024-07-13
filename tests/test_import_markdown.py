@@ -1,5 +1,3 @@
-from datetime import datetime
-from email.mime import base
 from pathlib import Path
 
 from django.core.management import call_command

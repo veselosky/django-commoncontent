@@ -2,7 +2,7 @@ from django import template
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
 from django.utils.html import format_html
-from genericsite.models import Menu, SectionMenu, SiteVar
+from genericsite.models import Menu, SectionMenu
 
 register = template.Library()
 
