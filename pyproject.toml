@@ -79,3 +79,7 @@ indent_size = 2
 line-length = 88
 indent-width = 4
 target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "B"]
+ignore = ["E501", "W505"]

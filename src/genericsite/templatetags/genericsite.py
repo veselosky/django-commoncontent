@@ -145,7 +145,7 @@ def opengraph_image(context, og):
 
     ``{% opengraph_image article as img %}``
     """
-    if img := getattr(og, "share_image"):
+    if img := getattr(og, "share_image", None):
         return img
     if hasattr(og, "image_set"):
         if img := og.image_set.first():

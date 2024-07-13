@@ -283,7 +283,7 @@ class OpenGraph(SchemaBase):
                     val += str(item)
             elif attr == "locale_alternate":
                 for locale in content:
-                    val += format_html(metatag, "og", attr, content)
+                    val += format_html(metatag, "og", attr, locale)
             elif content and attr in basic_attrs:
                 val += format_html(metatag, "og", attr, content)
         return val

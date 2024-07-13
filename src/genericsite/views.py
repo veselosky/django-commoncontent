@@ -27,7 +27,7 @@ class OpenGraphDetailView(DetailView):
             if tpl := self.kwargs.get(block):
                 context[block] = tpl
 
-        if custom_template := getattr(self.object, "content_template"):
+        if custom_template := getattr(self.object, "content_template", ""):
             context["content_template"] = custom_template
         return context
 
