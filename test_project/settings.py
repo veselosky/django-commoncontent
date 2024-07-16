@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "tinymce",
     # contrib apps required by genericsite for statics
     "django.contrib.contenttypes",
+    "django.contrib.humanize",
     "django.contrib.redirects",
     "django.contrib.sitemaps",
     "django.contrib.sites",
