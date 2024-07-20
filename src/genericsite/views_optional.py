@@ -1,25 +1,9 @@
 import typing as T
 
-from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, JsonResponse
-from django.views.generic import ListView, TemplateView
+from django.views.generic import ListView
 
 from genericsite.models import Image
-
-
-######################################################################################
-class ProfileView(LoginRequiredMixin, TemplateView):
-    template_name = "registration/profile.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if "allauth" in settings.INSTALLED_APPS:  # use allauth views
-            context["change_password_view"] = "account_change_password"
-        else:  # use django.contrib.auth views
-            context["change_password_view"] = "password_change"
-
-        return context
 
 
 ######################################################################################

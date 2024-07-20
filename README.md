@@ -90,14 +90,8 @@ list it like this:
 from genericsite import views as generic
 
 urlpatterns = [
-    # This needs to be above the "accounts/" pattern to be found (or you could mount
-    # your auth urls at some other path and skip this, it's included in the GenericSite
-    # urlconf).
-    path("accounts/profile/", generic.ProfileView.as_view(), name="account_profile"),
     # GenericSite provides templates for auth pages
     path("accounts/", include("django.contrib.auth.urls")),
-    # GenericSite also provides templates that work with django-allauth:
-    # path("accounts/", include("allauth.urls")),
     # You need to add the admin yourself:
     path("admin/", admin.site.urls),
     # TinyMCE urls if desired

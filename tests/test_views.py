@@ -3,7 +3,6 @@ from datetime import timedelta
 from io import BytesIO
 
 from django.apps import apps
-from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.http import HttpResponseNotFound
 from django.test import TestCase
@@ -332,24 +331,6 @@ class TestSectionView(TestCase):
         )
 
 
-class TestProfileView(TestCase):
-    """User profile view"""
-
-    def test_profile_view(self):
-        "profile view"
-        self.user = User.objects.create(
-            username="test_admin",
-            password="super-secure",
-            is_staff=True,
-            is_superuser=True,
-        )
-        self.client.force_login(self.user)
-
-        resp = self.client.get(reverse("account_profile"))
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn("registration/profile.html", [t.name for t in resp.templates])
-
-
 class BaseContentTestCase(TestCase):
     """A base class that sets up some content for testing"""
 
@@ -543,17 +524,17 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
         SiteVar.objects.create(
             site=site,
             name="detail_content_template",
-            value="account/messages/logged_in.txt",
+            value="genericsite/blocks/debug_newsite.html",
         )
         SiteVar.objects.create(
             site=site,
             name="detail_precontent_template",
-            value="account/messages/logged_out.txt",
+            value="genericsite/blocks/debug_newsite.html",
         )
         SiteVar.objects.create(
             site=site,
             name="detail_postcontent_template",
-            value="account/messages/password_set.txt",
+            value="genericsite/blocks/debug_newsite.html",
         )
 
         resp = self.client.get(
@@ -563,13 +544,14 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
             )
         )
         self.assertEqual(
-            "account/messages/logged_in.txt", resp.context["content_template"]
+            "genericsite/blocks/debug_newsite.html", resp.context["content_template"]
         )
         self.assertEqual(
-            "account/messages/logged_out.txt", resp.context["precontent_template"]
+            "genericsite/blocks/debug_newsite.html", resp.context["precontent_template"]
         )
         self.assertEqual(
-            "account/messages/password_set.txt", resp.context["postcontent_template"]
+            "genericsite/blocks/debug_newsite.html",
+            resp.context["postcontent_template"],
         )
 
     def test_list_pages(self):
@@ -591,30 +573,31 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
         SiteVar.objects.create(
             site=site,
             name="list_content_template",
-            value="account/messages/logged_in.txt",
+            value="genericsite/blocks/debug_newsite.html",
         )
         SiteVar.objects.create(
             site=site,
             name="list_precontent_template",
-            value="account/messages/logged_out.txt",
+            value="genericsite/blocks/debug_newsite.html",
         )
         SiteVar.objects.create(
             site=site,
             name="list_postcontent_template",
-            value="account/messages/password_set.txt",
+            value="genericsite/blocks/debug_newsite.html",
         )
 
         resp = self.client.get(
             reverse("section_page", kwargs={"section_slug": "test-section"})
         )
         self.assertEqual(
-            "account/messages/logged_in.txt", resp.context["content_template"]
+            "genericsite/blocks/debug_newsite.html", resp.context["content_template"]
         )
         self.assertEqual(
-            "account/messages/logged_out.txt", resp.context["precontent_template"]
+            "genericsite/blocks/debug_newsite.html", resp.context["precontent_template"]
         )
         self.assertEqual(
-            "account/messages/password_set.txt", resp.context["postcontent_template"]
+            "genericsite/blocks/debug_newsite.html",
+            resp.context["postcontent_template"],
         )
 
 

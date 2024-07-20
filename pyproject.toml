@@ -24,7 +24,6 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = [
-    "django-allauth>=0.51.0",
     "django-debug-toolbar",
     "django-environ",
     "django-extensions",
