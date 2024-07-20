@@ -61,7 +61,7 @@ class TestHomePageView(TestCase):
             title="Test HomePage 1",
             date_published=timezone.now() - timedelta(days=1),
         )
-        hp2 = HomePage.objects.create(
+        HomePage.objects.create(
             site=site2,
             admin_name="NOT MY HomePage",
             title="NOT MY HomePage",
@@ -80,7 +80,7 @@ class TestHomePageView(TestCase):
             title="Test HomePage 1",
             date_published=timezone.now() - timedelta(days=1),
         )
-        hp_draft = HomePage.objects.create(
+        HomePage.objects.create(
             site=site,
             admin_name="DRAFT HomePage",
             title="DRAFT HomePage 1",
@@ -101,7 +101,7 @@ class TestHomePageView(TestCase):
             title="Test HomePage 1",
             date_published=timezone.now() - timedelta(days=1),
         )
-        hp_tomorrow = HomePage.objects.create(
+        HomePage.objects.create(
             site=site,
             admin_name="FUTURE HomePage",
             title="FUTURE HomePage 1",
@@ -120,7 +120,7 @@ class TestHomePageView(TestCase):
             title="Test Section 1",
             date_published=timezone.now(),
         )
-        hp = HomePage.objects.create(
+        HomePage.objects.create(
             site=site,
             admin_name="Test HomePage",
             title="Test HomePage 1",
@@ -168,7 +168,7 @@ class TestPageView(TestCase):
 
     def test_draft_page(self):
         site = Site.objects.get_current()
-        page = Page.objects.create(
+        Page.objects.create(
             site=site,
             slug="test-page",
             title="Test Page 1",
@@ -182,7 +182,7 @@ class TestPageView(TestCase):
 
     def test_future_page(self):
         site = Site.objects.get_current()
-        page = Page.objects.create(
+        Page.objects.create(
             site=site,
             slug="test-page",
             title="Test Page 1",
@@ -194,11 +194,10 @@ class TestPageView(TestCase):
         self.assertEqual(resp.status_code, 404)
 
     def test_page_site_filter(self):
-        site = Site.objects.get_current()
         site2, _ = Site.objects.get_or_create(
             id=2, defaults={"domain": "notmysite.com", "name": "notmysite.com"}
         )
-        page = Page.objects.create(
+        Page.objects.create(
             site=site2,
             slug="test-page",
             title="Test Page 1",
@@ -250,7 +249,7 @@ class TestSectionView(TestCase):
 
     def test_draft_section(self):
         site = Site.objects.get_current()
-        section = Section.objects.create(
+        Section.objects.create(
             site=site,
             slug="test-section",
             title="Test Section 1",
@@ -264,7 +263,7 @@ class TestSectionView(TestCase):
 
     def test_future_section(self):
         site = Site.objects.get_current()
-        section = Section.objects.create(
+        Section.objects.create(
             site=site,
             slug="test-section",
             title="Test Section 1",
@@ -276,11 +275,10 @@ class TestSectionView(TestCase):
         self.assertEqual(resp.status_code, 404)
 
     def test_section_site_filter(self):
-        site = Site.objects.get_current()
         site2, _ = Site.objects.get_or_create(
             id=2, defaults={"domain": "notmysite.com", "name": "notmysite.com"}
         )
-        section = Section.objects.create(
+        Section.objects.create(
             site=site2,
             slug="test-section",
             title="Test Section 1",
@@ -418,7 +416,7 @@ class TestArticlesAndFeeds(BaseContentTestCase):
 
     def test_article_draft(self):
         """Draft Article page should not be found."""
-        article = Article.objects.create(
+        Article.objects.create(
             site=self.site,
             slug="draft-article",
             section=self.section,
@@ -439,7 +437,7 @@ class TestArticlesAndFeeds(BaseContentTestCase):
 
     def test_article_future(self):
         """Future-dated Article page should not be found."""
-        article = Article.objects.create(
+        Article.objects.create(
             site=self.site,
             slug="future-article",
             section=self.section,

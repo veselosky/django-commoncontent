@@ -27,7 +27,7 @@ class OpenGraphDetailView(DetailView):
             if tpl := self.kwargs.get(block):
                 context[block] = tpl
 
-        if custom_template := getattr(self.object, "content_template"):
+        if custom_template := getattr(self.object, "content_template", ""):
             context["content_template"] = custom_template
         return context
 
@@ -298,7 +298,7 @@ class HomePageView(ArticleListView):
                 .filter(site=get_current_site(self.request))
                 .latest()
             )
-        except HomePage.DoesNotExist as e:
+        except HomePage.DoesNotExist:
             # Create a phony debug home page for bootstrapping.
             hp = HomePage(
                 site=get_current_site(self.request),

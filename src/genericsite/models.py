@@ -103,12 +103,6 @@ class SiteVar(models.Model):
 
     """
 
-    class Meta:
-        base_manager_name = "objects"
-        unique_together = ("site", "name")
-        verbose_name = _("site variable")
-        verbose_name_plural = _("site variables")
-
     site = models.ForeignKey(
         "sites.Site",
         verbose_name=_("site"),
@@ -119,6 +113,12 @@ class SiteVar(models.Model):
     value = models.TextField(_("value"))
 
     objects = SiteVarQueryset.as_manager()
+
+    class Meta:
+        base_manager_name = "objects"
+        unique_together = ("site", "name")
+        verbose_name = _("site variable")
+        verbose_name_plural = _("site variables")
 
     def __str__(self):
         return f"{self.name}={self.value} ({self.site.domain})"
@@ -141,15 +141,6 @@ class Author(models.Model):
     attribution, and to populate a profile page. The Author can also be used to store
     default copyright information.
     """
-
-    class Meta:
-        verbose_name = _("author")
-        verbose_name_plural = _("authors")
-        constraints = [
-            models.UniqueConstraint(
-                fields=["site", "name"], name="unique_author_name_per_site"
-            )
-        ]
 
     site = models.ForeignKey(
         Site,
@@ -222,11 +213,23 @@ class Author(models.Model):
         help_text=_("Time of last significant editorial update"),
     )
 
-    # Class properties
-    icon_name = "person-vcard"
+    class Meta:
+        verbose_name = _("author")
+        verbose_name_plural = _("authors")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["site", "name"], name="unique_author_name_per_site"
+            )
+        ]
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse("author_page", kwargs={"author_slug": self.slug})
+
+    # Class properties
+    icon_name = "person-vcard"
 
     @property
     def opengraph(self):
@@ -245,9 +248,6 @@ class Author(models.Model):
             image=self.profile_image.url if self.profile_image else None,
         )
         return schema
-
-    def get_absolute_url(self):
-        return reverse("author_page", kwargs={"author_slug": self.slug})
 
     @property
     def url(self):
@@ -279,15 +279,6 @@ class AbstractCreativeWork(models.Model):
     key-value pairs rather than a dictionary because open graph allows duplicate keys,
     and the order of the keys is significant.
     """
-
-    class Meta:
-        abstract = True
-        get_latest_by = "date_published"
-        ordering = ["-date_published"]
-        # Nearly all queries will filter on these fields
-        indexes = [
-            models.Index(fields=["site", "status", "date_published", "expires", "slug"])
-        ]
 
     title = models.CharField(_("title"), max_length=255)
     # From https://schema.org/creativeWorkStatus
@@ -371,13 +362,22 @@ class AbstractCreativeWork(models.Model):
 
     tags = TaggableManager(blank=True)
 
+    class Meta:
+        abstract = True
+        get_latest_by = "date_published"
+        ordering = ["-date_published"]
+        # Nearly all queries will filter on these fields
+        indexes = [
+            models.Index(fields=["site", "status", "date_published", "expires", "slug"])
+        ]
+
+    def __str__(self):
+        return self.title
+
     # Class properties
     icon_name = "file"
     schema_type = "CreativeWork"
     opengraph_type = "website"
-
-    def __str__(self):
-        return self.title
 
     @property
     def copyright_holder(self):
@@ -482,10 +482,6 @@ class MediaObject(AbstractCreativeWork):
     based on the file name stored in the `content_field` (using `mimetypes.guess_type`).
     """
 
-    class Meta:
-        abstract = True
-        unique_together = ("site", "title")
-
     # Override inherited field. For MediaObjects, title is optional to facilitate easy uploads.
     title = models.CharField(_("title"), max_length=255, blank=True)
     # Open Graph has `type`, Schema.org calls it `encodingFormat`, both recommend MIME
@@ -496,6 +492,17 @@ class MediaObject(AbstractCreativeWork):
     upload_date = models.DateTimeField(_("when uploaded"), default=timezone.now)
 
     tags = TaggableManager(blank=True)
+
+    class Meta:
+        abstract = True
+        unique_together = ("site", "title")
+
+    def save(self, *args, **kwargs):
+        if not self.mime_type:
+            self.mime_type, _ = mimetypes.guess_type(
+                getattr(self, self.content_field).name, strict=False
+            )
+        return super().save(*args, **kwargs)
 
     # Class properties
     content_field = None  # Must override in subclasses
@@ -513,19 +520,8 @@ class MediaObject(AbstractCreativeWork):
         path = getattr(self, self.content_field).url
         return f"{self._base_url}{path}"
 
-    def save(self, *args, **kwargs):
-        if not self.mime_type:
-            self.mime_type, _ = mimetypes.guess_type(
-                getattr(self, self.content_field).name, strict=False
-            )
-        return super().save(*args, **kwargs)
-
 
 class Image(MediaObject):
-    class Meta(MediaObject.Meta):
-        verbose_name = _("image")
-        verbose_name_plural = _("images")
-
     image_file = models.ImageField(
         _("image file"),
         blank=True,
@@ -615,6 +611,10 @@ class Image(MediaObject):
         options={"quality": 60},
     )
 
+    class Meta(MediaObject.Meta):
+        verbose_name = _("image")
+        verbose_name_plural = _("images")
+
     content_field = "image_file"
     icon_name = "image"
 
@@ -638,13 +638,13 @@ class Image(MediaObject):
 
 
 class Attachment(MediaObject):
+    file = models.FileField(_("file"), max_length=255, upload_to=upload_to)
+
     class Meta(MediaObject.Meta):
         verbose_name = _("attachment")
         verbose_name_plural = _("attachments")
 
     content_field = "file"
-
-    file = models.FileField(_("file"), max_length=255, upload_to=upload_to)
 
 
 #######################################################################
@@ -669,11 +669,6 @@ class GenericPageManager(models.Manager):
 #######################################################################
 class BasePage(AbstractCreativeWork):
     "A model to represent a generic page."
-
-    class Meta(AbstractCreativeWork.Meta):
-        abstract = True
-        verbose_name = _("page")
-        verbose_name_plural = _("pages")
 
     slug = models.SlugField(_("slug"))
     # From https://schema.org/articleBody or https://schema.org/text
@@ -718,6 +713,14 @@ class BasePage(AbstractCreativeWork):
 
     objects = GenericPageManager.from_queryset(CreativeWorkQuerySet)()
 
+    class Meta(AbstractCreativeWork.Meta):
+        abstract = True
+        verbose_name = _("page")
+        verbose_name_plural = _("pages")
+
+    def get_absolute_url(self):
+        return reverse("generic_page", kwargs={"page_slug": self.slug})
+
     # Class properties
     schema_type = "WebPage"
     opengraph_type = "website"
@@ -745,13 +748,12 @@ class BasePage(AbstractCreativeWork):
         config = apps.get_app_config("genericsite")
         return config.pagebreak_separator in self.body
 
-    def get_absolute_url(self):
-        return reverse("generic_page", kwargs={"page_slug": self.slug})
-
 
 #######################################################################
 class Section(BasePage):
     "A model to represent major site categories."
+
+    objects = GenericPageManager.from_queryset(CreativeWorkQuerySet)()
 
     class Meta(BasePage.Meta):
         verbose_name = _("section")
@@ -761,8 +763,6 @@ class Section(BasePage):
                 fields=["site", "slug"], name="unique_section_slug_per_site"
             )
         ]
-
-    objects = GenericPageManager.from_queryset(CreativeWorkQuerySet)()
 
     def __str__(self):
         return f"{self.title} ({self.site.name})"
@@ -775,12 +775,12 @@ class Section(BasePage):
 class Page(BasePage):
     "A model to represent a generic evergreen page or 'landing page'."
 
+    objects = GenericPageManager.from_queryset(CreativeWorkQuerySet)()
+
     class Meta(BasePage.Meta):
         unique_together = ("site", "slug")
         verbose_name = _("page")
         verbose_name_plural = _("pages")
-
-    objects = GenericPageManager.from_queryset(CreativeWorkQuerySet)()
 
     def get_absolute_url(self):
         return reverse("landing_page", kwargs={"page_slug": self.slug})
@@ -790,10 +790,6 @@ class Page(BasePage):
 class HomePage(BasePage):
     "A model to represent the site home page."
 
-    class Meta(BasePage.Meta):
-        verbose_name = _("home page")
-        verbose_name_plural = _("home pages")
-
     admin_name = models.CharField(
         _("admin name"),
         max_length=255,
@@ -801,6 +797,10 @@ class HomePage(BasePage):
         help_text=_("Name used in the admin to distinguish from other home pages"),
     )
     objects = GenericPageManager.from_queryset(CreativeWorkQuerySet)()
+
+    class Meta(BasePage.Meta):
+        verbose_name = _("home page")
+        verbose_name_plural = _("home pages")
 
     def get_absolute_url(self):
         return reverse("home_page")
@@ -836,6 +836,21 @@ class ArticleManager(models.Manager):
 class Article(BasePage):
     "Articles are the bread and butter of a site. They will appear in feeds."
 
+    section = models.ForeignKey(
+        Section, verbose_name=_("section"), on_delete=models.PROTECT
+    )
+    series = models.ForeignKey(
+        ArticleSeries,
+        verbose_name=_("series"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
+    image_set = models.ManyToManyField(Image, verbose_name=_("related images"))
+    attachment_set = models.ManyToManyField(Attachment, verbose_name=_("attachments"))
+
+    objects = ArticleManager.from_queryset(CreativeWorkQuerySet)()
+
     # Intentionally not inherting from AbstractCreativeWork's Meta because `ordering`
     # and `order_with_respect_to` are not compatible with each other.
     class Meta:
@@ -862,23 +877,26 @@ class Article(BasePage):
             )
         ]
 
-    section = models.ForeignKey(
-        Section, verbose_name=_("section"), on_delete=models.PROTECT
-    )
-    series = models.ForeignKey(
-        ArticleSeries,
-        verbose_name=_("series"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-    )
-    image_set = models.ManyToManyField(Image, verbose_name=_("related images"))
-    attachment_set = models.ManyToManyField(Attachment, verbose_name=_("attachments"))
+    def save(self, *args, **kwargs):
+        if not self.id:
+            # Django should do the Right Thing setting _order on new instances
+            return super().save(*args, **kwargs)
 
-    objects = ArticleManager.from_queryset(CreativeWorkQuerySet)()
-
-    schema_type = "Article"
-    opengraph_type = "article"
+        # When adding a series to an existing article, Django does not set _order,
+        # so it has the default 0, which breaks get_next_in_order
+        if self.series and not self._order:
+            # Order not assigned, place at end of series
+            self._order = self.series.get_article_order().count() + 1
+        elif not self.series:
+            # If the series is removed, reset the order
+            self._order = 0
+        # Save before resetting series order so the query finds this instance
+        retval = super().save(*args, **kwargs)
+        if self.series:
+            # Possible the series has changed, which could cause dupes. This
+            # will reset the _order for all articles in the series.
+            self.series.set_article_order(self.series.get_article_order())
+        return retval
 
     def get_absolute_url(self):
         if self.series:
@@ -894,6 +912,9 @@ class Article(BasePage):
             "article_page",
             kwargs={"article_slug": self.slug, "section_slug": self.section.slug},
         )
+
+    schema_type = "Article"
+    opengraph_type = "article"
 
     @property
     def opengraph(self):
@@ -926,35 +947,11 @@ class Article(BasePage):
         ids = list(self.series.get_article_order())
         return f"Part {ids.index(self.id) + 1} of {len(ids)}"
 
-    def save(self, *args, **kwargs):
-        if not self.id:
-            # Django should do the Right Thing setting _order on new instances
-            return super().save(*args, **kwargs)
-
-        # When adding a series to an existing article, Django does not set _order,
-        # so it has the default 0, which breaks get_next_in_order
-        if self.series and not self._order:
-            # Order not assigned, place at end of series
-            self._order = self.series.get_article_order().count() + 1
-        elif not self.series:
-            # If the series is removed, reset the order
-            self._order = 0
-        # Save before resetting series order so the query finds this instance
-        retval = super().save(*args, **kwargs)
-        if self.series:
-            # Possible the series has changed, which could cause dupes. This
-            # will reset the _order for all articles in the series.
-            self.series.set_article_order(self.series.get_article_order())
-        return retval
-
 
 #######################################################################
 # Site Menus
 #######################################################################
 class Menu(models.Model):
-    class Meta:
-        unique_together = ("site", "slug")
-
     site = models.ForeignKey(Site, on_delete=models.CASCADE, verbose_name=_("site"))
     admin_name = models.CharField(_("admin name"), max_length=255)
     slug = models.SlugField(
@@ -964,6 +961,9 @@ class Menu(models.Model):
         ),
     )
     title = models.CharField(_("title"), max_length=255, blank=True)
+
+    class Meta:
+        unique_together = ("site", "slug")
 
     def __str__(self):
         return self.admin_name
@@ -981,9 +981,6 @@ class Link(models.Model):
     "icon_name". For completeness, the model also supports storing a description and
     image, though at this writing GenericSite templates do not use these properties.
     """
-
-    class Meta:
-        unique_together = (("menu", "url"), ("menu", "title"))
 
     menu = models.ForeignKey(Menu, on_delete=models.CASCADE, verbose_name=_("menu"))
     url = models.CharField(
@@ -1010,6 +1007,12 @@ class Link(models.Model):
         help_text=_("Image for social sharing"),
         related_name="+",
     )
+
+    class Meta:
+        unique_together = (("menu", "url"), ("menu", "title"))
+
+    def __str__(self):
+        return format_html('<a href="{}">{}</a>', self.url, self.title)
 
     @property
     def icon_name(self):

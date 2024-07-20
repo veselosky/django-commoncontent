@@ -1,10 +1,10 @@
 {% extends "account/base.html" %}
 {% load i18n genericsite %}
-{% block title %}{% trans "Sign Out" %}
-{% endblock %}
-
+{% block title %}
+  {% trans "Sign Out" %}
+{% endblock title %}
 {% block content %}
-  <main class="{{bootstrap_container_class}}">
+  <main class="{{ bootstrap_container_class }}">
     <div class="col-md-6">
       {% include "genericsite/includes/messages.html" %}
       <h1>{% trans "Sign Out" %}</h1>
@@ -12,11 +12,12 @@
       <form method="post" action="{% url 'account_logout' %}">
         {% csrf_token %}
         {% if redirect_field_value %}
-          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+          <input type="hidden"
+                 name="{{ redirect_field_name }}"
+                 value="{{ redirect_field_value }}" />
         {% endif %}
         <button class="btn btn-primary" type="submit">{% trans 'Sign Out' %}</button>
       </form>
     </div>
   </main>
-
-{% endblock %}
+{% endblock content %}

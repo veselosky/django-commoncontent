@@ -12,7 +12,7 @@ class TestAddClassesFilter(SimpleTestCase):
     def test_add_classes_classless(self):
         mock = Mock()
         mock.field.widget.attrs = {}
-        output = Template(
+        Template(
             '{% load genericsite %}{{ fakefield|add_classes:"newclass" }} '
         ).render(Context({"fakefield": mock}))
         mock.as_widget.assert_called_with(attrs={"class": "newclass"})
@@ -20,7 +20,7 @@ class TestAddClassesFilter(SimpleTestCase):
     def test_add_classes_append(self):
         mock = Mock()
         mock.field.widget.attrs = {"class": "class1 classB"}
-        output = Template(
+        Template(
             '{% load genericsite %}{{ fakefield|add_classes:"newclass secondclass" }} '
         ).render(Context({"fakefield": mock}))
         mock.as_widget.assert_called_with(

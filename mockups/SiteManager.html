@@ -1,17 +1,11 @@
 <!DOCTYPE html>
-<html
-  prefix="og: https://ogp.me/ns#
-article: https://ogp.me/ns/article#
-book: https://ogp.me/ns/book#
-profile: https://ogp.me/ns/profile#
-video: https://ogp.me/ns/video#
-"
-  lang="en"
->
+<html prefix="og: https://ogp.me/ns# article: https://ogp.me/ns/article# book: https://ogp.me/ns/book# profile: https://ogp.me/ns/profile# video: https://ogp.me/ns/video# "
+      lang="en">
   <head>
     <meta charset="utf-8" />
     <title>Site Manager Mock Up</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Mock up of a site manager" />
     <style>
       :root {
         /* Default variable for "light mode" */
@@ -27,15 +21,18 @@ video: https://ogp.me/ns/video#
         --symbol-button-size: 1.5em;
         --max-list-column-width: 25%;
       }
+
       *,
       *:before,
       *:after {
         box-sizing: border-box;
       }
+
       body {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
       }
+
       main {
         display: flex;
         flex-direction: row;
@@ -43,43 +40,55 @@ video: https://ogp.me/ns/video#
         align-items: flex-start;
         gap: 1rem;
       }
+
       .page-tree {
         flex: 1 1 20%;
         background-color: var(--background-color-muted);
         color: var(--color-muted);
       }
+
       .page-tree p {
         margin: 0;
         padding: 0;
       }
+
       .page-tree p.add-page {
         display: list-item;
         list-style: inside "+";
       }
+
       .page-tree details p.add-page {
         margin-left: 1rem;
       }
+
       details details {
         margin-left: 1rem;
       }
+
       details details details {
         margin-left: 2rem;
       }
+
       details details details details {
         margin-left: 3rem;
       }
+
       details details details details details {
         margin-left: 4rem;
       }
+
       details details details details details details {
         margin-left: 5rem;
       }
+
       details details details details details details details {
         margin-left: 6rem;
       }
+
       .page-content {
         flex: 1 1 80%;
       }
+
       .go-button {
         background-color: greenyellow;
         color: darkgreen;
@@ -87,6 +96,7 @@ video: https://ogp.me/ns/video#
         display: flex;
         align-items: center;
       }
+
       /* .go-button:hover,
       .go-button:focus {
         box-shadow: 0 0 1em 0.5em greenyellow;
@@ -101,27 +111,29 @@ video: https://ogp.me/ns/video#
         align-items: center;
         text-decoration: none;
       }
+
       i.bi-plus {
         width: var(--symbol-button-size);
         height: var(--symbol-button-size);
       }
+
       i.bi-plus::before {
         content: "";
         color: darkgreen;
         display: inline-block;
-        background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='currentColor' class='bi bi-plus' viewBox='0 0 16 16'> <path d='M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4'/></svg>");
+        background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='currentColor' class='bi bi-plus' viewBox='0 0 16 16'> <path d='M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4' /></svg>");
         background-repeat: no-repeat;
         width: var(--symbol-button-size);
         height: var(--symbol-button-size);
       }
     </style>
   </head>
-  <body class="">
+  <body>
     <header class="page_header">
       <h1>Site Manager Mock Up</h1>
     </header>
     <div class="precontent"></div>
-    <main class="">
+    <main>
       <section class="page-tree">
         <h2>Page Tree</h2>
         <p class="add-page">
@@ -160,7 +172,8 @@ video: https://ogp.me/ns/video#
       </section>
     </main>
     <div class="postcontent"></div>
-    <footer class="page_footer"></footer>
+    <footer class="page_footer">
+    </footer>
     <script>
       const pageTitle = document.getElementById("page-title");
     </script>
