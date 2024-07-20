@@ -27,8 +27,6 @@ urlpatterns = [
         optional.TinyMCEImageListView.as_view(),
         name="tinymce_image_list",
     ),
-    path("accounts/profile/", optional.ProfileView.as_view(), name="account_profile"),
-    path("accounts/", include("allauth.urls")),
     path("django_accounts/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),
     path(

@@ -47,9 +47,6 @@ INSTALLED_APPS = [
     *genericsite.apps.CONTENT,
     # genericsite apps for publishing tools
     "django_extensions",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
     "tinymce",
     # contrib apps required by genericsite for statics
     "django.contrib.contenttypes",
@@ -79,7 +76,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
 ]
 MIDDLEWARE += [
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
