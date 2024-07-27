@@ -13,8 +13,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from importlib.util import find_spec
 from pathlib import Path
 
+import commoncontent.apps
 import environ
-import genericsite.apps
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,26 +43,26 @@ LOGIN_REDIRECT_URL = "/"
 
 # Application definition
 INSTALLED_APPS = [
-    # genericsite apps for static site generation
-    *genericsite.apps.CONTENT,
-    # genericsite apps for publishing tools
+    # commoncontent apps for static site generation
+    *commoncontent.apps.CONTENT,
+    # commoncontent apps for publishing tools
     "django_extensions",
     "tinymce",
-    # contrib apps required by genericsite for statics
+    # contrib apps required by commoncontent for statics
     "django.contrib.contenttypes",
     "django.contrib.humanize",
     "django.contrib.redirects",
     "django.contrib.sitemaps",
     "django.contrib.sites",
     "django.contrib.staticfiles",
-    # contrib apps required by genericsite for dynamically served apps
+    # contrib apps required by commoncontent for dynamically served apps
     "django.contrib.auth",
     "django.contrib.messages",
     "django.contrib.sessions",
-    # Optional admin with genericsite extensions
+    # Optional admin with commoncontent extensions
     "django.contrib.admin",
     "django.contrib.admindocs",
-    *genericsite.apps.ADMIN,
+    *commoncontent.apps.ADMIN,
 ]
 
 # Note: most of these middlewares are not required for static generation
@@ -79,7 +79,7 @@ MIDDLEWARE = [
 ]
 MIDDLEWARE += [
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
-    "genericsite.redirects.TemporaryRedirectFallbackMiddleware",
+    "commoncontent.redirects.TemporaryRedirectFallbackMiddleware",
 ]
 
 ROOT_URLCONF = "test_project.urls"
@@ -95,7 +95,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "genericsite.apps.context_defaults",
+                "commoncontent.apps.context_defaults",
             ],
         },
     },
@@ -153,10 +153,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CONN_HEALTH_CHECKS = True
 
 
-# THUMBNAIL_PROCESSORS = genericsite.apps.THUMBNAIL_PROCESSORS
+# THUMBNAIL_PROCESSORS = commoncontent.apps.THUMBNAIL_PROCESSORS
 # THUMBNAIL_DEBUG = DEBUG
 
-# TINYMCE_DEFAULT_CONFIG = genericsite.apps.TINYMCE_CONFIG
+# TINYMCE_DEFAULT_CONFIG = commoncontent.apps.TINYMCE_CONFIG
 
 #######################################################################
 # DEVELOPMENT: If running in a dev environment, loosen restrictions

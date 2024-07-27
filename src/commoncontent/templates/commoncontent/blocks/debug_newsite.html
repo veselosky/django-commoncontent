@@ -1,0 +1,13 @@
+<div class="container-lg">
+  <h1>Congratulations! You have a generic site!</h1>
+  <p>
+    You have installed django-commoncontent, but you apparently have not created a home
+    page yet. To start, make sure you have created an admin user.
+  </p>
+  <pre><code>
+    python manage.py createsuperuser
+  </code></pre>
+  <p>
+    Then <a href="{% url "admin:index" %}">log into the admin</a> and start creating pages!
+  </p>
+</div>

@@ -1,0 +1,44 @@
+{% load commoncontent i18n static %}
+<div class="album py-5">
+  <div class="container">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+      {% for article in object_list %}
+        <div class="col">
+          <div class="card shadow-sm">
+            <a href="{{ article.get_absolute_url }}">
+              {% opengraph_image article as img %}
+              {% if img %}
+                <img class="img-fluid"
+                     src="{{ img.medium.url }}"
+                     width="{{ img.medium.width }}"
+                     height="{{ img.medium.height }}"
+                     alt="{{ img.alt_text }}" />
+              {% else %}
+                <svg class="bd-placeholder-img card-img-top"
+                     width="400"
+                     height="225"
+                     xmlns="http://www.w3.org/2000/svg"
+                     role="img"
+                     aria-label="Placeholder: Thumbnail"
+                     preserveAspectRatio="xMidYMid slice"
+                     focusable="false">
+                  <title>Placeholder</title><rect width="100%" height="100%" fill="#55595c" /><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text>
+                  </svg>
+                {% endif %}
+              </a>
+              <div class="card-body">
+                <h3 class="card-title">
+                  <a class="text-reset text-decoration-none"
+                     href="{{ article.get_absolute_url }}">{% firstof article.title article.schema.headline %}</a>
+                </h3>
+                <p class="card-text">{% firstof article.description article.schema.description %}</p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="row mt-5">
+        <div class="col">{% include "commoncontent/includes/pagination.html" %}</div>
+      </div>
+    </div>
+  </div>

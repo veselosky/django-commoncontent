@@ -1,0 +1,10 @@
+{% extends "commoncontent/base.html" %}
+{% block title %}
+  {% if object.seo_title %}
+    {{ object.seo_title }}
+  {% else %}
+    {{ object.title }}
+    {% if object.series %}| {{ object.series.name }} {{ object.series_part }}{% endif %}
+  {% endif %}
+  | {% firstof brand request.site.name %}
+{% endblock title %}

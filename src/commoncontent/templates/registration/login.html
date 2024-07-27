@@ -1,0 +1,70 @@
+{% extends "commoncontent/base.html" %}
+{% load commoncontent %}
+{% block extra_head %}
+  <style>
+    main {
+      display: flex;
+      align-items: center;
+      padding-top: 40px;
+      padding-bottom: 40px;
+      background-color: #f5f5f5;
+    }
+
+    .form-signin {
+      max-width: 330px;
+      padding: 15px;
+    }
+
+    .form-signin .form-floating:focus-within {
+      z-index: 2;
+    }
+
+    input#id_username {
+      margin-bottom: -1px;
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    input#id_password {
+      margin-bottom: 10px;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+  </style>
+{% endblock extra_head %}
+{% block content %}
+  <main class="container text-center">
+    <div class="form-signin w-100 m-auto">
+      {% comment %} TODO Use bootstrap classes in error display {% endcomment %}
+      {% if form.errors %}<p class="text-danger">Your username and password didn't match. Please try again.</p>{% endif %}
+      {% if next %}
+        {% if user.is_authenticated %}
+          <p class="text-warning">
+            Your account doesn't have access to the requested page. To proceed,
+            please login with an account that has access.
+          </p>
+        {% else %}
+          <p class="text-warning">You must sign in to see the requested page.</p>
+        {% endif %}
+      {% endif %}
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+        <div class="form-floating">
+          {{ form.username|add_classes:"form-control" }}
+          {{ form.username.label_tag }}
+        </div>
+        <div class="form-floating">
+          {{ form.password|add_classes:"form-control" }}
+          {{ form.password.label_tag }}
+        </div>
+        <input type="hidden" name="next" value="{{ next }}" />
+        <button class="w-100 btn btn-lg btn-primary" type="submit" value="login">Sign in</button>
+      </form>
+      {# Assumes you set up the password_reset view in your URLconf #}
+      <p>
+        <a href="{% url 'password_reset' %}">Forgot password?</a>
+      </p>
+    </div>
+  </main>
+{% endblock content %}

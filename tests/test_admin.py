@@ -20,9 +20,9 @@ class AdminSmokeTest(TestCase):
         """Load each admin change and add page to check syntax in the admin classes."""
         self.client.force_login(self.user)
 
-        app_label = "genericsite"
-        genericsite = apps.get_app_config(app_label)
-        for model in genericsite.get_models():
+        app_label = "commoncontent"
+        commoncontent = apps.get_app_config(app_label)
+        for model in commoncontent.get_models():
             if not site.is_registered(model):
                 continue
 

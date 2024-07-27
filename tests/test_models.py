@@ -1,12 +1,8 @@
 from datetime import datetime
 from unittest import mock
 
-from django.test import TestCase as DjangoTestCase
-from django.test import override_settings
-from django.urls import reverse
-from django.utils import timezone
-from genericsite.common import upload_to
-from genericsite.models import (
+from commoncontent.common import upload_to
+from commoncontent.models import (
     Article,
     ArticleSeries,
     Page,
@@ -15,6 +11,10 @@ from genericsite.models import (
     SiteVar,
     Status,
 )
+from django.test import TestCase as DjangoTestCase
+from django.test import override_settings
+from django.urls import reverse
+from django.utils import timezone
 
 
 class TestModels(DjangoTestCase):
@@ -136,7 +136,7 @@ class TestUploadTo(DjangoTestCase):
             site=site,
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
-        with override_settings(GENERICSITE_UPLOAD_TO=upload_to_target_for_test):
+        with override_settings(COMMONCONTENT_UPLOAD_TO=upload_to_target_for_test):
             self.assertEqual(upload_to(page, "test.jpg"), "arf.jpg")
 
     def test_upload_to_target_is_string(self):
@@ -150,7 +150,7 @@ class TestUploadTo(DjangoTestCase):
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
         with override_settings(
-            GENERICSITE_UPLOAD_TO="tests.test_models.upload_to_target_for_test"
+            COMMONCONTENT_UPLOAD_TO="tests.test_models.upload_to_target_for_test"
         ):
             self.assertEqual(upload_to(page, "test.jpg"), "arf.jpg")
 
@@ -164,7 +164,7 @@ class TestUploadTo(DjangoTestCase):
             site=site,
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
-        with mock.patch("genericsite.common.now") as mock_tz:
+        with mock.patch("commoncontent.common.now") as mock_tz:
             mock_tz.return_value = datetime.fromisoformat("2021-11-22T19:00")
             self.assertEqual(
                 upload_to(page, "test.jpg"), "example.com/2021/11/22/test.jpg"

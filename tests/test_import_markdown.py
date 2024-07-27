@@ -1,8 +1,8 @@
 from pathlib import Path
 
+from commoncontent.models import Article, Section, Site
 from django.core.management import call_command
 from django.test import TestCase
-from genericsite.models import Article, Section, Site
 
 base_path = Path(__file__).resolve().parent
 

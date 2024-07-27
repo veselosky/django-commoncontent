@@ -1,4 +1,4 @@
-name: Package a release of genericsite
+name: Package a release of commoncontent
 on:
   push:
     tags:

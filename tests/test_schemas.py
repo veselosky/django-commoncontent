@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from genericsite.schemas import (
+from commoncontent.schemas import (
     AudioProp,
     CreativeWorkSchema,
     ImageProp,

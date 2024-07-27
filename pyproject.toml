@@ -1,5 +1,5 @@
 [project]
-name = "django-genericsite"
+name = "django-commoncontent"
 dynamic = ["version"]
 authors = [{ name = "Vince Veselosky", email = "vince@veselosky.com" }]
 description = "basic data model and templates for Django's generic views to produce a decent-looking website with minimal effort"
@@ -37,8 +37,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/veselosky/django-genericsite"
-"Bug Tracker" = "https://github.com/veselosky/django-genericsite/issues"
+Homepage = "https://github.com/veselosky/django-commoncontent"
+"Bug Tracker" = "https://github.com/veselosky/django-commoncontent/issues"
 
 [build-system]
 # With setuptools-scm, package data files (e.g. templates) that are tracked by git will
@@ -48,7 +48,7 @@ requires = ["setuptools>=66.1.1", "setuptools-scm>=7.0.5", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic.version]
-attr = "genericsite.__version__"
+attr = "commoncontent.__version__"
 
 [tool.djlint]
 close_void_tags = true

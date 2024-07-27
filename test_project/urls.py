@@ -1,4 +1,4 @@
-"""genericsite URL Configuration
+"""commoncontent URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.0/topics/http/urls/
@@ -14,12 +14,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from commoncontent import views_optional as optional
+from commoncontent.sitemaps import sitemaps
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
-from genericsite import views_optional as optional
-from genericsite.sitemaps import sitemaps
 
 urlpatterns = [
     path(
@@ -35,7 +35,7 @@ urlpatterns = [
         {"sitemaps": sitemaps},
         name="django.contrib.sitemaps.views.sitemap",
     ),
-    path("", include("genericsite.urls")),
+    path("", include("commoncontent.urls")),
 ]
 if settings.DEBUG:
     # NOTE: When DEBUG and staticfiles is installed, Django automatically adds static
