@@ -13,7 +13,7 @@ from commoncontent.models import Article, ArticleSeries, Author, HomePage, Page,
 
 
 ######################################################################################
-class OpenGraphDetailView(DetailView):
+class BasePageDetailView(DetailView):
     template_name_field = "base_template"
 
     def get_context_data(self, **kwargs):
@@ -76,7 +76,7 @@ class ArticleSeriesView(RedirectView):
 
 
 ######################################################################################
-class ArticleDetailView(OpenGraphDetailView):
+class ArticleDetailView(BasePageDetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         # Canonical URL for articles in a series includes the series slug
@@ -100,7 +100,7 @@ class ArticleDetailView(OpenGraphDetailView):
 
 
 ######################################################################################
-class PageDetailView(OpenGraphDetailView):
+class PageDetailView(BasePageDetailView):
     def get_object(self):
         return get_object_or_404(
             Page.objects.live().filter(
@@ -111,7 +111,7 @@ class PageDetailView(OpenGraphDetailView):
 
 
 ######################################################################################
-class OpenGraphListView(ListView):
+class BasePageListView(ListView):
     """View for pages that present a list of articles (e.g. SectionPage, HomePage).
 
     The `get_object` method is left unimplemented here, as it will be different for
@@ -205,7 +205,7 @@ class OpenGraphListView(ListView):
 
 
 ######################################################################################
-class ArticleListView(OpenGraphListView):
+class ArticleListView(BasePageListView):
     model = Article
 
     def get_queryset(self):

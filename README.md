@@ -7,6 +7,14 @@ content management workflows. Common Content is designed to fill the gap between
 options. If you need pages and feeds for your Django site, but don't need the power and
 complexity of a full content management system, Common Content may be the right tool.
 
+Common Content includes a set of templates using the
+[Bootstrap CSS framework](https://getbootstrap.com) based on the examples found on the
+bootstrap website. The templates work with any objects that implement the common data
+model. They can easily be coupled with Django's generic class-based views to produce a
+clean and professional site quickly and easily. If you use the included concrete models
+with the default templates and the included views, you'll be starting with a basic
+blog-style site.
+
 ## Project Status: Alpha
 
 Common Content is still Alpha-level software. It has many completed features that are
@@ -63,14 +71,6 @@ In addition to the content pages, Common Content also provides:
 - `django-tinymce` Support - If `django-tinymce` is installed, Common Content will use
   its WYSISYG editor in its admin pages. There is an optional JSON view that exposes a
   list of recently upload images for use by the TinyMCE editor.
-
-Common Content includes a set of templates using the
-[Bootstrap CSS framework](https://getbootstrap.com) based on the examples found on the
-bootstrap website. The templates work with any objects that implement the common data
-model. They can easily be coupled with Django's generic class-based views to produce a
-clean and professional site quickly and easily. If you use the included concrete models
-with the default templates and the included views, you'll be starting with a basic
-blog-style site.
 
 The templates are built using Bootstrap 5, and they load the core CSS and JavaScript
 from a CDN by default, so there's nothing else to install and little or no front-end to
