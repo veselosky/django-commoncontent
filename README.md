@@ -80,9 +80,7 @@ deal with.
 
 After checking out the code, you can bootstrap a development environment by running:
 
-```sh
-python manage.py devsetup
-```
+`sh python manage.py devsetup `
 
 Note that the Python used to run this script will be the one used in your virtualenv.
 
@@ -93,41 +91,41 @@ Add the following to your `settings.py`:
 ```python
 import commoncontent.apps
 INSTALLED_APPS = [
-  *commoncontent.apps.CONTENT
-  # Optionally use tinymce in the admin
-  "tinymce",
-  # Other Django apps here
-  # ADMIN apps must be added AFTER the Django admin and sites apps
-  *commoncontent.apps.ADMIN
+  *commoncontent.apps.CONTENT,
+# Optionally use tinymce in the admin
+"tinymce",
+# Other Django apps here
+# sitevars must come AFTER contrib.sites for admin to work
+"sitevars",
 ]
+
 # Ensure your middleware includes the following:
-MIDDLEWARE += [
-  "django.contrib.sites.middleware.CurrentSiteMiddleware",
-  "commoncontent.redirects.TemporaryRedirectFallbackMiddleware",
-]
+MIDDLEWARE += [ "django.contrib.sites.middleware.CurrentSiteMiddleware",
+"commoncontent.redirects.TemporaryRedirectFallbackMiddleware", ]
+
 # If using tinymce
 TINYMCE_DEFAULT_CONFIG = commoncontent.apps.TINYMCE_CONFIG
 
 # Add `commoncontent.apps.context_defaults` to your context processors. You will also
 # need to add the request, auth, and messages context processors if not already there.
 # Probably looks like this:
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-                "commoncontent.apps.context_defaults",
-            ],
-        },
-    },
-]
 
+TEMPLATES = [
+  { "BACKEND": "django.template.backends.django.DjangoTemplates",
+    "DIRS": [],
+    "APP_DIRS": True,
+    "OPTIONS": {
+      "context_processors": [
+        "django.template.context_processors.debug",
+        "django.template.context_processors.request",
+        "django.contrib.auth.context_processors.auth",
+        "django.contrib.messages.context_processors.messages",
+        "commoncontent.apps.context_defaults",
+        "sitevars.context_processors.inject_sitevars",
+      ],
+    },
+  },
+]
 ```
 
 In your project's `urls.py`, insert the Common Content URLs where you want them. To have
@@ -138,14 +136,12 @@ and list it like this:
 from commoncontent import views as generic
 
 urlpatterns = [
-    # Common Content provides templates for auth pages
-    path("accounts/", include("django.contrib.auth.urls")),
-    # You need to add the admin yourself:
-    path("admin/", admin.site.urls),
-    # TinyMCE urls if desired
-    path("tinymce/", include("tinymce.urls")),
-    # All other urls are handed to Common Content
-    path("", include("commoncontent.urls")),
+  # Common Content provides templates for auth pages
+  path("accounts/",
+  include("django.contrib.auth.urls")), # You need to add the admin yourself:
+  path("admin/", admin.site.urls), # TinyMCE urls if desired path("tinymce/",
+  include("tinymce.urls")), # All other urls are handed to Common Content path("",
+  include("commoncontent.urls")),
 ]
 ```
 
@@ -196,14 +192,54 @@ TODO: Document available block templates.
 
 ### Site Vars
 
-The app comes with a SiteVar model for storing site-specific variables or chunks of
-content. You can store any variable for use with your own templates. Variables used by
-the default templates/models can be found on the Admin Documentation page for SiteVar.
+We depend on [django-sitevars](https://pypi.org/project/django-sitevars/) for storing
+site-specific variables or chunks of content. You can also store any variable for use
+with your own templates. Variable can be injected into template contexts using the
+context processor in `sitevars.context_processors.inject_sitevars`, or using the
+`{% sitevar "name" %}` template tag. Variables used by the default templates/models are
+listed below. Defaults for these variables are injected in the template contexts by
+`commoncontent.apps.context_defaults`.
+
+- `base_template` - The base template to use for generic pages. Defaults to
+  `commoncontent/base.html`.
+- `brand` - Site's brand name. Uses Site.name if not set.
+- `copyright_holder` - Custom name for the copyright holder if using the default
+  copyright notice. Falls back to `site.name` if not provided.
+- `copyright_notice` - HTML to include in the copyright notice section of the footer
+  (replaces the default copyright notice).
+- `custom_stylesheet` - A site-specific CSS file. This is pulled into the `extra_head`
+  block after bootstrap and commoncontent's CSS, so you can use it to override default
+  styles and customize the look and feel of each site. It is included using
+  `{% static custom_stylesheet %}` so the value should be relative to the STATIC_ROOT.
+- `default_icon` - Name of a Bootstrap icon to use by default if the object provides
+  none.
+- `detail_precontent_template` - Default template to use for the `precontent` block for
+  detail pages.
+- `detail_content_template` - Default template to use for the `content` block for detail
+  pages.
+- `detail_postcontent_template` - Default template to use for the `postcontent` block
+  for detail pages.
+- `footer_template` - Default template to use for the `footer` block.
+- `header_template` - Default template to use for the `header` block.
+- `list_postcontent_template` - Default template to use for the `postcontent` block for
+  list pages.
+- `list_precontent_template` - Default template to use for the `precontent` block for
+  list pages.
+- `list_content_template` - Default template to use for the `content` block for list
+  pages.
+- `logo` - The URL to your site's logo image.
+- `paginate_by` - Items per page on list pages, same as Django's ListView, see
+  `pagination <https://docs.djangoproject.com/en/dev/ref/paginator/>`\_ in the Django
+  docs.
+- `paginate_orphans` - Same as Django's ListView, see
+  `pagination <https://docs.djangoproject.com/en/dev/ref/paginator/>`\_ in the Django
+  docs.
 
 ### Images and Media
 
-Common Content takes advantage of Django Imagekit to manage images. Models are provided
-for storing file metadata including copyright information.
+Common Content takes advantage of
+[django-imagekit](https://pypi.org/project/django-imagekit/) to manage images. Models
+are provided for storing file metadata including copyright information.
 
 Common Content uses presets to produce images in specific sizes as recommended by
 [Buffer's Social Media Image Guidelines](https://buffer.com/library/ideal-image-sizes-social-media-posts/).

@@ -9,10 +9,6 @@ CONTENT = [
     "imagekit",
     "taggit",
 ]
-# Apps required for admin with commoncontent extensions
-ADMIN = [
-    "commoncontent.adminoverride",
-]
 
 TINYMCE_CONFIG = {
     "height": "320px",
@@ -128,10 +124,6 @@ def context_defaults(request):
     # Grab all the default configurations as a dictionary.
     gvars = conf.as_dict()
 
-    # Grab all the site vars from the DB and add them to the dictionary, overriding any
-    # fallback defaults.
-    gvars.update(request.site.vars.all().values_list("name", "value"))
-
     # Set the content blocks based on whether the current view is a list or detail view
     # (using a simple heuristic to determine listness.)
     view = request.resolver_match.func
@@ -142,51 +134,29 @@ def context_defaults(request):
     if hasattr(view, "view_class"):
         from django.views.generic.list import MultipleObjectMixin
 
-        is_list = isinstance(view.view_class, MultipleObjectMixin)
+        is_list = issubclass(view.view_class, MultipleObjectMixin)
 
+    # Edge case: SiteVars override our settings by having inject_sitevars context
+    # processor come after this one. But if they override list_*_template, we need to
+    # check that here, since we're assigning values they may not have set.
+    sitevars = request.site.vars
+    list_tpls = [
+        "list_content_template",
+        "list_precontent_template",
+        "list_postcontent_template",
+    ]
+    detail_tpls = [
+        "detail_content_template",
+        "detail_precontent_template",
+        "detail_postcontent_template",
+    ]
+    # Since we must support py38, we can't use removeprefix, so we slice instead.
     if is_list:
-        gvars["content_template"] = gvars["list_content_template"]
-        gvars["precontent_template"] = gvars["list_precontent_template"]
-        gvars["postcontent_template"] = gvars["list_postcontent_template"]
+        for tpl in list_tpls:  # prefix == "list_"
+            gvars[tpl[5:]] = sitevars.get_value(tpl, gvars[tpl])
     else:
-        gvars["content_template"] = gvars["detail_content_template"]
-        gvars["precontent_template"] = gvars["detail_precontent_template"]
-        gvars["postcontent_template"] = gvars["detail_postcontent_template"]
+        for tpl in detail_tpls:  # prefix == "detail_"
+            gvars[tpl[7:]] = sitevars.get_value(tpl, gvars[tpl])
 
     # And don't forget to return the value!!!
     return gvars
-
-
-def plus(*args):
-    """Returns a list suitable to use as settings.py INSTALLED_APPS."""
-    django_apps = [
-        # Standard Django stuff we require
-        "django.contrib.admin",
-        "django.contrib.admindocs",
-        "django.contrib.auth",
-        "django.contrib.contenttypes",
-        "django.contrib.messages",
-        "django.contrib.redirects",
-        "django.contrib.sessions",
-        "django.contrib.sites",
-        "django.contrib.staticfiles",
-    ]
-    # If the user passes in any Django apps that we use, remove them from our list so we
-    # don't get dupes. This is slightly fragile, as the user MAY have a custom Appconfig
-    # for the app and we would not detect that.
-    for app in django_apps:
-        if app in args:
-            django_apps.remove(app)
-
-    return [
-        "commoncontent",
-        # 3rd party apps we require
-        "django_bootstrap_icons",
-        "taggit",
-        # Insert the user's stuff here, above Django defaults, in case they
-        # want to override default templates.
-        *args,
-        *django_apps,
-        # Below contrib.admin so it can unregister default admins
-        "commoncontent.adminoverride",
-    ]

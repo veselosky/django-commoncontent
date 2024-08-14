@@ -11,7 +11,6 @@ from commoncontent.models import (
     Page,
     Section,
     Site,
-    SiteVar,
     Status,
 )
 from commoncontent.sitemaps import ArticleSitemap
@@ -22,6 +21,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from PIL import Image as PILImage
+from sitevars.models import SiteVar
 
 
 class TestHomePageView(TestCase):
@@ -561,6 +561,7 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
         resp = self.client.get(
             reverse("section_page", kwargs={"section_slug": "test-section"})
         )
+        # print(resp.context)
         self.assertEqual(config.list_content_template, resp.context["content_template"])
         self.assertEqual(
             config.list_precontent_template, resp.context["precontent_template"]

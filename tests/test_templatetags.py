@@ -1,11 +1,13 @@
 from datetime import datetime
 from unittest.mock import Mock
 
-from commoncontent.models import Page, Site, SiteVar, Status
+from commoncontent.models import Page, Status
+from django.contrib.sites.models import Site
 from django.core.paginator import Paginator
 from django.template import Context, Template
-from django.test import RequestFactory, SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.test import TestCase as DjangoTestCase
+from sitevars.models import SiteVar
 
 
 class TestAddClassesFilter(SimpleTestCase):
@@ -51,6 +53,7 @@ class TestElidedRangeFilter(SimpleTestCase):
         self.assertEqual(output, "1 2 3 4 5 6 7 8 9 ")
 
 
+@override_settings(SITEVARS_USE_CACHE=False)
 class TestCopyrightNoticeTag(DjangoTestCase):
     def test_copyright_notice_obj_has_custom(self):
         """Context contains an 'object' that has a copyright_notice method.

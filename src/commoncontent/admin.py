@@ -12,7 +12,6 @@ from commoncontent.models import (
     Menu,
     Page,
     Section,
-    SiteVar,
 )
 
 
@@ -49,13 +48,6 @@ class ImageAdmin(admin.ModelAdmin):
         "height",
         "mime_type",
     )
-
-
-#######################################################################################
-@admin.register(SiteVar)
-class SiteVarAdmin(admin.ModelAdmin):
-    list_display = ("name", "value", "site")
-    list_filter = ("site",)
 
 
 #######################################################################################

@@ -127,18 +127,12 @@ class BasePageListView(ListView):
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        site = get_current_site(self.request)
         conf = apps.get_app_config("commoncontent")
         context = super().get_context_data(**kwargs)
         context["object"] = self.object
         context["opengraph"] = self.object.opengraph
-        context["precontent_template"] = site.vars.get_value("list_precontent_template")
-        context["content_template"] = getattr(
-            self.object, "content_template", None
-        ) or site.vars.get_value("list_content_template")
-        context["postcontent_template"] = site.vars.get_value(
-            "list_postcontent_template"
-        )
+        if content_template := getattr(self.object, "content_template", None):
+            context["content_template"] = content_template
 
         # Allow passing kwargs in the urlconf to override the default block templates
         for block in conf.base_blocks:

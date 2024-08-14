@@ -8,13 +8,13 @@ from commoncontent.models import (
     Page,
     Section,
     Site,
-    SiteVar,
     Status,
 )
 from django.test import TestCase as DjangoTestCase
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
+from sitevars.models import SiteVar
 
 
 class TestModels(DjangoTestCase):

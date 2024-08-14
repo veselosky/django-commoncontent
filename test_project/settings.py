@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     # Optional admin with commoncontent extensions
     "django.contrib.admin",
     "django.contrib.admindocs",
-    *commoncontent.apps.ADMIN,
+    "sitevars",
 ]
 
 # Note: most of these middlewares are not required for static generation
@@ -81,6 +81,12 @@ MIDDLEWARE += [
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "commoncontent.redirects.TemporaryRedirectFallbackMiddleware",
 ]
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {"": {"handlers": ["console"], "level": "DEBUG"}},
+}
 
 ROOT_URLCONF = "test_project.urls"
 
@@ -96,6 +102,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "commoncontent.apps.context_defaults",
+                "sitevars.context_processors.inject_sitevars",
             ],
         },
     },

@@ -30,12 +30,12 @@ matter.
 
 import logging
 import re
-from datetime import datetime
 from pathlib import Path
 
 from dateutil.parser import parse
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 from django.utils.text import slugify
 from mistletoe import Document
 from mistletoe.contrib.pygments_renderer import PygmentsRenderer
@@ -97,7 +97,7 @@ class Command(BaseCommand):
         section_title = options["section"]
         site_id = options["site"]
         files = options["files"]
-        now = datetime.now()
+        now = timezone.now()
 
         # Determine whether they passed a site id or domain, and load the Site object
         # from the database
