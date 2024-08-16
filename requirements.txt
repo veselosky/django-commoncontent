@@ -8,41 +8,44 @@ charset-normalizer==3.3.2
     # via requests
 defusedxml==0.7.1
     # via django-bootstrap-icons
-django==5.0.7
+django==5.1
     # via
-    #   django-genericsite (pyproject.toml)
+    #   django-commoncontent (pyproject.toml)
     #   django-appconf
     #   django-bootstrap-icons
+    #   django-sitevars
     #   django-taggit
 django-appconf==1.0.6
     # via django-imagekit
-django-bootstrap-icons==0.8.7
-    # via django-genericsite (pyproject.toml)
+django-bootstrap-icons==0.9.0
+    # via django-commoncontent (pyproject.toml)
 django-imagekit==5.0.0
-    # via django-genericsite (pyproject.toml)
-django-taggit==5.0.1
-    # via django-genericsite (pyproject.toml)
+    # via django-commoncontent (pyproject.toml)
+django-sitevars==1.0.0
+    # via django-commoncontent (pyproject.toml)
+django-taggit==6.0.0
+    # via django-commoncontent (pyproject.toml)
 idna==3.7
     # via requests
-mistletoe==1.3.0
-    # via django-genericsite (pyproject.toml)
+mistletoe==1.4.0
+    # via django-commoncontent (pyproject.toml)
 pilkit==3.0
     # via django-imagekit
-pillow==10.3.0
+pillow==10.4.0
     # via
-    #   django-genericsite (pyproject.toml)
+    #   django-commoncontent (pyproject.toml)
     #   pilkit
 pygments==2.18.0
-    # via django-genericsite (pyproject.toml)
+    # via django-commoncontent (pyproject.toml)
 python-dateutil==2.9.0.post0
-    # via django-genericsite (pyproject.toml)
-pyyaml==6.0.1
-    # via django-genericsite (pyproject.toml)
-requests==2.32.2
+    # via django-commoncontent (pyproject.toml)
+pyyaml==6.0.2
+    # via django-commoncontent (pyproject.toml)
+requests==2.32.3
     # via django-bootstrap-icons
 six==1.16.0
     # via python-dateutil
-sqlparse==0.5.0
+sqlparse==0.5.1
     # via django
 urllib3==2.2.2
     # via requests

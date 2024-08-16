@@ -2,13 +2,7 @@ import json
 from datetime import timedelta
 from io import BytesIO
 
-from django.apps import apps
-from django.core.files.base import ContentFile
-from django.http import HttpResponseNotFound
-from django.test import TestCase
-from django.urls import reverse
-from django.utils import timezone
-from genericsite.models import (
+from commoncontent.models import (
     Article,
     ArticleSeries,
     Author,
@@ -17,11 +11,17 @@ from genericsite.models import (
     Page,
     Section,
     Site,
-    SiteVar,
     Status,
 )
-from genericsite.sitemaps import ArticleSitemap
+from commoncontent.sitemaps import ArticleSitemap
+from django.apps import apps
+from django.core.files.base import ContentFile
+from django.http import HttpResponseNotFound
+from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
 from PIL import Image as PILImage
+from sitevars.models import SiteVar
 
 
 class TestHomePageView(TestCase):
@@ -30,7 +30,7 @@ class TestHomePageView(TestCase):
         resp = self.client.get(reverse("home_page"))
         self.assertEqual(resp.status_code, 200)
         self.assertIn(
-            "genericsite/blocks/debug_newsite.html", [t.name for t in resp.templates]
+            "commoncontent/blocks/debug_newsite.html", [t.name for t in resp.templates]
         )
 
     def test_homepage_exists(self):
@@ -488,7 +488,7 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
     """Issue #42, ensure views have the correct block variables set."""
 
     def test_all_blocks_in_context(self):
-        config = apps.get_app_config("genericsite")
+        config = apps.get_app_config("commoncontent")
 
         resp = self.client.get(
             reverse(
@@ -501,7 +501,7 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
                 self.assertIn(tpl, resp.context)
 
     def test_detail_pages(self):
-        config = apps.get_app_config("genericsite")
+        config = apps.get_app_config("commoncontent")
 
         resp = self.client.get(
             reverse(
@@ -524,17 +524,17 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
         SiteVar.objects.create(
             site=site,
             name="detail_content_template",
-            value="genericsite/blocks/debug_newsite.html",
+            value="commoncontent/blocks/debug_newsite.html",
         )
         SiteVar.objects.create(
             site=site,
             name="detail_precontent_template",
-            value="genericsite/blocks/debug_newsite.html",
+            value="commoncontent/blocks/debug_newsite.html",
         )
         SiteVar.objects.create(
             site=site,
             name="detail_postcontent_template",
-            value="genericsite/blocks/debug_newsite.html",
+            value="commoncontent/blocks/debug_newsite.html",
         )
 
         resp = self.client.get(
@@ -544,22 +544,24 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
             )
         )
         self.assertEqual(
-            "genericsite/blocks/debug_newsite.html", resp.context["content_template"]
+            "commoncontent/blocks/debug_newsite.html", resp.context["content_template"]
         )
         self.assertEqual(
-            "genericsite/blocks/debug_newsite.html", resp.context["precontent_template"]
+            "commoncontent/blocks/debug_newsite.html",
+            resp.context["precontent_template"],
         )
         self.assertEqual(
-            "genericsite/blocks/debug_newsite.html",
+            "commoncontent/blocks/debug_newsite.html",
             resp.context["postcontent_template"],
         )
 
     def test_list_pages(self):
-        config = apps.get_app_config("genericsite")
+        config = apps.get_app_config("commoncontent")
 
         resp = self.client.get(
             reverse("section_page", kwargs={"section_slug": "test-section"})
         )
+        # print(resp.context)
         self.assertEqual(config.list_content_template, resp.context["content_template"])
         self.assertEqual(
             config.list_precontent_template, resp.context["precontent_template"]
@@ -573,30 +575,31 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
         SiteVar.objects.create(
             site=site,
             name="list_content_template",
-            value="genericsite/blocks/debug_newsite.html",
+            value="commoncontent/blocks/debug_newsite.html",
         )
         SiteVar.objects.create(
             site=site,
             name="list_precontent_template",
-            value="genericsite/blocks/debug_newsite.html",
+            value="commoncontent/blocks/debug_newsite.html",
         )
         SiteVar.objects.create(
             site=site,
             name="list_postcontent_template",
-            value="genericsite/blocks/debug_newsite.html",
+            value="commoncontent/blocks/debug_newsite.html",
         )
 
         resp = self.client.get(
             reverse("section_page", kwargs={"section_slug": "test-section"})
         )
         self.assertEqual(
-            "genericsite/blocks/debug_newsite.html", resp.context["content_template"]
+            "commoncontent/blocks/debug_newsite.html", resp.context["content_template"]
         )
         self.assertEqual(
-            "genericsite/blocks/debug_newsite.html", resp.context["precontent_template"]
+            "commoncontent/blocks/debug_newsite.html",
+            resp.context["precontent_template"],
         )
         self.assertEqual(
-            "genericsite/blocks/debug_newsite.html",
+            "commoncontent/blocks/debug_newsite.html",
             resp.context["postcontent_template"],
         )
 

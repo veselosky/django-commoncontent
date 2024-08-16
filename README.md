@@ -1,30 +1,76 @@
-# GenericSite: Rapid website prototyping with Django
+# Common Content: A reusable content app for Django
 
-Django is famous for being a batteries-included web framework for perfectionists with
-deadlines. However, bootstrapping a new website using Django still requires you to write
-a significant amount of Python code and HTML templates to generate the basics needed by
-most every website.
+Common Content provides models, views, and templates for common web content in a
+reusable Django app. Django ships with `flatpages`, the most simplistic content model
+possible. Third party tools like Wagtail or DjangoCMS provide flexible and complex
+content management workflows. Common Content is designed to fill the gap between these
+options. If you need pages and feeds for your Django site, but don't need the power and
+complexity of a full content management system, Common Content may be the right tool.
 
-GenericSite is a Django app designed to get you that first 80% of your website
-functionality as quickly as possible. It performs the undifferentiated heavy lifting so
-you can focus on the 20% of the work that makes your site special.
-
-GenericSite defines a data model based on [Schema.org](https://schema.org), extended in
-some places using fields from the [open graph protocol](https://ogp.me), or other web
-standards. It provides concrete Django models for common web objects, as well as an
-abstract CreativeWork model for extending the available page types.
-
-GenericSite includes a set of views to be used with the included models. These are based
-on Django's generic class-based views. They can be used directly or subclassed to meet
-your needs.
-
-GenericSite includes a set of templates using the
+Common Content includes a set of templates using the
 [Bootstrap CSS framework](https://getbootstrap.com) based on the examples found on the
-bootstrap website. The templates work with any objects that implement the generic data
-model, or anything that you can map to an opengraph-like model. They can easily be
-coupled with Django's generic class-based views to produce a clean and professional site
-quickly and easily. If you use the included concrete models with the default templates
-and the included views, you'll be starting with a basic blog-style site.
+bootstrap website. The templates work with any objects that implement the common data
+model. They can easily be coupled with Django's generic class-based views to produce a
+clean and professional site quickly and easily. If you use the included concrete models
+with the default templates and the included views, you'll be starting with a basic
+blog-style site.
+
+## Project Status: Alpha
+
+Common Content is still Alpha-level software. It has many completed features that are
+usable in production. However, test coverage is not yet complete, the feature set is
+still growing, and there are likely to be breaking changes before the software reaches a
+stable 1.0 release. Be aware that migrating to newer versions may require some work.
+
+## Included Content Models, Views, and Templates
+
+Common Content defines a data model based on [Schema.org](https://schema.org), extended
+in some places using fields from the [open graph protocol](https://ogp.me), or other web
+standards. It provides concrete Django models for common web objects, as well as an
+abstract CreativeWork and BasePage model for extending the available page types.
+
+Common Content provides the following Content:
+
+- `HomePage` - A dedicated model for site home pages. Sites can have multiple HomePages
+  with different publication dates, allowing for scheduled updates.
+- Generic `Page` - A model for evergreen pages like "About".
+- `Article` - Like a Post in Wordpress, the Article is the main content type of the
+  site. Articles can also be linked together in a Series.
+- `Section` - Articles are contained in sections. A section is like a category.
+- RSS Feeds - Common Content provides a site RSS Feed of published articles, and a
+  separate RSS feed for each Section.
+- Sitemaps - Common Content also provides Sitemaps for use with Django's sitemap
+  framework.
+- `Image` - An Image model is provided to house image uploads and their metadata,
+  including copyright information. Resized renditions of each image are provided by
+  `django-imagekit` (see the section below on Images).
+- `Attachment` - A model for storing non-image file uploads and their metadata.
+- `Author` - A model to encapsulate author information, including default copyright
+  information. Authors are optional. Author pages show a profile and list of authored
+  Articles. Each Author also has an RSS Feed.
+
+Common Content provides views and templates (using Bootstrap 5) for each type, along
+with a few different options for list display.
+
+In addition to the content pages, Common Content also provides:
+
+- `Menu` and `Link` - These models define a list of links that can be used to implement
+  site navigation menus, footer links, etc.
+- `SiteVar` - Site variables store bits of information that are reused across the site.
+  Things like the default copyright notice, site tagline, analytics IDs, etc. can be
+  stored in SiteVars. All variables for a site are injected into every template context
+  using the Common Content Context Processor so they are available on every page, even
+  pages not provided by Common Content.
+- Redirects - Includes the Django redirects app, with a custom middleware to support
+  temporary redirects.
+- `AbstractCreativeWork` and `BasePage` - These are abstract Django models that you can
+  subclass to create new content types that are compatible with Common Content templates
+  and tools.
+- Admin Support - Common Content provides admin pages for its models, and documentation
+  for use by the `admindocs` app.
+- `django-tinymce` Support - If `django-tinymce` is installed, Common Content will use
+  its WYSISYG editor in its admin pages. There is an optional JSON view that exposes a
+  list of recently upload images for use by the TinyMCE editor.
 
 The templates are built using Bootstrap 5, and they load the core CSS and JavaScript
 from a CDN by default, so there's nothing else to install and little or no front-end to
@@ -34,79 +80,79 @@ deal with.
 
 After checking out the code, you can bootstrap a development environment by running:
 
-```sh
-python manage.py devsetup
-```
+`sh python manage.py devsetup `
 
 Note that the Python used to run this script will be the one used in your virtualenv.
 
-## How to use it
+## Installation
 
 Add the following to your `settings.py`:
 
 ```python
-import genericsite.apps
+import commoncontent.apps
 INSTALLED_APPS = [
-  *genericsite.apps.CONTENT
-  # Optionally use tinymce in the admin
-  "tinymce",
-  # Other Django apps here, then
-  *genericsite.apps.ADMIN
+  *commoncontent.apps.CONTENT,
+# Optionally use tinymce in the admin
+"tinymce",
+# Other Django apps here
+# sitevars must come AFTER contrib.sites for admin to work
+"sitevars",
 ]
-MIDDLEWARE += [
-  "django.contrib.sites.middleware.CurrentSiteMiddleware",
-  "genericsite.redirects.TemporaryRedirectFallbackMiddleware",
-]
-# If using tinymce
-TINYMCE_DEFAULT_CONFIG = genericsite.apps.TINYMCE_CONFIG
 
-# Add `genericsite.apps.context_defaults` to your context processors. You will also
+# Ensure your middleware includes the following:
+MIDDLEWARE += [ "django.contrib.sites.middleware.CurrentSiteMiddleware",
+"commoncontent.redirects.TemporaryRedirectFallbackMiddleware", ]
+
+# If using tinymce
+TINYMCE_DEFAULT_CONFIG = commoncontent.apps.TINYMCE_CONFIG
+
+# Add `commoncontent.apps.context_defaults` to your context processors. You will also
 # need to add the request, auth, and messages context processors if not already there.
 # Probably looks like this:
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-                "genericsite.apps.context_defaults",
-            ],
-        },
-    },
-]
 
+TEMPLATES = [
+  { "BACKEND": "django.template.backends.django.DjangoTemplates",
+    "DIRS": [],
+    "APP_DIRS": True,
+    "OPTIONS": {
+      "context_processors": [
+        "django.template.context_processors.debug",
+        "django.template.context_processors.request",
+        "django.contrib.auth.context_processors.auth",
+        "django.contrib.messages.context_processors.messages",
+        "commoncontent.apps.context_defaults",
+        "sitevars.context_processors.inject_sitevars",
+      ],
+    },
+  },
+]
 ```
 
-In your project's `urls.py`, insert the GenericSite URLs where you want them. To have
-GenericSite manage your home page and top-level pages, make it the LAST url pattern, and
-list it like this:
+In your project's `urls.py`, insert the Common Content URLs where you want them. To have
+Common Content manage your home page and top-level pages, make it the LAST url pattern,
+and list it like this:
 
 ```python
-from genericsite import views as generic
+from commoncontent import views as generic
 
 urlpatterns = [
-    # GenericSite provides templates for auth pages
-    path("accounts/", include("django.contrib.auth.urls")),
-    # You need to add the admin yourself:
-    path("admin/", admin.site.urls),
-    # TinyMCE urls if desired
-    path("tinymce/", include("tinymce.urls")),
-    # All other urls are handed to GenericSite
-    path("", include("genericsite.urls")),
+  # Common Content provides templates for auth pages
+  path("accounts/",
+  include("django.contrib.auth.urls")), # You need to add the admin yourself:
+  path("admin/", admin.site.urls), # TinyMCE urls if desired path("tinymce/",
+  include("tinymce.urls")), # All other urls are handed to Common Content path("",
+  include("commoncontent.urls")),
 ]
 ```
 
-TODO: When closer to "1.0" create a project template for use with startproject.
+## Usage
+
+The following documentation should help you use Common Content.
 
 ### The base template
 
-The GenericSite base template is divided into major blocks that can be replaced in your
-child templates. The blocks, in order of appearance, are:
+The Common Content base template is divided into major blocks that can be replaced in
+your child templates. The blocks, in order of appearance, are:
 
 - `title`: The content of the HTML page title tag.
 - `bootstrap_styles`: An HTML block that by default pulls in the bootstrap stylesheet.
@@ -146,19 +192,59 @@ TODO: Document available block templates.
 
 ### Site Vars
 
-The app comes with a SiteVar model for storing site-specific variables or chunks of
-content. You can store any variable for use with your own templates. Variables used by
-the default templates/models can be found on the Admin Documentation page for SiteVar.
+We depend on [django-sitevars](https://pypi.org/project/django-sitevars/) for storing
+site-specific variables or chunks of content. You can also store any variable for use
+with your own templates. Variable can be injected into template contexts using the
+context processor in `sitevars.context_processors.inject_sitevars`, or using the
+`{% sitevar "name" %}` template tag. Variables used by the default templates/models are
+listed below. Defaults for these variables are injected in the template contexts by
+`commoncontent.apps.context_defaults`.
 
-## Images and Media
+- `base_template` - The base template to use for generic pages. Defaults to
+  `commoncontent/base.html`.
+- `brand` - Site's brand name. Uses Site.name if not set.
+- `copyright_holder` - Custom name for the copyright holder if using the default
+  copyright notice. Falls back to `site.name` if not provided.
+- `copyright_notice` - HTML to include in the copyright notice section of the footer
+  (replaces the default copyright notice).
+- `custom_stylesheet` - A site-specific CSS file. This is pulled into the `extra_head`
+  block after bootstrap and commoncontent's CSS, so you can use it to override default
+  styles and customize the look and feel of each site. It is included using
+  `{% static custom_stylesheet %}` so the value should be relative to the STATIC_ROOT.
+- `default_icon` - Name of a Bootstrap icon to use by default if the object provides
+  none.
+- `detail_precontent_template` - Default template to use for the `precontent` block for
+  detail pages.
+- `detail_content_template` - Default template to use for the `content` block for detail
+  pages.
+- `detail_postcontent_template` - Default template to use for the `postcontent` block
+  for detail pages.
+- `footer_template` - Default template to use for the `footer` block.
+- `header_template` - Default template to use for the `header` block.
+- `list_postcontent_template` - Default template to use for the `postcontent` block for
+  list pages.
+- `list_precontent_template` - Default template to use for the `precontent` block for
+  list pages.
+- `list_content_template` - Default template to use for the `content` block for list
+  pages.
+- `logo` - The URL to your site's logo image.
+- `paginate_by` - Items per page on list pages, same as Django's ListView, see
+  `pagination <https://docs.djangoproject.com/en/dev/ref/paginator/>`\_ in the Django
+  docs.
+- `paginate_orphans` - Same as Django's ListView, see
+  `pagination <https://docs.djangoproject.com/en/dev/ref/paginator/>`\_ in the Django
+  docs.
 
-GenericSite takes advantage of Django Imagekit to manage images. Models are provided for
-storing file metadata including copyright information.
+### Images and Media
 
-GenericSite uses presets to produce images in specific sizes as recommended by
+Common Content takes advantage of
+[django-imagekit](https://pypi.org/project/django-imagekit/) to manage images. Models
+are provided for storing file metadata including copyright information.
+
+Common Content uses presets to produce images in specific sizes as recommended by
 [Buffer's Social Media Image Guidelines](https://buffer.com/library/ideal-image-sizes-social-media-posts/).
 
-These named thumbnail settings are available:
+These named image presets are available:
 
 - small: 160x90
 - medium: 400x225

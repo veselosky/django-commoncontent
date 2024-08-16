@@ -20,10 +20,10 @@ def devsetup(rebuild=False):
     if rebuild:
         # Nuke the venv and recreate
         print("Rebuilding virtualenv")
-        venv.create(str(venvdir), clear=True, with_pip=True, prompt="genericsite")
+        venv.create(str(venvdir), clear=True, with_pip=True, prompt="commoncontent")
     elif not venvdir.exists():
         print("Creating virtualenv")
-        venv.create(str(venvdir), with_pip=True, prompt="genericsite")
+        venv.create(str(venvdir), with_pip=True, prompt="commoncontent")
 
     python = venvdir / "bin" / "python"
     activate = f"source {venvdir}/bin/activate"

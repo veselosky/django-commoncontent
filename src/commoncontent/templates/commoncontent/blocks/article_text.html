@@ -1,0 +1,42 @@
+{% load commoncontent %}
+{% with object as article %}
+  <article class="article-full">
+    <header class="article-header">
+      <h1 class="article-title">{% firstof article.headline article.title article.schema.headline %}</h1>
+      {% if article.author %}
+        <p class="article-meta">
+          {{ article.date_published|date:"DATE_FORMAT" }}
+          <a href="{{ article.author.get_absolute_url }}">{{ article.author.name }}</a>
+        </p>
+      {% else %}
+        <p class="article-meta">{{ article.date_published|date:"DATE_FORMAT" }}</p>
+      {% endif %}
+    </header>
+    {% if article.series %}
+      <section class="article-series-info mb-3">
+        {% include "commoncontent/includes/article_series.html" %}
+      </section>
+    {% endif %}
+    {% opengraph_image article as img %}
+    {% if img %}
+      <p>
+        <img class="img-fluid"
+             src="{{ img.large.url }}"
+             alt="{{ img.alt_text }}"
+             height="{{ img.large.height }}"
+             width="{{ img.large.width }}" />
+      </p>
+    {% endif %}
+    {{ article.body|safe }}
+    {% if article.series %}
+      <footer class="article-footer">
+        {% if article.get_next_in_order %}
+          <p>
+            Next in the series: <a href="{{ article.get_next_in_order.get_absolute_url }}">{{ article.get_next_in_order.title }}</a>
+          </p>
+        {% endif %}
+        {% include "commoncontent/includes/article_series.html" %}
+      </footer>
+    {% endif %}
+  </article>
+{% endwith %}

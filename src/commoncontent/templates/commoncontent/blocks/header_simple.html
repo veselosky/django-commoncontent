@@ -1,0 +1,27 @@
+{% load commoncontent i18n %}
+<div class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+  <a href="/"
+     class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+    <span class="fs-4">{% firstof brand request.site.name %}</span>
+  </a>
+  {% menu "main-nav" as menu %}
+  <ul class="nav nav-pills">
+    {% for item in menu.links %}
+      {% firstof item.get_absolute_url item.url as url %}
+      <li class="nav-item">
+        <a href="{{ url }}"
+           class="nav-link {% menu_active url %}"
+           {% menu_aria_current url %}>
+          {% if url == "/" %}
+            {% trans "Home" %}
+          {% else %}
+            {% firstof item.title item.opengraph.title %}
+          {% endif %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% comment  %}
+The simple header is a branded menu bar with no extra features.
+{% endcomment %}

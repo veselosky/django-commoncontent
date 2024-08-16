@@ -1,0 +1,43 @@
+{% load commoncontent i18n static %}
+<div class="album py-5">
+  <div class="container">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+      {% for author in object_list %}
+        <div class="col">
+          <div class="card shadow-sm">
+            <a href="{{ author.get_absolute_url }}">
+              {% if author.profile_image %}
+                <img class="img-fluid"
+                     src="{{ author.profile_image.portrait_medium.url }}"
+                     width="{{ author.profile_image.portrait_medium.width }}"
+                     height="{{ author.profile_image.portrait_medium.height }}"
+                     alt="{{ author.profile_image.alt_text }}" />
+              {% else %}
+                <svg class="bd-placeholder-img card-img-top"
+                     width="225"
+                     height="400"
+                     xmlns="http://www.w3.org/2000/svg"
+                     role="img"
+                     aria-label="Placeholder: Thumbnail"
+                     preserveAspectRatio="xMidYMid slice"
+                     focusable="false">
+                  <title>Placeholder</title><rect width="100%" height="100%" fill="#55595c" /><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text>
+                  </svg>
+                {% endif %}
+              </a>
+              <div class="card-body">
+                <h3 class="card-title">
+                  <a class="text-reset text-decoration-none"
+                     href="{{ author.get_absolute_url }}">{{ author.name }}</a>
+                </h3>
+                <p class="card-text">{{ author.short_bio|safe }}</p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="row mt-5">
+        <div class="col">{% include "commoncontent/includes/pagination.html" %}</div>
+      </div>
+    </div>
+  </div>

@@ -9,7 +9,7 @@ class TestPaginationTemplate(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.pager = loader.get_template("genericsite/includes/pagination.html")
+        cls.pager = loader.get_template("commoncontent/includes/pagination.html")
         cls.object_list = "abcdefghijklmnopqrstuvwxyz"
 
     def test_no_other_pages(self):

@@ -1,0 +1,25 @@
+{% load i18n %}
+<div class="article-list">
+  {% for article in object_list %}
+    <article class="article-preview">
+      <h2 class="article-title">
+        <a href="{{ article.get_absolute_url }}">{% firstof article.headline article.title article.name %}</a>
+      </h2>
+      {% if article.author %}
+        <p class="article-meta">
+          {{ article.date_published|date:"DATE_FORMAT" }}
+          <a href="{{ article.author.get_absolute_url }}">{{ article.author.name }}</a>
+        </p>
+      {% else %}
+        <p class="article-meta">{{ article.date_published|date:"DATE_FORMAT" }}</p>
+      {% endif %}
+      <div class="article-excerpt">{{ article.excerpt|safe }}</div>
+      {% if article.has_excerpt %}
+        <p>
+          <a href="{{ article.get_absolute_url }}#continue-reading">{% trans "Continue reading" %}</a>
+        </p>
+      {% endif %}
+    </article><!-- /.article-preview -->
+  {% endfor %}
+</div>
+<div class="mt-5">{% include "commoncontent/includes/pagination.html" %}</div>
