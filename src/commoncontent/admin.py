@@ -1,3 +1,4 @@
+from content_editor.admin import ContentEditor, ContentEditorInline, allow_regions
 from django.conf import settings
 from django.contrib import admin
 from imagekit.admin import AdminThumbnail
@@ -12,6 +13,8 @@ from commoncontent.models import (
     Menu,
     Page,
     Section,
+    SectionHTML,
+    SectionImage,
 )
 
 
@@ -51,7 +54,7 @@ class ImageAdmin(admin.ModelAdmin):
 
 
 #######################################################################################
-class CreativeWorkAdmin(admin.ModelAdmin):
+class CreativeWorkAdmin(ContentEditor):
     prepopulated_fields = {"slug": ("title",)}
     date_hierarchy = "date_published"
     list_display = ("title", "date_published", "site", "status")
@@ -167,9 +170,62 @@ class ArticleSeriesAdmin(admin.ModelAdmin):
 
 
 #######################################################################################
+class SectionHTMLInline(ContentEditorInline):
+    model = SectionHTML
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "html",
+                    "region",
+                    "ordering",
+                ),
+            },
+        ),
+    )
+    regions = allow_regions({"precontent", "content", "postcontent"})
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if "tinymce" in settings.INSTALLED_APPS and db_field.name == "html":
+            from tinymce.widgets import TinyMCE
+
+            from commoncontent.apps import TINYMCE_CONFIG
+
+            return db_field.formfield(
+                widget=TinyMCE(
+                    attrs={"cols": 90, "rows": 40},
+                    mce_attrs=TINYMCE_CONFIG,
+                )
+            )
+        return super().formfield_for_dbfield(db_field, **kwargs)
+
+
+#######################################################################################
+class SectionImageInline(ContentEditorInline):
+    model = SectionImage
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "image",
+                    "region",
+                    "ordering",
+                ),
+            },
+        ),
+    )
+    regions = allow_regions({"precontent", "content", "postcontent"})
+
+
+#######################################################################################
 @admin.register(Section)
 class SectionAdmin(CreativeWorkAdmin):
-    pass
+    inlines = [
+        SectionHTMLInline.create(model=SectionHTML),
+        SectionImageInline.create(model=SectionImage),
+    ]
 
 
 #######################################################################################

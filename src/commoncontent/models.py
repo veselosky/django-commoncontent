@@ -1,5 +1,6 @@
 import mimetypes
 
+from content_editor.models import Region, create_plugin_base
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -273,6 +274,12 @@ class AbstractCreativeWork(models.Model):
     icon_name = "file"
     schema_type = "CreativeWork"
     opengraph_type = "website"
+
+    regions = [
+        Region(key="precontent", title=_("Pre-content")),
+        Region(key="content", title=_("Main content")),
+        Region(key="postcontent", title=_("Post-content")),
+    ]
 
     @property
     def copyright_holder(self):
@@ -664,6 +671,33 @@ class Section(BasePage):
 
     def get_absolute_url(self):
         return reverse("section_page", kwargs={"section_slug": self.slug})
+
+
+#######################################################################
+SectionPlugin = create_plugin_base(Section)
+
+
+#######################################################################
+class SectionHTML(SectionPlugin):
+    html = models.TextField(_("html content"), blank=True)
+
+    class Meta:
+        verbose_name = _("section HTML")
+        verbose_name_plural = _("section HTML plugins")
+
+
+#######################################################################
+class SectionImage(SectionPlugin):
+    image = models.ForeignKey(
+        Image,
+        on_delete=models.CASCADE,
+        help_text=_("Image for the section"),
+        related_name="+",
+    )
+
+    class Meta:
+        verbose_name = _("section image")
+        verbose_name_plural = _("section image plugins")
 
 
 #######################################################################
