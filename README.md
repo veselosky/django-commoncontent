@@ -1,11 +1,14 @@
 # Common Content: A reusable content app for Django
 
 Common Content provides models, views, and templates for common web content in a
-reusable Django app. Django ships with `flatpages`, the most simplistic content model
-possible. Third party tools like Wagtail or DjangoCMS provide flexible and complex
-content management workflows. Common Content is designed to fill the gap between these
-options. If you need pages and feeds for your Django site, but don't need the power and
-complexity of a full content management system, Common Content may be the right tool.
+reusable Django app, giving you a blog-like web site out of the box.
+
+Django ships with `flatpages`, the most simplistic content model possible. Third party
+tools like [Wagtail](https://wagtail.org/) or [DjangoCMS](https://www.django-cms.org/)
+provide flexible and complex content management workflows, but require a lot of custom
+code. Common Content is designed to fill the gap between these options. If you need
+pages and feeds for your Django site, but don't need (or want) the power and complexity
+of a full content management system, Common Content may be the right tool.
 
 Common Content includes a set of templates using the
 [Bootstrap CSS framework](https://getbootstrap.com) based on the examples found on the
@@ -50,17 +53,16 @@ Common Content provides the following Content:
   Articles. Each Author also has an RSS Feed.
 
 Common Content provides views and templates (using Bootstrap 5) for each type, along
-with a few different options for list display.
+with a few different options for list display. The templates include Open Graph metadata
+and Schema.org metadata for social sharing and SEO. The templates load the Bootstrap CSS
+and JavaScript from a CDN by default, so there's nothing else to install and little or
+no front-end to deal with (but you can override this in your own templates, see the
+`bootstrap_styles` block below).
 
 In addition to the content pages, Common Content also provides:
 
 - `Menu` and `Link` - These models define a list of links that can be used to implement
   site navigation menus, footer links, etc.
-- `SiteVar` - Site variables store bits of information that are reused across the site.
-  Things like the default copyright notice, site tagline, analytics IDs, etc. can be
-  stored in SiteVars. All variables for a site are injected into every template context
-  using the Common Content Context Processor so they are available on every page, even
-  pages not provided by Common Content.
 - Redirects - Includes the Django redirects app, with a custom middleware to support
   temporary redirects.
 - `AbstractCreativeWork` and `BasePage` - These are abstract Django models that you can
@@ -68,19 +70,22 @@ In addition to the content pages, Common Content also provides:
   and tools.
 - Admin Support - Common Content provides admin pages for its models, and documentation
   for use by the `admindocs` app.
+- `django-sitevars` - Site variables store bits of information that are reused across
+  the site. Things like the default copyright notice, site tagline, analytics IDs, etc.
+  can be stored in SiteVars. All variables for a site are injected into every template
+  context using the SiteVars Context Processor so they are available on every page, even
+  pages not provided by Common Content.
 - `django-tinymce` Support - If `django-tinymce` is installed, Common Content will use
   its WYSISYG editor in its admin pages. There is an optional JSON view that exposes a
   list of recently upload images for use by the TinyMCE editor.
-
-The templates are built using Bootstrap 5, and they load the core CSS and JavaScript
-from a CDN by default, so there's nothing else to install and little or no front-end to
-deal with.
 
 ## Development
 
 After checking out the code, you can bootstrap a development environment by running:
 
-`sh python manage.py devsetup `
+```bash
+python manage.py devsetup
+```
 
 Note that the Python used to run this script will be the one used in your virtualenv.
 
@@ -92,22 +97,27 @@ Add the following to your `settings.py`:
 import commoncontent.apps
 INSTALLED_APPS = [
   *commoncontent.apps.CONTENT,
-# Optionally use tinymce in the admin
-"tinymce",
-# Other Django apps here
-# sitevars must come AFTER contrib.sites for admin to work
-"sitevars",
+  # Optionally use tinymce in the admin
+  "tinymce",
+  # Other Django apps here
+  "django.contrib.sites",  # Required
+  # sitevars must come AFTER contrib.sites for admin to work
+  "sitevars",
 ]
 
 # Ensure your middleware includes the following:
-MIDDLEWARE += [ "django.contrib.sites.middleware.CurrentSiteMiddleware",
-"commoncontent.redirects.TemporaryRedirectFallbackMiddleware", ]
+MIDDLEWARE += [
+  "django.contrib.sites.middleware.CurrentSiteMiddleware",
+  "commoncontent.redirects.TemporaryRedirectFallbackMiddleware",
+]
 
 # If using tinymce
 TINYMCE_DEFAULT_CONFIG = commoncontent.apps.TINYMCE_CONFIG
 
 # Add `commoncontent.apps.context_defaults` to your context processors. You will also
 # need to add the request, auth, and messages context processors if not already there.
+# The inject_sitevars processor should come after context_defaults so you can override
+# the default values using sitevars.
 # Probably looks like this:
 
 TEMPLATES = [
@@ -137,11 +147,14 @@ from commoncontent import views as generic
 
 urlpatterns = [
   # Common Content provides templates for auth pages
-  path("accounts/",
-  include("django.contrib.auth.urls")), # You need to add the admin yourself:
-  path("admin/", admin.site.urls), # TinyMCE urls if desired path("tinymce/",
-  include("tinymce.urls")), # All other urls are handed to Common Content path("",
-  include("commoncontent.urls")),
+  path("accounts/", include("django.contrib.auth.urls")),
+  # You need to add the admin yourself. Remember to add the docs!
+  path('admin/doc/', include('django.contrib.admindocs.urls')),
+  path("admin/", admin.site.urls),
+  # TinyMCE urls if desired
+  path("tinymce/", include("tinymce.urls")),
+  # All other urls are handed to Common Content
+  path("", include("commoncontent.urls")),
 ]
 ```
 
@@ -161,6 +174,7 @@ your child templates. The blocks, in order of appearance, are:
 - `opengraph`: Used to expose the page's open graph metadata in the HTML head. This is
   done in the default template. You won't need to override this unless you define custom
   open graph types that need special handling.
+- `schema`: Holds the schema.org metadata.
 - `extra_head`: Override this if you need to include custom CSS, web fonts, etc. in the
   page's HTML head.
 - `body_class`: A block you can override to apply a custom class to the HTML body
@@ -178,17 +192,35 @@ your child templates. The blocks, in order of appearance, are:
   include "Read Next" or "Related" recirculation modules or a call to action.
 - `footer`: A block to contain your site's footer links and blanket copyright
   statements, elements common to every page. Override in your site's base template.
-- `bootstrap_js`: An HTML that by default loads the Bootstrap JS bundle. Override if
-  needed.
+- `bootstrap_js`: Loads the Bootstrap JS bundle. Override if needed.
 - `extra_js`: A block just before the closing body tag. Use this to include deferred
   JavaScript or other elements you want loaded after the main page content.
 
 ### Block Templates
 
-Genericsite ships with several partial templates that can be included as the content of
-the base blocks to construct a page quickly from reusable modules.
+Common Content ships with several partial templates that can be included as the content
+of the base blocks to construct a page quickly from reusable modules. These can be
+loaded from the `commoncontent/blocks/` template directory.
 
-TODO: Document available block templates.
+NOTE: Although the Common Content base template is an excellent starter, these block
+templates are very basic. This is an area for future expansion. For now, they are
+usable, but you probably will want to build your own.
+
+The available block templates are:
+
+- `article_list_album.html`: Displays Articles' image, title, and description as an
+  array of cards. Useful for Section pages and home pages.
+- `article_list_blog.html`: Displays Articles' title and excerpt in a news feed style,
+  like an old-school blog home page.
+- `article_text.html`: Displays the title, featured image, and full text of an Article.
+  Used on the Article detail page.
+- `author_list_album.html`: Displays a profile image and short bio for each author. Used
+  on the Author list page.
+- `author_profile.html`: Displays the author profile photo and full bio. Used on the
+  Author detail page.
+- `empty.html`: An empty template to leave a block empty.
+- `footer_simple.html`: A very simple footer.
+- `header_simple.html`: A very simple header.
 
 ### Site Vars
 
@@ -202,13 +234,13 @@ listed below. Defaults for these variables are injected in the template contexts
 
 - `base_template` - The base template to use for generic pages. Defaults to
   `commoncontent/base.html`.
-- `brand` - Site's brand name. Uses Site.name if not set.
+- `brand` - Site's brand name. Uses `site.name` if not set.
 - `copyright_holder` - Custom name for the copyright holder if using the default
   copyright notice. Falls back to `site.name` if not provided.
-- `copyright_notice` - HTML to include in the copyright notice section of the footer
+- `copyright_notice` - Text to include in the copyright notice section of the footer
   (replaces the default copyright notice).
 - `custom_stylesheet` - A site-specific CSS file. This is pulled into the `extra_head`
-  block after bootstrap and commoncontent's CSS, so you can use it to override default
+  block after bootstrap and Common Content's CSS, so you can use it to override default
   styles and customize the look and feel of each site. It is included using
   `{% static custom_stylesheet %}` so the value should be relative to the STATIC_ROOT.
 - `default_icon` - Name of a Bootstrap icon to use by default if the object provides
@@ -227,13 +259,10 @@ listed below. Defaults for these variables are injected in the template contexts
   list pages.
 - `list_content_template` - Default template to use for the `content` block for list
   pages.
-- `logo` - The URL to your site's logo image.
 - `paginate_by` - Items per page on list pages, same as Django's ListView, see
-  `pagination <https://docs.djangoproject.com/en/dev/ref/paginator/>`\_ in the Django
-  docs.
+  [pagination](https://docs.djangoproject.com/en/dev/ref/paginator/) in the Django docs.
 - `paginate_orphans` - Same as Django's ListView, see
-  `pagination <https://docs.djangoproject.com/en/dev/ref/paginator/>`\_ in the Django
-  docs.
+  [pagination](https://docs.djangoproject.com/en/dev/ref/paginator/) in the Django docs.
 
 ### Images and Media
 
