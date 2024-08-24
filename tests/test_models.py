@@ -1,6 +1,12 @@
 from datetime import datetime
 from unittest import mock
 
+from django.test import TestCase as DjangoTestCase
+from django.test import override_settings
+from django.urls import reverse
+from django.utils import timezone
+from sitevars.models import SiteVar
+
 from commoncontent.common import upload_to
 from commoncontent.models import (
     Article,
@@ -10,11 +16,6 @@ from commoncontent.models import (
     Site,
     Status,
 )
-from django.test import TestCase as DjangoTestCase
-from django.test import override_settings
-from django.urls import reverse
-from django.utils import timezone
-from sitevars.models import SiteVar
 
 
 class TestModels(DjangoTestCase):
@@ -31,7 +32,7 @@ class TestModels(DjangoTestCase):
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
             custom_copyright_notice="{} custom copyright notice",
         )
-        assert "2021 custom copyright notice" in page.copyright_notice
+        self.assertIn("2021 custom copyright notice", page.copyright_notice)
 
     def test_copyright_notice_site_has_fallback(self):
         """Page has no custom_copyright_notice.
@@ -49,7 +50,7 @@ class TestModels(DjangoTestCase):
             site=site,
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
-        assert "2021 sitewide copyright" in page.copyright_notice
+        self.assertIn("2021 sitewide copyright", page.copyright_notice)
 
     def test_copyright_notice_site_has_holder(self):
         """Page has no custom_copyright_notice.
@@ -67,7 +68,7 @@ class TestModels(DjangoTestCase):
             site=site,
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
-        assert "2021 custom holder. All rights" in page.copyright_notice
+        self.assertIn("2021 custom holder. All rights", page.copyright_notice)
 
     def test_copyright_notice_default(self):
         """Page has no custom_copyright_notice.
@@ -82,7 +83,7 @@ class TestModels(DjangoTestCase):
             site=site,
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
         )
-        assert "2021 example.com. All rights" in page.copyright_notice
+        self.assertIn("2021 example.com. All rights", page.copyright_notice)
 
     def test_explicit_excerpt(self):
         """Page has a pagebreak marker for excerpt. Should return only content before
@@ -100,8 +101,8 @@ class TestModels(DjangoTestCase):
             Second paragraph.
             """,
         )
-        assert "First paragraph." in page.excerpt
-        assert "Second paragraph." not in page.excerpt
+        self.assertIn("First paragraph.", page.excerpt)
+        self.assertNotIn("Second paragraph.", page.excerpt)
 
     def test_no_explicit_excerpt(self):
         """Page has no pagebreak marker for excerpt. Should return all content."""
@@ -116,8 +117,8 @@ class TestModels(DjangoTestCase):
             Second paragraph.
             """,
         )
-        assert "First paragraph." in page.excerpt
-        assert "Second paragraph." in page.excerpt
+        self.assertIn("First paragraph.", page.excerpt)
+        self.assertIn("Second paragraph.", page.excerpt)
 
 
 def upload_to_target_for_test(instance, filename):

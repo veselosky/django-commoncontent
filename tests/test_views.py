@@ -2,6 +2,15 @@ import json
 from datetime import timedelta
 from io import BytesIO
 
+from django.apps import apps
+from django.core.files.base import ContentFile
+from django.http import HttpResponseNotFound
+from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
+from PIL import Image as PILImage
+from sitevars.models import SiteVar
+
 from commoncontent.models import (
     Article,
     ArticleSeries,
@@ -14,14 +23,6 @@ from commoncontent.models import (
     Status,
 )
 from commoncontent.sitemaps import ArticleSitemap
-from django.apps import apps
-from django.core.files.base import ContentFile
-from django.http import HttpResponseNotFound
-from django.test import TestCase
-from django.urls import reverse
-from django.utils import timezone
-from PIL import Image as PILImage
-from sitevars.models import SiteVar
 
 
 class TestHomePageView(TestCase):
@@ -561,7 +562,6 @@ class TestViewsGetRightTemplateVars(BaseContentTestCase):
         resp = self.client.get(
             reverse("section_page", kwargs={"section_slug": "test-section"})
         )
-        # print(resp.context)
         self.assertEqual(config.list_content_template, resp.context["content_template"])
         self.assertEqual(
             config.list_precontent_template, resp.context["precontent_template"]
@@ -766,6 +766,4 @@ class ArticleSitemapTest(BaseContentTestCase):
 
     def test_items_order(self):
         items = list(self.sitemap.items())
-        for item in items:
-            print(item.date_published)
         self.assertEqual(items, [self.article, self.article3, self.article4])

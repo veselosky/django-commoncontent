@@ -81,13 +81,15 @@ In addition to the content pages, Common Content also provides:
 
 ## Development
 
+This project uses [uv from Astral](https://docs.astral.sh/uv/) for managing development.
+Install uv before working with this repo.
+
 After checking out the code, you can bootstrap a development environment by running:
 
 ```bash
-python manage.py devsetup
+uv sync
+uv run ./manage.py migrate
 ```
-
-Note that the Python used to run this script will be the one used in your virtualenv.
 
 ## Installation
 

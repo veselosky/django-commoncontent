@@ -59,9 +59,9 @@ def extract_title_from_ast(doc):
     The title is assumed to be the first heading in the content.
     """
     for index, node in enumerate(doc.children):
-        print(f"Examining node {node}")
+        logger.debug(f"Examining node {node}")
         if node.__class__.__name__ == "Heading":
-            print(f"Found heading node {node}")
+            logger.debug(f"Found heading node {node}")
             title = node.children[0].content
             # Remove the node from the AST, title is a separate element in the final HTML
             doc.children.pop(index)
