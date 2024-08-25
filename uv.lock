@@ -356,7 +356,7 @@ requires-dist = [
     { name = "django-environ", marker = "extra == 'dev'", specifier = ">=0.11.2" },
     { name = "django-extensions", marker = "extra == 'dev'", specifier = ">=3.2.3" },
     { name = "django-imagekit", specifier = ">=5.0.0" },
-    { name = "django-sitevars", editable = "../django-sitevars" },
+    { name = "django-sitevars", specifier = ">=1.0.2" },
     { name = "django-taggit", specifier = ">=5.0.0" },
     { name = "django-tinymce", marker = "extra == 'dev'", specifier = ">=4.1.0" },
     { name = "djlint", marker = "extra == 'dev'", specifier = ">=1.34.1" },
@@ -435,24 +435,14 @@ wheels = [
 
 [[package]]
 name = "django-sitevars"
-version = "1.0.0"
-source = { editable = "../django-sitevars" }
+version = "1.0.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "django", specifier = "<5.3,>=4.2" },
-    { name = "django-debug-toolbar", marker = "extra == 'dev'" },
-    { name = "django-environ", marker = "extra == 'dev'" },
-    { name = "django-extensions", marker = "extra == 'dev'" },
-    { name = "djlint", marker = "extra == 'dev'" },
-    { name = "docutils", marker = "extra == 'dev'", specifier = ">=0.19" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7.1" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-cov", marker = "extra == 'dev'" },
-    { name = "pytest-django", marker = "extra == 'dev'" },
+sdist = { url = "https://files.pythonhosted.org/packages/d0/5e/4fcf9c75be9a1e372b210de2483d1d67b37492f6574647cefd203d50b79d/django_sitevars-1.0.2.tar.gz", hash = "sha256:c92c3ed2fa45f4ade96e3c70d1130368883cd63e36689de60b99fab1d88055bc", size = 19390 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/36/d7b0f979d7f1196122ef668abb27668d4dc7916b6e4ce07422157107d654/django_sitevars-1.0.2-py3-none-any.whl", hash = "sha256:71ac33cbeec76a29a30a207b5c3e7b1476067acfcc2f2f0d7b03ac62a768c817", size = 12557 },
 ]
 
 [[package]]
@@ -564,11 +554,11 @@ wheels = [
 
 [[package]]
 name = "idna"
-version = "3.7"
+version = "3.8"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/21/ed/f86a79a07470cb07819390452f178b3bef1d375f2ec021ecfc709fc7cf07/idna-3.7.tar.gz", hash = "sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc", size = 189575 }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/ac/e349c5e6d4543326c6883ee9491e3921e0d07b55fdf3cce184b40d63e72a/idna-3.8.tar.gz", hash = "sha256:d838c2c0ed6fced7693d5e8ab8e734d5f8fda53a039c0164afb0b82e771e3603", size = 189467 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e5/3e/741d8c82801c347547f8a2a06aa57dbb1992be9e948df2ea0eda2c8b79e8/idna-3.7-py3-none-any.whl", hash = "sha256:82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0", size = 66836 },
+    { url = "https://files.pythonhosted.org/packages/22/7e/d71db821f177828df9dea8c42ac46473366f191be53080e552e628aad991/idna-3.8-py3-none-any.whl", hash = "sha256:050b4e5baadcd44d760cedbd2b8e639f2ff89bbc7a5730fcc662954303377aac", size = 66894 },
 ]
 
 [[package]]
