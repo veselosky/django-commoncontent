@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest.mock import Mock
 
-from commoncontent.models import Page, Status
+from commoncontent.models import Menu, Page, Status
 from django.contrib.sites.models import Site
 from django.core.paginator import Paginator
 from django.template import Context, Template
@@ -122,3 +122,74 @@ class TestCopyrightNoticeTag(DjangoTestCase):
             Context({"request": request, "object": object()})
         )
         self.assertIn(f"{year} example.com. All rights", output)
+
+
+class TestMenuTags(DjangoTestCase):
+    def setUp(self):
+        self.site = Site.objects.get(id=1)
+        self.request = RequestFactory().get("/")
+        self.request.site = self.site
+        self.context = Context({"request": self.request})
+
+    def test_menu_exists(self):
+        Menu.objects.create(
+            site=self.site, slug="main-nav", admin_name="Main Navigation"
+        )
+        output = Template(
+            '{% load commoncontent %}{% menu "main-nav" as menu %}{{ menu }}'
+        ).render(self.context)
+        self.assertIn("Main Navigation", output)
+
+    def test_menu_does_not_exist(self):
+        output = Template(
+            '{% load commoncontent %}{% menu "non-existent" as menu %}{{ menu }}'
+        ).render(self.context)
+        self.assertEqual(output.strip(), "None")
+
+    def test_menu_main_nav_special_case(self):
+        output = Template(
+            '{% load commoncontent %}{% menu "main-nav" as menu %}{{ menu }}'
+        ).render(self.context)
+        self.assertIn("SectionMenu", output)
+
+    def test_menu_active_root_url(self):
+        self.request.path = "/"
+        output = Template('{% load commoncontent %}{% menu_active "/" %}').render(
+            self.context
+        )
+        self.assertEqual(output.strip(), "active")
+
+    def test_menu_active_subdirectory_url(self):
+        self.request.path = "/subdir/"
+        output = Template('{% load commoncontent %}{% menu_active "/subdir" %}').render(
+            self.context
+        )
+        self.assertEqual(output.strip(), "active")
+
+    def test_menu_active_non_matching_url(self):
+        self.request.path = "/other/"
+        output = Template('{% load commoncontent %}{% menu_active "/subdir" %}').render(
+            self.context
+        )
+        self.assertEqual(output.strip(), "")
+
+    def test_menu_aria_current_exact_match(self):
+        self.request.path = "/exact/"
+        output = Template(
+            '{% load commoncontent %}{% menu_aria_current "/exact/" %}'
+        ).render(self.context)
+        self.assertEqual(output.strip(), 'aria-current="page"')
+
+    def test_menu_aria_current_section_match(self):
+        self.request.path = "/section/subsection/"
+        output = Template(
+            '{% load commoncontent %}{% menu_aria_current "/section/" %}'
+        ).render(self.context)
+        self.assertEqual(output.strip(), 'aria-current="section"')
+
+    def test_menu_aria_current_no_match(self):
+        self.request.path = "/other/"
+        output = Template(
+            '{% load commoncontent %}{% menu_aria_current "/section/" %}'
+        ).render(self.context)
+        self.assertEqual(output.strip(), "")
