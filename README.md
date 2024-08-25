@@ -102,6 +102,7 @@ INSTALLED_APPS = [
   # Optionally use tinymce in the admin
   "tinymce",
   # Other Django apps here
+  "django.contrib.redirects",  # Required
   "django.contrib.sites",  # Required
   # sitevars must come AFTER contrib.sites for admin to work
   "sitevars",
