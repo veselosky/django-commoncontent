@@ -934,7 +934,16 @@ class SectionMenu:
 
     @property
     def links(self):
-        home = HomePage.objects.live().filter(site=self.site).latest()
+        try:
+            home = HomePage.objects.live().filter(site=self.site).latest()
+        except HomePage.DoesNotExist:
+            home = HomePage(
+                site=self.site,
+                admin_name="__DEBUG__",
+                title=self.site.name,
+                date_published=timezone.now(),
+            )
+
         menu = [home]
         menu.extend(self.sections)
         if self.pages:

@@ -11,8 +11,12 @@ from commoncontent.common import upload_to
 from commoncontent.models import (
     Article,
     ArticleSeries,
+    HomePage,
+    Link,
+    Menu,
     Page,
     Section,
+    SectionMenu,
     Site,
     Status,
 )
@@ -227,3 +231,84 @@ class ArticleModelTest(DjangoTestCase):
             },
         )
         self.assertEqual(self.article_without_series.get_absolute_url(), expected_url)
+
+
+class TestMenuModel(DjangoTestCase):
+    def setUp(self):
+        self.site = Site.objects.create(name="Test Site", domain="testsite.com")
+        self.menu = Menu.objects.create(
+            site=self.site, admin_name="Main Menu", slug="main-menu"
+        )
+
+    def test_menu_str(self):
+        """Test the string representation of the Menu model."""
+        self.assertEqual(str(self.menu), "Main Menu")
+
+    def test_menu_links(self):
+        """Test the links property of the Menu model."""
+        link1 = Link.objects.create(menu=self.menu, url="/link1", title="Link 1")
+        link2 = Link.objects.create(menu=self.menu, url="/link2", title="Link 2")
+        self.assertQuerySetEqual(self.menu.links, [link1, link2], ordered=False)
+
+
+class TestSectionMenu(DjangoTestCase):
+    def test_section_menu_links(self):
+        """Test the links property when both HomePage and Sections exist."""
+        site = Site.objects.get(id=1)
+        homepage = HomePage.objects.create(
+            site=site, title="Home", slug="home", date_published=timezone.now()
+        )
+        section1 = Section.objects.create(
+            site=site,
+            title="Section 1",
+            slug="section-1",
+            date_published=timezone.now(),
+        )
+        section2 = Section.objects.create(
+            site=site,
+            title="Section 2",
+            slug="section-2",
+            date_published=timezone.now(),
+        )
+        page1 = Page.objects.create(
+            site=site,
+            title="Page 1",
+            slug="page-1",
+            date_published=timezone.now(),
+        )
+        section_menu = SectionMenu(site=site, pages=[page1])
+        self.assertIn(homepage, section_menu.links)
+        self.assertIn(section1, section_menu.links)
+        self.assertIn(section2, section_menu.links)
+        self.assertIn(page1, section_menu.links)
+
+    def test_section_menu_no_homepage(self):
+        """Test the links property when no HomePage exists."""
+        site = Site.objects.get(id=1)
+        section1 = Section.objects.create(
+            site=site,
+            title="Section 1",
+            slug="section-1",
+            date_published=timezone.now(),
+        )
+        section2 = Section.objects.create(
+            site=site,
+            title="Section 2",
+            slug="section-2",
+            date_published=timezone.now(),
+        )
+
+        section_menu = SectionMenu(site=site)
+        self.assertIsInstance(section_menu.links[0], HomePage)
+        self.assertEqual(section_menu.links[1], section1)
+        self.assertEqual(section_menu.links[2], section2)
+
+    def test_section_menu_no_sections(self):
+        """Test the links property when no Sections exist."""
+        site = Site.objects.get(id=1)
+        homepage = HomePage.objects.create(
+            site=site, title="Home", slug="home", date_published=timezone.now()
+        )
+        section_menu = SectionMenu(site=site)
+        self.assertIn(homepage, section_menu.links)
+        self.assertEqual(len(section_menu.links), 1)
