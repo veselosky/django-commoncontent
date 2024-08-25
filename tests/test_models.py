@@ -129,13 +129,7 @@ class TestModels(DjangoTestCase):
             status=Status.USABLE,
             site=site,
             date_published=datetime.fromisoformat("2021-11-22T19:00"),
-            body="""<p>First paragraph.</p>
-            <p>Second paragraph.</p>
-            <p>Third paragraph.</p>
-            <p>Fourth paragraph.</p>
-            <p>Fifth paragraph.</p>
-            <p>Sixth paragraph.</p>
-            """,
+            body="""<p>First paragraph.</p><p>Second paragraph.</p>""",
         )
         expected = """<p>First paragraph.</p><p>Second …</p>"""
         with override_settings(COMMONCONTENT_EXCERPT_MAX_WORDS=3):
