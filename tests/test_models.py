@@ -120,6 +120,27 @@ class TestModels(DjangoTestCase):
         self.assertIn("First paragraph.", page.excerpt)
         self.assertIn("Second paragraph.", page.excerpt)
 
+    def test_excerpt_truncated(self):
+        """If the content is longer that conf.excerpt_max_words, it should be truncated."""
+        site = Site.objects.get(id=1)
+        page = Page(
+            title="Test Page",
+            slug="test-page",
+            status=Status.USABLE,
+            site=site,
+            date_published=datetime.fromisoformat("2021-11-22T19:00"),
+            body="""<p>First paragraph.</p>
+            <p>Second paragraph.</p>
+            <p>Third paragraph.</p>
+            <p>Fourth paragraph.</p>
+            <p>Fifth paragraph.</p>
+            <p>Sixth paragraph.</p>
+            """,
+        )
+        expected = """<p>First paragraph.</p><p>Second …</p>"""
+        with override_settings(COMMONCONTENT_EXCERPT_MAX_WORDS=3):
+            self.assertHTMLEqual(page.excerpt, expected)
+
 
 def upload_to_target_for_test(instance, filename):
     return "arf.jpg"
