@@ -99,4 +99,4 @@ dev-dependencies = [
 ]
 
 [tool.uv.sources]
-django-sitevars = { path = "../django-sitevars", editable = true }
+# django-sitevars = { path = "../django-sitevars", editable = true }
