@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from commoncontent.models import Article, Section, Site
 from django.core.management import call_command
 from django.test import TestCase
+
+from commoncontent.models import Article, Section, Site
 
 base_path = Path(__file__).resolve().parent
 
@@ -44,7 +45,6 @@ class TestImportMarkdownCommand(TestCase):
             ],
         )
         # Content should be extracted from markdown
-        print(article.body)
         expected = """
         <h2>What is this "shell"?</h2>
         <p>The "shell" is another name for the command shell or command interpreter. This is the
@@ -84,7 +84,6 @@ class TestImportMarkdownCommand(TestCase):
         # Tags should be empty
         self.assertListEqual(list(article.tags.names()), [])
         # Content should be extracted from markdown
-        print(article.body)
         # Note the H1 tag is removed because it is assumed to be the title
         expected = """
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur fermentum velit non

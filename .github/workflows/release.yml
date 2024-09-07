@@ -12,16 +12,18 @@ jobs:
   create_release:
     runs-on: ubuntu-22.04
     needs: run_tests
+    permissions:
+      contents: write
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out the code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
 
       - name: Install dependencies
@@ -33,3 +35,27 @@ jobs:
 
       - name: Create a Github Release
         run: gh release create ${{ github.ref }} --generate-notes dist/*
+
+      - name: Upload the release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/
+
+  pypi_upload:
+    runs-on: ubuntu-22.04
+    needs: create_release
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/p/django-commoncontent
+    steps:
+      - name: Download the release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

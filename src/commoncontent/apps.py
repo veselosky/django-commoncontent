@@ -78,6 +78,12 @@ class CommonContentConfig(AppConfig):
     fallback_copyright = _("© Copyright {} {}. All rights reserved.")
 
     @property
+    def excerpt_max_words(self):
+        from django.conf import settings
+
+        return getattr(settings, "COMMONCONTENT_EXCERPT_MAX_WORDS", 200)
+
+    @property
     def pagebreak_separator(self):
         from django.conf import settings
 
@@ -85,7 +91,7 @@ class CommonContentConfig(AppConfig):
             return settings.TINYMCE_DEFAULT_CONFIG["pagebreak_separator"]
         except Exception:
             # May not be configured
-            return "<!-- pagebreak -->"
+            return TINYMCE_CONFIG["pagebreak_separator"]
 
     @property
     def sitemap_changefreq(self):

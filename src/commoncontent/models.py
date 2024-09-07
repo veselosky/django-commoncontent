@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.db import models
+from django.template.defaultfilters import truncatewords_html
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
@@ -633,15 +634,14 @@ class BasePage(AbstractCreativeWork):
         if not self.body:
             return ""
         excerpt = self.body.split(config.pagebreak_separator, maxsplit=1)[0]
-        return excerpt
+        return truncatewords_html(excerpt, config.excerpt_max_words)
 
     @property
     def has_excerpt(self):
         """True if there is more body text to read after the excerpt. False if
         excerpt == body.
         """
-        config = apps.get_app_config("commoncontent")
-        return config.pagebreak_separator in self.body
+        return not self.excerpt == self.body
 
 
 #######################################################################
@@ -934,7 +934,16 @@ class SectionMenu:
 
     @property
     def links(self):
-        home = HomePage.objects.live().filter(site=self.site).latest()
+        try:
+            home = HomePage.objects.live().filter(site=self.site).latest()
+        except HomePage.DoesNotExist:
+            home = HomePage(
+                site=self.site,
+                admin_name="__DEBUG__",
+                title=self.site.name,
+                date_published=timezone.now(),
+            )
+
         menu = [home]
         menu.extend(self.sections)
         if self.pages:

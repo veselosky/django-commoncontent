@@ -2,7 +2,7 @@ from commoncontent.models import Menu, SectionMenu
 from django import template
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
-from django.utils.html import format_html
+from django.utils.html import format_html, mark_safe
 
 register = template.Library()
 
@@ -132,9 +132,9 @@ def menu_aria_current(context, menuitem: str):
     """
     path = str(context["request"].path)
     if path == menuitem:
-        return 'aria-current="page" '
+        return mark_safe('aria-current="page" ')
     elif path.startswith(menuitem):
-        return 'aria-current="section" '
+        return mark_safe('aria-current="section" ')
     return ""
 
 

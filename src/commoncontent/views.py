@@ -294,10 +294,11 @@ class HomePageView(ArticleListView):
             )
         except HomePage.DoesNotExist:
             # Create a phony debug home page for bootstrapping.
+            site = get_current_site(self.request)
             hp = HomePage(
-                site=get_current_site(self.request),
+                site=site,
                 admin_name="__DEBUG__",
-                title="Generic Site",
+                title=site.name,
                 date_published=timezone.now(),
             )
         return hp
