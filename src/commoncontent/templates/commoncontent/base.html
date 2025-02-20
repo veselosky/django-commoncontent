@@ -29,6 +29,9 @@
     {% block schema %}
       {{ object.schema }}
     {% endblock schema %}
+    {% block canonical_url %}
+      {% canonical_url_link %}
+    {% endblock canonical_url %}
     {% block extra_head %}
       <link rel="stylesheet" href="{% static 'generic.css' %}" />
       {% if custom_stylesheet %}
