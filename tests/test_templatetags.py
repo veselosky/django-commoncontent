@@ -1,13 +1,15 @@
 from datetime import datetime
 from unittest.mock import Mock
 
-from commoncontent.models import Menu, Page, Status
 from django.contrib.sites.models import Site
 from django.core.paginator import Paginator
 from django.template import Context, Template
 from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.test import TestCase as DjangoTestCase
+from django.views.generic import View
 from sitevars.models import SiteVar
+
+from commoncontent.models import Menu, Page, Status
 
 
 class TestAddClassesFilter(SimpleTestCase):
@@ -193,3 +195,125 @@ class TestMenuTags(DjangoTestCase):
             '{% load commoncontent %}{% menu_aria_current "/section/" %}'
         ).render(self.context)
         self.assertEqual(output.strip(), "")
+
+
+# Uses DjangoTestCase because the tag makes a DB query for SiteVars
+class TestCanonicalUrlLinkTag(DjangoTestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.request = self.factory.get("/test-path")
+        self.context = Context({"request": self.request})
+        self.template = "{% load commoncontent %}{% canonical_url_link %}"
+        self.request.META["QUERY_STRING"] = ""
+
+    @override_settings(CANONICAL_USE_HTTPS=False, SECURE_SSL_REDIRECT=False)
+    def test_canonical_url_link_no_query(self):
+        output = Template(self.template).render(self.context)
+        self.assertIn(
+            '<link rel="canonical" href="http://testserver/test-path" />', output
+        )
+
+    @override_settings(CANONICAL_USE_HTTPS=False, SECURE_SSL_REDIRECT=False)
+    def test_canonical_url_link_include_query_true(self):
+        request = self.factory.get("/test-path?param=value")
+        context = Context({"request": request})
+        output = Template(
+            "{% load commoncontent %}{% canonical_url_link include_query=True %}"
+        ).render(context)
+        self.assertIn(
+            '<link rel="canonical" href="http://testserver/test-path?param=value" />',
+            output,
+        )
+
+    @override_settings(CANONICAL_USE_HTTPS=False, SECURE_SSL_REDIRECT=False)
+    def test_canonical_url_link_include_query_false(self):
+        request = self.factory.get("/test-path?param=value")
+        context = Context({"request": request})
+        output = Template(
+            "{% load commoncontent %}{% canonical_url_link include_query=False %}"
+        ).render(context)
+        self.assertIn(
+            '<link rel="canonical" href="http://testserver/test-path" />', output
+        )
+
+    @override_settings(CANONICAL_USE_HTTPS=False, SECURE_SSL_REDIRECT=False)
+    def test_canonical_url_link_view_includes_query(self):
+        request = self.factory.get("/test-path?param=value")
+
+        def view(request):
+            pass
+
+        view.query_is_canonical = True
+        context = Context({"view": view, "request": request})
+        output = Template(self.template).render(context)
+        self.assertIn(
+            '<link rel="canonical" href="http://testserver/test-path?param=value" />',
+            output,
+        )
+
+    @override_settings(CANONICAL_USE_HTTPS=False, SECURE_SSL_REDIRECT=False)
+    def test_canonical_url_link_view_includes_query_but_include_query_false(self):
+        request = self.factory.get("/test-path?param=value")
+
+        def view(request):
+            pass
+
+        view.query_is_canonical = True
+        template = (
+            "{% load commoncontent %}{% canonical_url_link include_query=False %}"
+        )
+        context = Context({"view": view, "request": request})
+        output = Template(template).render(context)
+        self.assertIn(
+            '<link rel="canonical" href="http://testserver/test-path" />',
+            output,
+        )
+
+    @override_settings(CANONICAL_USE_HTTPS=False, SECURE_SSL_REDIRECT=False)
+    def test_canonical_url_link_cbv_has_query_canonical(self):
+        class TestView(View):
+            query_is_canonical = True
+
+        view = TestView.as_view()
+        request = self.factory.get("/test-path?param=value")
+        context = Context({"view": view, "request": request})
+        output = Template(self.template).render(context)
+        self.assertIn(
+            '<link rel="canonical" href="http://testserver/test-path?param=value" />',
+            output,
+        )
+
+    @override_settings(CANONICAL_USE_HTTPS=True, SECURE_SSL_REDIRECT=False)
+    def test_canonical_url_link_force_https(self):
+        output = Template(self.template).render(self.context)
+        self.assertIn(
+            '<link rel="canonical" href="https://testserver/test-path" />', output
+        )
+
+    @override_settings(
+        CANONICAL_USE_HTTPS=False, SECURE_SSL_REDIRECT=True, SECURE_REDIRECT_EXEMPT=[]
+    )
+    def test_canonical_url_link_secure_ssl_redirect(self):
+        output = Template(self.template).render(self.context)
+        self.assertIn(
+            '<link rel="canonical" href="https://testserver/test-path" />', output
+        )
+
+    @override_settings(
+        CANONICAL_USE_HTTPS=False,
+        SECURE_SSL_REDIRECT=True,
+        SECURE_REDIRECT_EXEMPT=[r"^/test-path$"],
+    )
+    def test_canonical_url_link_secure_ssl_redirect_exempt(self):
+        output = Template(self.template).render(self.context)
+        self.assertIn(
+            '<link rel="canonical" href="http://testserver/test-path" />', output
+        )
+
+    @override_settings(CANONICAL_USE_HTTPS=False, SECURE_SSL_REDIRECT=False)
+    def test_canonical_url_link_canonical_path(self):
+        self.context["canonical_path"] = "/canonical-path"
+        output = Template(self.template).render(self.context)
+        self.assertIn(
+            '<link rel="canonical" href="http://testserver/canonical-path" />', output
+        )

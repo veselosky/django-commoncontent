@@ -1,8 +1,12 @@
-from commoncontent.models import Menu, SectionMenu
+import re
+
 from django import template
+from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
 from django.utils.html import format_html, mark_safe
+
+from commoncontent.models import Menu, SectionMenu
 
 register = template.Library()
 
@@ -10,8 +14,6 @@ register = template.Library()
 #######################################################################################
 # Filters
 #######################################################################################
-
-
 @register.filter(name="add_classes")
 def add_classes(value, arg):
     """
@@ -54,6 +56,100 @@ def elided_range(value):
 #######################################################################################
 # Tags
 #######################################################################################
+@register.simple_tag(takes_context=True)
+def canonical_url_link(context, include_query=None):
+    """Return a rel=canonical link tag for the current page.
+
+    Note: This tag is called by default in the ``base.html`` template inside a block
+    named "canonical_url". Override that block in your template to customize.
+
+    The generated URL does not include the query string by default. If you want to
+    include the query string, pass ``include_query=True``. If a view wants to specify
+    that the query string should be included, it can set a ``query_is_canonical``
+    attribute on the view to True (but you can override this by passing
+    ``include_query=False``).
+
+    If ``SECURE_SSL_REDIRECT`` is True, the canonical URL will use 'https', unless the
+    current path matches one of the regular expressions in ``SECURE_REDIRECT_EXEMPT``.
+
+    If your site supports both http and https, you can set ``CANONICAL_USE_HTTPS=True``
+    in your settings.py (or set a SiteVar of the same name) to force the canonical URL
+    to use 'https'. Otherwise, it will use 'http'.
+
+    If your site displays the same content at more than one path, you can specify a
+    ``canonical_path`` in the context to override the current path. But you really should
+    avoid doing this, it's bad for SEO.
+    """
+    # https://moz.com/learn/seo/canonicalization
+    # https://support.google.com/webmasters/answer/139066?hl=en
+    # https://www.searchenginejournal.com/seo-101/canonical-urls/
+    # https://developers.google.com/search/docs/advanced/crawling/consolidate-duplicate-urls
+    # https://developers.google.com/search/docs/advanced/crawling/rel-canonical
+
+    request = context.get("request")
+    site = get_current_site(request)
+    # Calculating canonical URL is not as straightforward as it seems. A naive approach
+    # would be to use request.build_absolute_uri(request.path), but that doesn't take
+    # into account several factors.
+    # `request.scheme` will return the scheme of the current request, unless
+    # SECURE_SSL_REDIRECT==True, in which case it will always return 'https'.
+    # This is not necessarily accurate for the canonical URL. If it's False, we may
+    # still want to use 'https' for the canonical URL. Even if it's true, paths in the
+    # SECURE_REDIRECT_EXEMPT list will not be redirected to 'https', and that's not
+    # accounted for (as of Django 5.1). (And redirects won't happen if
+    # SecurityMiddleware is not installed, but that is probably an error.)
+    scheme = "http"
+    force_https = getattr(
+        settings, "CANONICAL_USE_HTTPS", False
+    ) or site.vars.get_value("CANONICAL_USE_HTTPS", asa=bool)
+
+    # See also SecurityMiddleware
+    redirect_exempt = [re.compile(r) for r in settings.SECURE_REDIRECT_EXEMPT]
+    if force_https and not settings.SECURE_SSL_REDIRECT:
+        scheme = "https"
+    elif settings.SECURE_SSL_REDIRECT and not any(
+        pattern.search(request.path) for pattern in redirect_exempt
+    ):
+        scheme = "https"
+
+    # Note that Django uses SECURE_SSL_HOST to specify a different domain for HTTPS
+    # requests. However, if that host is canonical, we should have been redirected
+    # there by the security middleware, so get_host() should be correct.
+    domain = request.get_host()
+
+    # In some cases, we want to include query parameters in the canonical URL. In
+    # other cases we do not. Users can specify which by passing the include_query
+    # argument to the template tag. If they don't, the view itself can specify
+    # a query_is_canonical attribute to say which behavior is correct for this view.
+    if include_query is None:
+        view = context.get("view")
+        # To simplify class based views, you can just set query_is_canonical on the
+        # class itself, rather than bending over backwards to set it on the function.
+        if view:
+            if hasattr(view, "view_class") and hasattr(
+                view.view_class, "query_is_canonical"
+            ):
+                include_query = view.view_class.query_is_canonical
+            else:
+                include_query = getattr(view, "query_is_canonical", False)
+
+    query = ""
+    if include_query:
+        query = request.META.get("QUERY_STRING")
+        if query:
+            query = "?" + query
+
+    # Finally, if the project has mapped multiple paths to the same view and wants one
+    # of them to be canonical, it can specify a canonical_path in the context. But
+    # don't do this. Seriously, it's a bad idea.
+    canonical_path = context.get("canonical_path", request.path)
+    return format_html(
+        '<link rel="canonical" href="{}://{}{}{}" />',
+        scheme,
+        domain,
+        canonical_path,
+        query,
+    )
 
 
 @register.simple_tag(takes_context=True)
