@@ -1,14 +1,16 @@
 import re
 
 from django import template
+from django.apps import apps
 from django.conf import settings
-from django.contrib.sites.shortcuts import get_current_site
 from django.utils import timezone
 from django.utils.html import format_html, mark_safe
 
 from commoncontent.models import Menu, SectionMenu
 
 register = template.Library()
+sitevars = apps.get_app_config("sitevars")
+Site = sitevars.Site
 
 
 #######################################################################################
@@ -87,7 +89,8 @@ def canonical_url_link(context, include_query=None):
     # https://developers.google.com/search/docs/advanced/crawling/rel-canonical
 
     request = context.get("request")
-    site = get_current_site(request)
+    vars = sitevars.get_site_for_request(request).vars
+
     # Calculating canonical URL is not as straightforward as it seems. A naive approach
     # would be to use request.build_absolute_uri(request.path), but that doesn't take
     # into account several factors.
@@ -99,9 +102,9 @@ def canonical_url_link(context, include_query=None):
     # accounted for (as of Django 5.1). (And redirects won't happen if
     # SecurityMiddleware is not installed, but that is probably an error.)
     scheme = "http"
-    force_https = getattr(
-        settings, "CANONICAL_USE_HTTPS", False
-    ) or site.vars.get_value("CANONICAL_USE_HTTPS", asa=bool)
+    force_https = getattr(settings, "CANONICAL_USE_HTTPS", False) or vars.get_value(
+        "CANONICAL_USE_HTTPS", asa=bool
+    )
 
     # See also SecurityMiddleware
     redirect_exempt = [re.compile(r) for r in settings.SECURE_REDIRECT_EXEMPT]
@@ -157,7 +160,8 @@ def copyright_notice(context):
     """Return a copyright notice for the current page."""
     obj = context.get("object")
     request = context.get("request")
-    site = get_current_site(request)
+    site = sitevars.get_site_for_request(request)
+    vars = site.vars
     notice = ""
     # First we check if the "object" (for detail views) knows its own copyright.
     if obj and hasattr(obj, "copyright_year"):
@@ -171,10 +175,10 @@ def copyright_notice(context):
         return format_html(notice, copyright_year)
 
     # Otherwise, we fall back to the site's copyright. Is one explicitly set?
-    if notice := site.vars.get_value("copyright_notice"):
+    if notice := vars.get_value("copyright_notice"):
         return format_html(notice, copyright_year)
     else:
-        holder = site.vars.get_value("copyright_holder", site.name)
+        holder = vars.get_value("copyright_holder", getattr(site, "name", ""))
         return format_html(
             "© Copyright {} {}. All rights reserved.", copyright_year, holder
         )
@@ -187,7 +191,7 @@ def menu(context, menu_slug):
     ``{% menu "main-nav" as menu %}``
     """
     request = context.get("request")
-    site = get_current_site(request)
+    site = sitevars.get_site_for_request(request)
     menu = None
     try:
         menu = Menu.objects.get(site=site, slug=menu_slug)

@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest.mock import Mock
 
-from django.contrib.sites.models import Site
+from django.apps import apps
 from django.core.paginator import Paginator
 from django.template import Context, Template
 from django.test import RequestFactory, SimpleTestCase, override_settings
@@ -10,6 +10,8 @@ from django.views.generic import View
 from sitevars.models import SiteVar
 
 from commoncontent.models import Menu, Page, Status
+
+Site = apps.get_app_config("sitevars").Site
 
 
 class TestAddClassesFilter(SimpleTestCase):
@@ -62,6 +64,8 @@ class TestCopyrightNoticeTag(DjangoTestCase):
         Should return the value of object.copyright_notice.
         """
         site = Site.objects.get(id=1)
+        request = RequestFactory().get("/page.html")
+        request.site = site
         page = Page(
             title="Test Page",
             slug="test-page",
@@ -71,7 +75,7 @@ class TestCopyrightNoticeTag(DjangoTestCase):
             custom_copyright_notice="{} custom copyright notice",
         )
         output = Template("{% load commoncontent %}{% copyright_notice %} ").render(
-            Context({"object": page})
+            Context({"request": request, "object": page})
         )
         self.assertIn(page.copyright_notice, output)
         self.assertIn("2021 custom copyright notice", output)

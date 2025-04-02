@@ -1,11 +1,13 @@
 from pathlib import Path
 
+from django.apps import apps
 from django.core.management import call_command
 from django.test import TestCase
 
-from commoncontent.models import Article, Section, Site
+from commoncontent.models import Article, Section
 
 base_path = Path(__file__).resolve().parent
+Site = apps.get_app_config("sitevars").Site
 
 
 class TestImportMarkdownCommand(TestCase):

@@ -19,10 +19,11 @@ from commoncontent.models import (
     Image,
     Page,
     Section,
-    Site,
     Status,
 )
 from commoncontent.sitemaps import ArticleSitemap
+
+Site = apps.get_app_config("sitevars").Site
 
 
 class TestHomePageView(TestCase):

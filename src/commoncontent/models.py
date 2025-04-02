@@ -2,8 +2,6 @@ import mimetypes
 
 from django.apps import apps
 from django.conf import settings
-from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.db import models
 from django.template.defaultfilters import truncatewords_html
 from django.urls import reverse
@@ -26,6 +24,7 @@ from commoncontent.schemas import (
 
 # Transform "en-us" to "en_US"
 DEFAULT_LOCALE = to_locale(settings.LANGUAGE_CODE)
+sitevars = apps.get_app_config("sitevars")
 
 
 ######################################################################################
@@ -39,7 +38,7 @@ class Author(models.Model):
     """
 
     site = models.ForeignKey(
-        Site,
+        sitevars.site_model,
         verbose_name=_("site"),
         on_delete=models.CASCADE,
         default=1,
@@ -190,13 +189,13 @@ class AbstractCreativeWork(models.Model):
         ),
     )
     site = models.ForeignKey(
-        Site,
+        sitevars.site_model,
         verbose_name=_("site"),
         on_delete=models.CASCADE,
         default=1,
     )
     owner = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         blank=True,
         null=True,
@@ -712,7 +711,9 @@ class ArticleSeries(models.Model):
     name = models.CharField(_("name"), max_length=255)
     slug = models.SlugField(_("slug"))
     description = models.TextField(_("description"), blank=True)
-    site = models.ForeignKey(Site, on_delete=models.CASCADE, verbose_name=_("site"))
+    site = models.ForeignKey(
+        sitevars.site_model, on_delete=models.CASCADE, verbose_name=_("site")
+    )
 
     def __str__(self):
         return self.name
@@ -847,7 +848,9 @@ class Article(BasePage):
 # Site Menus
 #######################################################################
 class Menu(models.Model):
-    site = models.ForeignKey(Site, on_delete=models.CASCADE, verbose_name=_("site"))
+    site = models.ForeignKey(
+        sitevars.site_model, on_delete=models.CASCADE, verbose_name=_("site")
+    )
     admin_name = models.CharField(_("admin name"), max_length=255)
     slug = models.SlugField(
         _("slug"),
@@ -924,7 +927,7 @@ class Link(models.Model):
 
 
 class SectionMenu:
-    def __init__(self, site: Site, title: str = "", sections=None, pages=None) -> None:
+    def __init__(self, site, title: str = "", sections=None, pages=None) -> None:
         self.site = site
         self.title = title
         self.sections = sections or Section.objects.live().filter(site=site).order_by(
