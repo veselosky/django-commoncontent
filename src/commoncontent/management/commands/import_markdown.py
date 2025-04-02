@@ -33,6 +33,7 @@ import re
 from pathlib import Path
 
 from dateutil.parser import parse
+from django.apps import apps
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -42,7 +43,7 @@ from mistletoe.contrib.pygments_renderer import PygmentsRenderer
 from yaml import Loader, load
 
 from commoncontent.common import Status
-from commoncontent.models import Article, Section, Site
+from commoncontent.models import Article, Section
 
 # Define the regular expression pattern for YAML front matter
 # This pattern looks for text that starts and ends with triple dashes
@@ -51,6 +52,7 @@ from commoncontent.models import Article, Section, Site
 # Use the re.DOTALL flag to make the dot match newlines as well
 pattern = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)", re.DOTALL)
 logger = logging.getLogger(__name__)
+Site = apps.get_app_config("sitevars").Site
 
 
 def extract_title_from_ast(doc):

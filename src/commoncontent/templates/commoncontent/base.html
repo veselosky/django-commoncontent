@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <title>
       {% block title %}
-        {% firstof object.seo_title opengraph.title request.site.name %}
+        {% firstof object.seo_title object.title opengraph.title request.site.name %}
       {% endblock title %}
     </title>
     <meta name="description"

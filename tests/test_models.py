@@ -1,6 +1,7 @@
 from datetime import datetime
 from unittest import mock
 
+from django.apps import apps
 from django.test import TestCase as DjangoTestCase
 from django.test import override_settings
 from django.urls import reverse
@@ -17,9 +18,10 @@ from commoncontent.models import (
     Page,
     Section,
     SectionMenu,
-    Site,
     Status,
 )
+
+Site = apps.get_app_config("sitevars").Site
 
 
 class TestModels(DjangoTestCase):

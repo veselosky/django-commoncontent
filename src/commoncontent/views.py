@@ -1,7 +1,6 @@
 import typing as T
 
 from django.apps import apps
-from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.syndication.views import Feed
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -11,10 +10,18 @@ from django.views.generic import DetailView, ListView, RedirectView
 
 from commoncontent.models import Article, ArticleSeries, Author, HomePage, Page, Section
 
+sitevars = apps.get_app_config("sitevars")
+
 
 ######################################################################################
 class BasePageDetailView(DetailView):
     template_name_field = "base_template"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.site = sitevars.get_site_for_request(request)
+        self.object = self.get_object()
+
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -60,7 +67,7 @@ class ArticleSeriesView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         series = get_object_or_404(
             ArticleSeries.objects.filter(
-                site=get_current_site(self.request),
+                site_id=sitevars.get_site_id_for_request(self.request),
                 slug=kwargs["series_slug"],
             )
         )
@@ -92,7 +99,7 @@ class ArticleDetailView(BasePageDetailView):
         # unique within their section, even if in a series
         return get_object_or_404(
             Article.objects.live().filter(
-                site=get_current_site(self.request),
+                site=self.site,
                 section__slug=self.kwargs["section_slug"],
                 slug=self.kwargs["article_slug"],
             )
@@ -104,7 +111,7 @@ class PageDetailView(BasePageDetailView):
     def get_object(self):
         return get_object_or_404(
             Page.objects.live().filter(
-                site=get_current_site(self.request),
+                site=self.site,
                 slug=self.kwargs["page_slug"],
             )
         )
@@ -122,9 +129,11 @@ class BasePageListView(ListView):
     object = None
     # template_name_suffix = "_list" is supplied by ListView
 
-    def get(self, request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
+        self.site = sitevars.get_site_for_request(request)
         self.object = self.get_object()
-        return super().get(request, *args, **kwargs)
+
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         conf = apps.get_app_config("commoncontent")
@@ -152,18 +161,17 @@ class BasePageListView(ListView):
         if paginate_by := super().get_paginate_by(queryset):
             return paginate_by
         # Fall back to per-site setting or None
-        return self.request.site.vars.get_value("paginate_by", None, asa=int)
+        return self.site.vars.get_value("paginate_by", None, asa=int)
 
     def get_paginate_orphans(self) -> int:
         # If set explicitly on class, return it
         if orphans := super().get_paginate_orphans():
             return orphans
         # Fall back to per-site setting or 0 (Django's default)
-        return self.request.site.vars.get_value("paginate_orphans", 0, asa=int)
+        return self.site.vars.get_value("paginate_orphans", 0, asa=int)
 
     def get_queryset(self):
-        site = get_current_site(self.request)
-        qs = super().get_queryset().live().filter(site=site)
+        qs = super().get_queryset().live().filter(site=self.site)
         if section := self.kwargs.get("section_slug"):
             qs = qs.filter(section__slug=section)
         return qs
@@ -221,7 +229,7 @@ class AuthorView(ArticleListView):
     def get_object(self):
         return get_object_or_404(
             Author.objects.filter(
-                site=get_current_site(self.request),
+                site=self.site,
                 slug=self.kwargs["author_slug"],
             )
         )
@@ -236,7 +244,9 @@ class AuthorListView(ListView):
     object = None
 
     def dispatch(self, request, *args, **kwargs):
+        self.site = sitevars.get_site_for_request(request)
         self.object = self.get_object()
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> T.Dict[str, T.Any]:
@@ -245,9 +255,9 @@ class AuthorListView(ListView):
         return context
 
     def get_object(self):
-        site_name = self.request.site.vars.get_value("brand", self.request.site.name)
+        site_name = self.site.vars.get_value("brand", self.site.name)
         self.object = Page(
-            site=get_current_site(self.request),
+            site=self.site,
             title=f"Contributors to {site_name}",
             description="Authors who have contributed to this site.",
             date_published=timezone.now(),
@@ -275,7 +285,7 @@ class SectionView(ArticleListView):
     def get_object(self):
         return get_object_or_404(
             Section.objects.live().filter(
-                site=get_current_site(self.request),
+                site=self.site,
                 slug=self.kwargs["section_slug"],
             )
         )
@@ -287,18 +297,13 @@ class HomePageView(ArticleListView):
 
     def get_object(self):
         try:
-            hp = (
-                HomePage.objects.live()
-                .filter(site=get_current_site(self.request))
-                .latest()
-            )
+            hp = HomePage.objects.live().filter(site=self.site).latest()
         except HomePage.DoesNotExist:
             # Create a phony debug home page for bootstrapping.
-            site = get_current_site(self.request)
             hp = HomePage(
-                site=site,
+                site=self.site,
                 admin_name="__DEBUG__",
-                title=site.name,
+                title=self.site.name,
                 date_published=timezone.now(),
             )
         return hp
@@ -337,7 +342,7 @@ class SiteFeed(Feed):
 
     def get_object(self, request, *args, **kwargs):
         "For site feed, get_object will return the site"
-        return request.site
+        return sitevars.get_site_for_request(request)
 
     def title(self, obj):
         tagline = obj.vars.get_value("tagline")
@@ -409,7 +414,7 @@ class SectionFeed(SiteFeed):
         "Return the CategoryPage for this feed"
         return get_object_or_404(
             Section.objects.live().filter(
-                site=request.site, slug=kwargs["section_slug"]
+                site=sitevars.get_site_for_request(request), slug=kwargs["section_slug"]
             )
         )
 

@@ -145,7 +145,7 @@ def context_defaults(request):
     # Edge case: SiteVars override our settings by having inject_sitevars context
     # processor come after this one. But if they override list_*_template, we need to
     # check that here, since we're assigning values they may not have set.
-    sitevars = request.site.vars
+    sitevars = apps.get_app_config("sitevars").get_site_for_request(request).vars
     list_tpls = [
         "list_content_template",
         "list_precontent_template",

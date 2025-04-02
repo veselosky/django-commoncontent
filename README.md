@@ -25,6 +25,14 @@ usable in production. However, test coverage is not yet complete, the feature se
 still growing, and there are likely to be breaking changes before the software reaches a
 stable 1.0 release. Be aware that migrating to newer versions may require some work.
 
+## Custom User and Site models
+
+Common Content now supports
+[custom AUTH_USER_MODEL (via Django)](https://docs.djangoproject.com/en/5.1/topics/auth/customizing/#substituting-a-custom-user-model)
+as well as a
+[custom SITE_MODEL (via django-sitevars)](https://github.com/veselosky/django-sitevars?tab=readme-ov-file#using-with-an-alternate-site-model).
+Follow the links for documentation on setting them up for your project.
+
 ## Included Content Models, Views, and Templates
 
 Common Content defines a data model based on [Schema.org](https://schema.org), extended
@@ -98,19 +106,20 @@ Add the following to your `settings.py`:
 ```python
 import commoncontent.apps
 INSTALLED_APPS = [
-  *commoncontent.apps.CONTENT,
+  *commoncontent.apps.CONTENT,  # commoncontent, django_bootstrap_icons, imagekit, taggit
   # Optionally use tinymce in the admin
   "tinymce",
   # Other Django apps here
-  "django.contrib.redirects",  # Required
-  "django.contrib.sites",  # Required
+  "django.contrib.sites",  # Optional
   # sitevars must come AFTER contrib.sites for admin to work
-  "sitevars",
+  "sitevars", # Required
 ]
 
 # Ensure your middleware includes the following:
 MIDDLEWARE += [
+  # If using django.contrib.sites:
   "django.contrib.sites.middleware.CurrentSiteMiddleware",
+  # If using django.contrib.redirects:
   "commoncontent.redirects.TemporaryRedirectFallbackMiddleware",
 ]
 
@@ -129,10 +138,10 @@ TEMPLATES = [
     "APP_DIRS": True,
     "OPTIONS": {
       "context_processors": [
-        "django.template.context_processors.debug",
-        "django.template.context_processors.request",
+        "django.template.context_processors.request",  # Required
         "django.contrib.auth.context_processors.auth",
         "django.contrib.messages.context_processors.messages",
+        # These are both required for commoncontent templates to work properly:
         "commoncontent.apps.context_defaults",
         "sitevars.context_processors.inject_sitevars",
       ],
