@@ -31,7 +31,7 @@
                   <a class="text-reset text-decoration-none"
                      href="{{ article.get_absolute_url }}">{% firstof article.title article.schema.headline %}</a>
                 </h3>
-                <p class="card-text">{% firstof article.description article.schema.description %}</p>
+                <p class="card-text">{{ article.description|safe }}</p>
               </div>
             </div>
           </div>

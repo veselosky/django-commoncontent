@@ -6,6 +6,7 @@ from django.db import models
 from django.template.defaultfilters import truncatewords_html
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import to_locale
@@ -13,7 +14,7 @@ from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill, ResizeToFit
 from taggit.managers import TaggableManager
 
-from commoncontent.common import Status, upload_to
+from commoncontent.common import AliasForField, Status, upload_to
 from commoncontent.schemas import (
     ImageProp,
     OGArticle,
@@ -175,7 +176,17 @@ class AbstractCreativeWork(models.Model):
     and the order of the keys is significant.
     """
 
-    title = models.CharField(_("title"), max_length=255)
+    # From https://schema.org/headline
+    title = models.CharField(
+        _("title"), max_length=255, help_text=_("The main headline")
+    )
+    # From https://schema.org/alternativeHeadline
+    subtitle = models.CharField(
+        _("subtitle"),
+        max_length=255,
+        blank=True,
+        help_text=_("A subtitle or secondary headline"),
+    )
     # From https://schema.org/creativeWorkStatus
     status = models.CharField(
         _("status"),
@@ -204,6 +215,7 @@ class AbstractCreativeWork(models.Model):
             "The user who created/uploaded the content (for internal permissions, audits)."
         ),
     )
+    # From https://schema.org/author
     author = models.ForeignKey(
         Author,
         verbose_name=_("author"),
@@ -211,7 +223,16 @@ class AbstractCreativeWork(models.Model):
         blank=True,
         null=True,
     )
-    description = models.TextField(_("description"), blank=True)
+    # From https://schema.org/description & https://schema.org/abstract
+    description = models.TextField(
+        _("description"),
+        blank=True,
+        help_text=_(
+            "An abstract of the content or marketing description. "
+            "Intended to entice a reader to click through to the content. "
+            "May contain inline HTML and multiple paragraphs."
+        ),
+    )
 
     # Equivalent to https://schema.org/dateCreated
     date_created = models.DateTimeField(
@@ -241,6 +262,7 @@ class AbstractCreativeWork(models.Model):
         null=True,
         help_text=_("Must be blank or in the future for page to be 'live'"),
     )
+    # https://schema.org/copyrightNotice
     custom_copyright_notice = models.TextField(
         _("custom copyright notice"),
         blank=True,
@@ -248,11 +270,19 @@ class AbstractCreativeWork(models.Model):
             r"include a pair of curly braces {} where you want the year inserted"
         ),
     )
+    # https://schema.org/copyrightHolder
     custom_copyright_holder = models.CharField(
         _("custom copyright holder"),
         max_length=255,
         blank=True,
     )
+    custom_icon = models.CharField(
+        _("custom icon"),
+        max_length=50,
+        blank=True,
+        help_text="<a href=https://icons.getbootstrap.com/#icons target=iconlist>icon list</a>",
+    )
+
     locale = models.CharField(_("locale"), max_length=10, default=DEFAULT_LOCALE)
 
     tags = TaggableManager(blank=True)
@@ -270,9 +300,28 @@ class AbstractCreativeWork(models.Model):
         return self.title
 
     # Class properties
-    icon_name = "file"
+    default_icon_name = "file"
     schema_type = "CreativeWork"
     opengraph_type = "website"
+    headline = AliasForField("title")
+    alternative_headline = AliasForField("subtitle")
+
+    @property
+    def abstract(self):
+        """Rich text excerpt for use in teases and feed content. If no abstract has
+        been specified, returns the full description text."""
+        if self.description:
+            return self.description
+        if hasattr(self, "excerpt"):
+            return self.excerpt
+        return ""
+
+    @property
+    def icon_name(self):
+        """name of an icon to represent this object"""
+        if self.custom_icon:
+            return self.custom_icon
+        return self.default_icon_name
 
     @property
     def copyright_holder(self):
@@ -317,6 +366,8 @@ class AbstractCreativeWork(models.Model):
         schema_class = ThingSchema.get_class_for_label(self.schema_type)
         schema = schema_class(
             headline=self.title,
+            alternativeHeadline=self.subtitle,
+            author=self.author,
             description=self.description,
             creativeWorkStatus=self.status,
             url=self.url,
@@ -363,6 +414,48 @@ class AbstractCreativeWork(models.Model):
         return og
 
 
+class WebContent(AbstractCreativeWork):
+    """
+    A model to represent web content, i.e. HTML.
+
+    CreativeWorks bifurcate into two types: MediaObjects (images, audio, video, etc.) and
+    WebContent (HTML, text, etc.) that can reference MediaObjects.
+    """
+
+    # From https://schema.org/articleBody or https://schema.org/text
+    body = models.TextField(_("body content"), blank=True)
+    share_image = models.ForeignKey(
+        "Image",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        help_text=_("Image for social sharing"),
+        related_name="+",
+    )
+
+    class Meta(AbstractCreativeWork.Meta):
+        verbose_name = _("web content")
+        verbose_name_plural = _("web content")
+        abstract = True
+
+    @cached_property
+    def excerpt(self):
+        """Rich text excerpt for use in teases and feed content. If no excerpt has
+        been specified, returns the full body text."""
+        config = apps.get_app_config("commoncontent")
+        if not self.body:
+            return ""
+        excerpt = self.body.split(config.pagebreak_separator, maxsplit=1)[0]
+        return truncatewords_html(excerpt, config.excerpt_max_words)
+
+    @property
+    def has_excerpt(self):
+        """True if there is more body text to read after the excerpt. False if
+        excerpt == body.
+        """
+        return not self.excerpt == self.body
+
+
 ######################################################################################
 # Media Objects
 ######################################################################################
@@ -401,7 +494,7 @@ class MediaObject(AbstractCreativeWork):
 
     # Class properties
     content_field = None  # Must override in subclasses
-    icon_name = "file-richtext"
+    default_icon_name = "file-richtext"
     schema_type = "MediaObject"
     opengraph_type = "image"
 
@@ -511,7 +604,7 @@ class Image(MediaObject):
         verbose_name_plural = _("images")
 
     content_field = "image_file"
-    icon_name = "image"
+    default_icon_name = "image"
 
     @property
     def is_portrait(self):
@@ -562,26 +655,10 @@ class GenericPageManager(models.Manager):
 
 
 #######################################################################
-class BasePage(AbstractCreativeWork):
+class BasePage(WebContent):
     "A model to represent a generic page."
 
     slug = models.SlugField(_("slug"))
-    # From https://schema.org/articleBody or https://schema.org/text
-    body = models.TextField(_("body content"), blank=True)
-    share_image = models.ForeignKey(
-        "Image",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        help_text=_("Image for social sharing"),
-        related_name="+",
-    )
-    custom_icon = models.CharField(
-        _("custom icon"),
-        max_length=50,
-        blank=True,
-        help_text="<a href=https://icons.getbootstrap.com/#icons target=iconlist>icon list</a>",
-    )
     seo_title = models.CharField(_("SEO title override"), max_length=255, blank=True)
     seo_description = models.CharField(
         _("SEO description override"), max_length=255, blank=True
@@ -619,28 +696,7 @@ class BasePage(AbstractCreativeWork):
     # Class properties
     schema_type = "WebPage"
     opengraph_type = "website"
-
-    @property
-    def icon_name(self):
-        "name of an icon to represent this object"
-        return self.custom_icon or self.site.vars.get_value("default_icon", "file-text")
-
-    @property
-    def excerpt(self):
-        """Rich text excerpt for use in teases and feed content. If no excerpt has
-        been specified, returns the full body text."""
-        config = apps.get_app_config("commoncontent")
-        if not self.body:
-            return ""
-        excerpt = self.body.split(config.pagebreak_separator, maxsplit=1)[0]
-        return truncatewords_html(excerpt, config.excerpt_max_words)
-
-    @property
-    def has_excerpt(self):
-        """True if there is more body text to read after the excerpt. False if
-        excerpt == body.
-        """
-        return not self.excerpt == self.body
+    default_icon_name = "file-text"
 
 
 #######################################################################
