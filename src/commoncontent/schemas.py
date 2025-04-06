@@ -95,6 +95,7 @@ class CreativeWorkSchema(ThingSchema):
     "Schema.org CreativeWork object"
 
     abstract: T.Optional[str] = None
+    alternativeHeadline: T.Optional[str] = None
     author: T.Optional[str] = None
     copyrightHolder: T.Optional[str] = None
     copyrightNotice: T.Optional[str] = None

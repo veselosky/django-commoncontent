@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.feedgenerator import Rss201rev2Feed
+from django.utils.html import escape, strip_tags
 from django.views.generic import DetailView, ListView, RedirectView
 
 from commoncontent.models import Article, ArticleSeries, Author, HomePage, Page, Section
@@ -355,7 +356,7 @@ class SiteFeed(Feed):
 
     def description(self, obj):
         page = HomePage.objects.live().filter(site=obj).latest()
-        return page.description
+        return page.seo_description or escape(strip_tags(page.abstract))
 
     def feed_url(self, obj):
         return reverse("site_feed")

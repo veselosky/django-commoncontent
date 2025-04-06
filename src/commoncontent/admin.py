@@ -52,6 +52,7 @@ class ImageAdmin(admin.ModelAdmin):
 
 #######################################################################################
 class CreativeWorkAdmin(admin.ModelAdmin):
+    rich_text_fields = ("description", "body")
     prepopulated_fields = {"slug": ("title",)}
     date_hierarchy = "date_published"
     list_display = ("title", "date_published", "site", "status")
@@ -97,7 +98,10 @@ class CreativeWorkAdmin(admin.ModelAdmin):
     )
 
     def formfield_for_dbfield(self, db_field, **kwargs):
-        if "tinymce" in settings.INSTALLED_APPS and db_field.name == "body":
+        if (
+            "tinymce" in settings.INSTALLED_APPS
+            and db_field.name in self.rich_text_fields
+        ):
             from tinymce.widgets import TinyMCE
 
             from commoncontent.apps import TINYMCE_CONFIG

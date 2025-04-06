@@ -27,3 +27,24 @@ def upload_to(instance, filename):
         return target(instance, filename)
     when = now()
     return f"{instance.site.domain}/{when.year}/{when.month}/{when.day}/{filename}"
+
+
+class AliasForField:
+    """
+    A descriptor that allows a property to be an alias for a Django model field.
+    """
+
+    def __init__(self, target_name, blank=""):
+        self.target_name = target_name
+        self.blank = blank
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return getattr(instance, self.target_name)
+
+    def __set__(self, instance, value):
+        setattr(instance, self.target_name, value)
+
+    def __delete__(self, instance):
+        setattr(instance, self.target_name, self.blank)
