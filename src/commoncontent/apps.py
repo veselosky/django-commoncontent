@@ -40,6 +40,7 @@ class CommonContentConfig(AppConfig):
     # ========================================================================
     # Django properties
     # ========================================================================
+    default = True  # This is the default app config for the commoncontent app.
     default_auto_field = "django.db.models.BigAutoField"
     name = "commoncontent"
 
