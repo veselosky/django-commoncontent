@@ -625,6 +625,90 @@ class Image(MediaObject):
         )
 
 
+# Subclasses of WebContent all can have sets of images associated with them. However,
+# due to the technicalities of ManyToMany relationships and abstract models, we couldn't
+# declare the ManyToManyField on the WebContent class. Each concrete subclass requires
+# its own concrete through-table, and must declare its own m2m field. We declare the
+# through-table as an abstract model for the shared fields, and then subclass it for
+# each concrete WebContent subclass. (This is also true of Attachments, but we don't
+# need to store any relationship data for Attachments, so there's no need to pre-declare
+# a through-table. The ManyToManyField on the WebContent subclass is sufficient.)
+class BaseContentImage(models.Model):
+    """
+    Base model for associating images with WebContent subclasses.
+    Includes shared fields for the relationship.
+    """
+
+    image = models.ForeignKey(
+        "Image",
+        on_delete=models.CASCADE,
+        verbose_name=_("image"),
+    )
+    title = models.CharField(_("title"), max_length=255, blank=True)
+    description = models.TextField(_("description"), blank=True)
+    alt_text = models.CharField(_("alt text"), max_length=255, blank=True)
+    order = models.PositiveIntegerField(_("order"), default=0)
+    tags = TaggableManager(blank=True)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f"{self.image}"
+
+
+class ArticleImage(BaseContentImage):
+    """
+    Through-table for associating images with Articles.
+    """
+
+    article = models.ForeignKey(
+        "Article",
+        on_delete=models.CASCADE,
+        related_name="article_images",
+        verbose_name=_("article"),
+    )
+
+
+class SectionImage(BaseContentImage):
+    """
+    Through-table for associating images with Sections.
+    """
+
+    section = models.ForeignKey(
+        "Section",
+        on_delete=models.CASCADE,
+        related_name="section_images",
+        verbose_name=_("section"),
+    )
+
+
+class PageImage(BaseContentImage):
+    """
+    Through-table for associating images with Pages.
+    """
+
+    page = models.ForeignKey(
+        "Page",
+        on_delete=models.CASCADE,
+        related_name="page_images",
+        verbose_name=_("page"),
+    )
+
+
+class HomePageImage(BaseContentImage):
+    """
+    Through-table for associating images with HomePages.
+    """
+
+    homepage = models.ForeignKey(
+        "HomePage",
+        on_delete=models.CASCADE,
+        related_name="homepage_images",
+        verbose_name=_("home page"),
+    )
+
+
 class Attachment(MediaObject):
     file = models.FileField(_("file"), max_length=255, upload_to=upload_to)
 
@@ -703,6 +787,14 @@ class BasePage(WebContent):
 class Section(BasePage):
     "A model to represent major site categories."
 
+    image_set = models.ManyToManyField(
+        "Image",
+        through="SectionImage",
+        related_name="sections",
+        verbose_name=_("related images"),
+    )
+    attachment_set = models.ManyToManyField(Attachment, verbose_name=_("attachments"))
+
     objects = GenericPageManager.from_queryset(CreativeWorkQuerySet)()
 
     class Meta(BasePage.Meta):
@@ -725,6 +817,14 @@ class Section(BasePage):
 class Page(BasePage):
     "A model to represent a generic evergreen page or 'landing page'."
 
+    image_set = models.ManyToManyField(
+        "Image",
+        through="PageImage",
+        related_name="pages",
+        verbose_name=_("related images"),
+    )
+    attachment_set = models.ManyToManyField(Attachment, verbose_name=_("attachments"))
+
     objects = GenericPageManager.from_queryset(CreativeWorkQuerySet)()
 
     class Meta(BasePage.Meta):
@@ -746,6 +846,14 @@ class HomePage(BasePage):
         unique=True,
         help_text=_("Name used in the admin to distinguish from other home pages"),
     )
+    image_set = models.ManyToManyField(
+        "Image",
+        through="HomePageImage",
+        related_name="homepages",
+        verbose_name=_("related images"),
+    )
+    attachment_set = models.ManyToManyField(Attachment, verbose_name=_("attachments"))
+
     objects = GenericPageManager.from_queryset(CreativeWorkQuerySet)()
 
     class Meta(BasePage.Meta):
@@ -798,7 +906,13 @@ class Article(BasePage):
         blank=True,
         null=True,
     )
-    image_set = models.ManyToManyField(Image, verbose_name=_("related images"))
+    image_set = models.ManyToManyField(
+        "Image",
+        through="ArticleImage",
+        related_name="articles",
+        verbose_name=_("related images"),
+    )
+
     attachment_set = models.ManyToManyField(Attachment, verbose_name=_("attachments"))
 
     objects = ArticleManager.from_queryset(CreativeWorkQuerySet)()
