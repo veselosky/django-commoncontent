@@ -25,7 +25,7 @@ usable in production. However, test coverage is not yet complete, the feature se
 still growing, and there are likely to be breaking changes before the software reaches a
 stable 1.0 release. Be aware that migrating to newer versions may require some work.
 
-**BREAKING CHANGE in 0.4.0:** A through-model has beed added to `Article.image_set`.
+**BREAKING CHANGE in 0.4.0:** A through-model has been added to `Article.image_set`.
 This operation requires dropping and recreating the field, which **will result in data
 loss**. If you are migrating from an earlier version, you will need to create a custom
 script to back up and restore your image relations. (This applies only to the ManyToMany
