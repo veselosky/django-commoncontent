@@ -2,7 +2,7 @@
 
 ## 0.4.0
 
-- BREAKING CHANGE: A through-model has beed added to `Article.image_set`. This operation
+- BREAKING CHANGE: A through-model has been added to `Article.image_set`. This operation
   requires dropping and recreating the field, which **will result in data loss**. If you
   are migrating from an earlier version, you will need to create a custom script to back
   up and restore your image relations. (This applies only to the ManyToMany `image_set`,
