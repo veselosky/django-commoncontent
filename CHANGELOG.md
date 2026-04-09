@@ -1,5 +1,13 @@
 # Changelog for Django-CommonContent
 
+## 0.4.1
+
+- BREAKING CHANGE: Dropped support for Django 4.2 and Python 3.8 and 3.9. If you need to
+  use CommonContent with those versions, please pin to version 0.4.0.
+- ADDED: Experimental command to export a site's content to a Hugo-compatible static
+  site. This feature is under development and is potentially destructive. Do not use
+  with an existing Hugo site.
+
 ## 0.4.0
 
 - BREAKING CHANGE: A through-model has been added to `Article.image_set`. This operation

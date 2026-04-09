@@ -4,13 +4,13 @@ dynamic = ["version"]
 authors = [{ name = "Vince Veselosky", email = "vince@control-escape.com" }]
 description = "basic data model and templates for Django's generic views to produce a decent-looking website with minimal effort"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "django-bootstrap-icons>=0.7.8",
     "django-imagekit>=5.0.0",
     "django-sitevars>=2.0.0",
     "django-taggit>=5.0.0",
-    "django>=4.2",
+    "django>=5.2",
     "pillow>=10.1.0",
     "pygments>=2.18.0",
     "python-dateutil>=2.8.1",
