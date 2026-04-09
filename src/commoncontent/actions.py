@@ -54,7 +54,8 @@ def _build_front_matter(instance):
         fm["lastmod"] = _format_datetime(instance.date_modified)
     if instance.expires:
         fm["expirydate"] = _format_datetime(instance.expires)
-    # copyright_notice returns a SafeString; convert to plain str for clean YAML
+    # copyright_notice returns a SafeString (str subclass); concatenation
+    # produces a plain str which yaml.safe_dump can serialize cleanly.
     copyright = instance.copyright_notice
     if copyright:
         fm["copyright"] = copyright + ""
@@ -131,7 +132,7 @@ def _export_media_file(media_obj, bundle_dir, mode="skip", force=False):
             for chunk in content_field.chunks():
                 f.write(chunk)
         content_field.close()
-    except Exception:
+    except (IOError, OSError):
         logger.error("Failed to export media file %s", content_field.name)
         return None
     return filename
@@ -400,7 +401,7 @@ def export_site(site, outdir, mode="skip", force=False):
         status=Status.USABLE,
         date_published__lte=now,
     ).filter(
-        models_Q_expires_valid(now)
+        _build_expires_query(now)
     ).order_by("-date_published")
 
     if homepages.exists():
@@ -422,7 +423,7 @@ def export_site(site, outdir, mode="skip", force=False):
     _export_static_files(site, outdir, mode=mode, force=force)
 
 
-def models_Q_expires_valid(now):
+def _build_expires_query(now):
     """Return a Q object that filters for valid expiry dates."""
     from django.db.models import Q
 
