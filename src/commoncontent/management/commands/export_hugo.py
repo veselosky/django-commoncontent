@@ -96,6 +96,8 @@ class Command(BaseCommand):
                 self.stderr.write("Export cancelled.")
                 return
 
-        self.stdout.write(f"Exporting site '{site.domain}' to '{outdir}' (mode={mode})...")
+        self.stdout.write(
+            f"Exporting site '{site.domain}' to '{outdir}' (mode={mode})..."
+        )
         export_site(site, outdir, mode=mode, force=force)
         self.stdout.write(self.style.SUCCESS("Export complete."))
