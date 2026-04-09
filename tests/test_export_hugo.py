@@ -1,28 +1,25 @@
 import os
 import shutil
 import tempfile
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime
+from datetime import timezone as dt_timezone
 from pathlib import Path
 
 import yaml
 from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
-from django.utils import timezone
 
 from commoncontent.actions import export_page, export_site
 from commoncontent.common import Status
 from commoncontent.models import (
     Article,
-    ArticleImage,
     Attachment,
     HomePage,
-    HomePageImage,
     Image,
     Page,
     PageImage,
     Section,
-    SectionImage,
 )
 
 Site = apps.get_app_config("sitevars").Site
@@ -48,9 +45,7 @@ class ExportPageTestCase(TestCase):
         """Create a test Image object with an actual file."""
         src = TEST_DATA_DIR / "test_image.jpg"
         with open(src, "rb") as f:
-            uploaded = SimpleUploadedFile(
-                filename, f.read(), content_type="image/jpeg"
-            )
+            uploaded = SimpleUploadedFile(filename, f.read(), content_type="image/jpeg")
         image = Image.objects.create(
             title="Test Image",
             site=self.site,
@@ -63,9 +58,7 @@ class ExportPageTestCase(TestCase):
         """Create a test Attachment object with an actual file."""
         src = TEST_DATA_DIR / "test_attachment.txt"
         with open(src, "rb") as f:
-            uploaded = SimpleUploadedFile(
-                filename, f.read(), content_type="text/plain"
-            )
+            uploaded = SimpleUploadedFile(filename, f.read(), content_type="text/plain")
         attachment = Attachment.objects.create(
             title="Test Attachment",
             site=self.site,
@@ -85,7 +78,7 @@ class ExportPageTestCase(TestCase):
         )
         export_page(page, self.content_dir)
 
-        index_path = self.content_dir / "test-page.html" / "index.html"
+        index_path = self.content_dir / "test-page" / "index.html"
         self.assertTrue(index_path.exists())
 
         content = index_path.read_text()
@@ -157,8 +150,8 @@ class ExportPageTestCase(TestCase):
         )
         export_page(article, self.content_dir)
 
-        # Article URL: /blog/my-article.html -> bundle at blog/my-article.html/
-        index_path = self.content_dir / "blog" / "my-article.html" / "index.html"
+        # Article URL: /blog/my-article.html -> bundle at blog/my-article/
+        index_path = self.content_dir / "blog" / "my-article" / "index.html"
         self.assertTrue(index_path.exists())
         content = index_path.read_text()
         self.assertIn("My Article", content)
@@ -175,7 +168,7 @@ class ExportPageTestCase(TestCase):
         )
         export_page(page, self.content_dir)
 
-        index_path = self.content_dir / "draft-page.html" / "index.html"
+        index_path = self.content_dir / "draft-page" / "index.html"
         content = index_path.read_text()
         parts = content.split("---\n", 2)
         fm = yaml.safe_load(parts[1])
@@ -201,7 +194,7 @@ class ExportPageTestCase(TestCase):
         )
         export_page(page, self.content_dir)
 
-        index_path = self.content_dir / "full-page.html" / "index.html"
+        index_path = self.content_dir / "full-page" / "index.html"
         content = index_path.read_text()
         parts = content.split("---\n", 2)
         fm = yaml.safe_load(parts[1])
@@ -229,7 +222,7 @@ class ExportPageTestCase(TestCase):
         )
         export_page(page, self.content_dir)
 
-        index_path = self.content_dir / "minimal.html" / "index.html"
+        index_path = self.content_dir / "minimal" / "index.html"
         content = index_path.read_text()
         parts = content.split("---\n", 2)
         fm = yaml.safe_load(parts[1])
@@ -253,7 +246,7 @@ class ExportPageTestCase(TestCase):
         )
         export_page(page, self.content_dir)
 
-        desc_path = self.content_dir / "described.html" / "rich_description.html"
+        desc_path = self.content_dir / "described" / "rich_description.html"
         self.assertTrue(desc_path.exists())
         self.assertEqual(desc_path.read_text(), "<p>Rich description</p>")
 
@@ -269,7 +262,7 @@ class ExportPageTestCase(TestCase):
         )
         export_page(page, self.content_dir)
 
-        desc_path = self.content_dir / "no-desc.html" / "rich_description.html"
+        desc_path = self.content_dir / "no-desc" / "rich_description.html"
         self.assertFalse(desc_path.exists())
 
     @override_settings(MEDIA_ROOT=None)
@@ -288,7 +281,7 @@ class ExportPageTestCase(TestCase):
             )
             export_page(page, self.content_dir)
 
-            bundle_dir = self.content_dir / "with-image.html"
+            bundle_dir = self.content_dir / "with-image"
             # Check image file was exported
             exported_files = list(bundle_dir.glob("cover*.jpg"))
             self.assertTrue(len(exported_files) > 0, "Image file should be exported")
@@ -328,7 +321,7 @@ class ExportPageTestCase(TestCase):
             )
             export_page(page, self.content_dir)
 
-            bundle_dir = self.content_dir / "gallery.html"
+            bundle_dir = self.content_dir / "gallery"
             image_files = list(bundle_dir.glob("gallery*.jpg"))
             self.assertTrue(len(image_files) > 0, "Gallery image should be exported")
 
@@ -348,12 +341,14 @@ class ExportPageTestCase(TestCase):
             page.attachment_set.add(attachment)
             export_page(page, self.content_dir)
 
-            bundle_dir = self.content_dir / "doc-page.html"
+            bundle_dir = self.content_dir / "doc-page"
             att_files = list(bundle_dir.glob("doc*.txt"))
             self.assertTrue(len(att_files) > 0, "Attachment should be exported")
 
             meta_files = list(bundle_dir.glob("doc*.txt.yaml"))
-            self.assertTrue(len(meta_files) > 0, "Attachment metadata should be exported")
+            self.assertTrue(
+                len(meta_files) > 0, "Attachment metadata should be exported"
+            )
             meta = yaml.safe_load(meta_files[0].read_text())
             self.assertEqual(meta["title"], "Test Attachment")
             self.assertIn("mime_type", meta)
@@ -370,7 +365,7 @@ class ExportPageTestCase(TestCase):
         )
         export_page(page, self.content_dir)
 
-        index_path = self.content_dir / "skip-test.html" / "index.html"
+        index_path = self.content_dir / "skip-test" / "index.html"
         original_content = index_path.read_text()
 
         # Modify the page content
@@ -401,7 +396,7 @@ class ExportPageTestCase(TestCase):
 
         export_page(page, self.content_dir, mode="overwrite", force=True)
 
-        index_path = self.content_dir / "overwrite-test.html" / "index.html"
+        index_path = self.content_dir / "overwrite-test" / "index.html"
         content = index_path.read_text()
         self.assertIn("<p>Modified</p>", content)
 
@@ -435,11 +430,7 @@ class ExportPageTestCase(TestCase):
 
         # Article with series URL: /blog/getting-started/part-one.html
         index_path = (
-            self.content_dir
-            / "blog"
-            / "getting-started"
-            / "part-one.html"
-            / "index.html"
+            self.content_dir / "blog" / "getting-started" / "part-one" / "index.html"
         )
         self.assertTrue(index_path.exists())
 
@@ -499,8 +490,8 @@ class ExportSiteTestCase(TestCase):
         export_site(self.site, self.outdir)
 
         content_dir = Path(self.outdir) / "content"
-        self.assertTrue((content_dir / "about.html" / "index.html").exists())
-        self.assertTrue((content_dir / "contact.html" / "index.html").exists())
+        self.assertTrue((content_dir / "about" / "index.html").exists())
+        self.assertTrue((content_dir / "contact" / "index.html").exists())
 
     def test_export_site_exports_sections_and_articles(self):
         """Test that export_site exports sections and articles."""
@@ -526,7 +517,7 @@ class ExportSiteTestCase(TestCase):
         content_dir = Path(self.outdir) / "content"
         self.assertTrue((content_dir / "news" / "_index.html").exists())
         self.assertTrue(
-            (content_dir / "news" / "breaking-news.html" / "index.html").exists()
+            (content_dir / "news" / "breaking-news" / "index.html").exists()
         )
 
     def test_export_site_remove_mode(self):
@@ -552,7 +543,7 @@ class ExportSiteTestCase(TestCase):
         )
         export_site(self.site, self.outdir, mode="skip")
 
-        index_path = Path(self.outdir) / "content" / "existing.html" / "index.html"
+        index_path = Path(self.outdir) / "content" / "existing" / "index.html"
         original = index_path.read_text()
 
         page.body = "<p>Updated body</p>"
@@ -647,7 +638,7 @@ class ExportMediaMetadataTestCase(TestCase):
             )
             export_page(page, self.content_dir)
 
-            bundle_dir = self.content_dir / "meta-page.html"
+            bundle_dir = self.content_dir / "meta-page"
             meta_files = list(bundle_dir.glob("*.jpg.yaml"))
             self.assertTrue(len(meta_files) > 0)
 
@@ -685,7 +676,7 @@ class ExportMediaMetadataTestCase(TestCase):
             page.attachment_set.add(attachment)
             export_page(page, self.content_dir)
 
-            bundle_dir = self.content_dir / "attach-page.html"
+            bundle_dir = self.content_dir / "attach-page"
             meta_files = list(bundle_dir.glob("*.txt.yaml"))
             self.assertTrue(len(meta_files) > 0)
 

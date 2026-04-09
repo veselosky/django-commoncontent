@@ -12,14 +12,12 @@ import re
 import shutil
 from pathlib import Path
 
+import yaml
 from django.apps import apps
 from django.conf import settings
-from django.utils import timezone
 
 from commoncontent.common import Status
 from commoncontent.models import Article, Attachment, HomePage, Image, Page, Section
-
-import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -72,9 +70,10 @@ def _render_page(instance, front_matter, body):
     return f"---\n{yaml_str}---\n{body}\n"
 
 
-def _get_bundle_path(instance, content_dir):
+def _get_bundle_path(instance, content_dir: Path):
     """Get the page bundle directory path for a page instance."""
-    url_path = instance.get_absolute_url()
+    # Remove .html suffix for bundle dir
+    url_path = instance.get_absolute_url().removesuffix(".html")
     # Normalize: remove leading/trailing slashes
     url_path = url_path.strip("/")
     if url_path:
@@ -90,15 +89,6 @@ def _get_index_filename(instance):
     if isinstance(instance, (HomePage, Section)):
         return "_index.html"
     return "index.html"
-
-
-def _get_media_path(media_obj):
-    """Get the relative path for a media object's file.
-
-    Returns the URL path portion (after MEDIA_URL) for the file.
-    """
-    content_field = getattr(media_obj, media_obj.content_field)
-    return content_field.url
 
 
 def _export_media_file(media_obj, bundle_dir, mode="skip", force=False):
@@ -221,22 +211,22 @@ def _resolve_local_url_to_file(url):
     """Try to resolve a local URL to an actual file path in media or static roots."""
     media_url = getattr(settings, "MEDIA_URL", "media/")
     static_url = getattr(settings, "STATIC_URL", "static/")
-    media_root = Path(getattr(settings, "MEDIA_ROOT", ""))
-    static_root = Path(getattr(settings, "STATIC_ROOT", ""))
+    media_root = Path(settings.MEDIA_ROOT)
+    static_root = Path(settings.STATIC_ROOT)
 
     # Normalize url: strip leading /
     clean_url = url.lstrip("/")
 
     # Check if it's a media URL
     if clean_url.startswith(media_url.lstrip("/")):
-        relative = clean_url[len(media_url.lstrip("/")):]
+        relative = clean_url[len(media_url.lstrip("/")) :]
         candidate = media_root / relative
         if candidate.exists():
             return candidate
 
     # Check if it's a static URL
     if clean_url.startswith(static_url.lstrip("/")):
-        relative = clean_url[len(static_url.lstrip("/")):]
+        relative = clean_url[len(static_url.lstrip("/")) :]
         candidate = static_root / relative
         if candidate.exists():
             return candidate
@@ -328,9 +318,7 @@ def export_page(instance, content_dir, mode="skip", force=False):
     collection_name = _get_image_collection_name(instance)
     if collection_name:
         for rel in getattr(instance, collection_name).select_related("image").all():
-            filename = _export_media_file(
-                rel.image, bundle_dir, mode=mode, force=force
-            )
+            filename = _export_media_file(rel.image, bundle_dir, mode=mode, force=force)
             if filename:
                 _export_media_metadata(rel.image, filename, bundle_dir)
 
@@ -349,7 +337,7 @@ def export_page(instance, content_dir, mode="skip", force=False):
 
 def _export_static_files(site, outdir, mode="skip", force=False):
     """Copy static files from static/$domain/ to the assets directory."""
-    static_root = Path(getattr(settings, "STATIC_ROOT", ""))
+    static_root = Path(settings.STATIC_ROOT)  # Let it die if not configured
     domain_static = static_root / site.domain
     if not domain_static.exists():
         return
@@ -395,17 +383,13 @@ def export_site(site, outdir, mode="skip", force=False):
 
     # Export in breadth-first order by model
     # 1. HomePage: only the current home page
-    now = timezone.now()
-    homepages = HomePage.objects.filter(
-        site=site,
-        status=Status.USABLE,
-        date_published__lte=now,
-    ).filter(
-        _build_expires_query(now)
-    ).order_by("-date_published")
+    try:
+        homepage = HomePage.objects.live().filter(site=site).latest()
+    except HomePage.DoesNotExist:
+        homepage = None
 
-    if homepages.exists():
-        export_page(homepages.first(), content_dir, mode=mode, force=force)
+    if homepage:
+        export_page(homepage, content_dir, mode=mode, force=force)
 
     # 2. Page: export all
     for page in Page.objects.filter(site=site):
@@ -421,10 +405,3 @@ def export_site(site, outdir, mode="skip", force=False):
 
     # Export static files
     _export_static_files(site, outdir, mode=mode, force=force)
-
-
-def _build_expires_query(now):
-    """Return a Q object that filters for valid expiry dates."""
-    from django.db.models import Q
-
-    return Q(expires__isnull=True) | Q(expires__gt=now)
